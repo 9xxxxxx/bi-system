@@ -1,6 +1,6 @@
 # M0 工程基础实现计划
 
-> **面向 AI 代理的工作者：** 必需子技能：使用 superpowers:subagent-driven-development（推荐）或 superpowers:executing-plans 逐任务实现此计划。步骤使用复选框（`- [ ]`）语法来跟踪进度。
+> **执行方式：** 当前阶段按任务顺序在主会话中直接实施，每个任务完成测试、静态检查和独立提交后再继续。涉及数据或目录清理时先验证备份与路径边界；后续功能里程碑只有在明确授权后才启用多 Agent 并行。
 
 **目标：** 在保留并校验现有数据的前提下清理旧原型，建立可在 Windows/Linux 运行、同时验证 SQLite/PostgreSQL 的 FastAPI + React 工程基础，并交付完整的 Git、依赖、测试和开发规范。
 
