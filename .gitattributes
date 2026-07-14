@@ -1,0 +1,11 @@
+* text=auto eol=lf
+
+*.db binary
+*.xlsx binary
+*.xls binary
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.pdf binary
+
