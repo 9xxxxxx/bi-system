@@ -7,7 +7,7 @@ from alembic.runtime.migration import MigrationContext
 from alembic.script import ScriptDirectory
 from bi_system.core.config import get_settings
 from bi_system.db.session import create_database_engine
-from sqlalchemy import text
+from sqlalchemy import inspect, text
 
 BACKEND_ROOT = Path(__file__).resolve().parents[2]
 
@@ -27,10 +27,21 @@ def test_database_is_at_current_migration_head() -> None:
         with engine.connect() as connection:
             assert connection.execute(text("SELECT 1")).scalar_one() == 1
             current_revision = MigrationContext.configure(connection).get_current_revision()
+            table_names = set(inspect(connection).get_table_names())
     finally:
         engine.dispose()
 
     head_revision = ScriptDirectory.from_config(alembic_config()).get_current_head()
 
-    assert current_revision == "0001_baseline"
     assert current_revision == head_revision
+    assert current_revision == "0002_ingestion_foundation"
+    assert {
+        "file_blobs",
+        "import_batches",
+        "import_columns",
+        "import_issue_samples",
+        "import_targets",
+        "import_templates",
+        "quality_rules",
+        "source_files",
+    } <= table_names
