@@ -31,7 +31,7 @@ packages = ["backend/src/bi_system"]
 
 [tool.pytest.ini_options]
 addopts = "-ra --strict-markers"
-pythonpath = ["backend/src"]
+pythonpath = ["backend/src", "."]
 testpaths = ["backend/tests"]
 
 [tool.ruff]
@@ -43,6 +43,6 @@ select = ["E", "F", "I", "UP", "B", "SIM", "RUF"]
 
 [tool.basedpyright]
 include = ["backend/src", "backend/tests", "scripts"]
-extraPaths = ["backend/src"]
+extraPaths = ["backend/src", "."]
 pythonVersion = "3.13"
 typeCheckingMode = "strict"
