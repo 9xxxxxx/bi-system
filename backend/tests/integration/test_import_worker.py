@@ -25,11 +25,13 @@ from bi_system.ingestion.domain import ImportMode
 from bi_system.ingestion.files import register_source_file
 from bi_system.ingestion.storage import LocalContentAddressedStorage
 from bi_system.ingestion.target_tables import build_target_table, read_active_rows
-from bi_system.ingestion.template_contracts import ImportTemplateDefinition
+from bi_system.ingestion.template_contracts import CreateImportTemplate, ImportTemplateDefinition
+from bi_system.ingestion.templates import create_import_template
 from bi_system.ingestion.worker import process_import_batch, run_next_import_batch
 from bi_system.main import create_app
 from fastapi.testclient import TestClient
 from httpx import Response
+from openpyxl import Workbook
 from sqlalchemy import func, select
 from sqlalchemy.engine import Engine
 from sqlalchemy.orm import Session, sessionmaker
@@ -217,6 +219,86 @@ def test_worker_supports_append_replace_and_upsert(worker_context: WorkerTestCon
     assert sorted((row["city"], row["amount"]) for row in rows) == [
         ("成都", 50),
         ("深圳", 45),
+    ]
+
+
+def test_worker_imports_xlsx_using_stored_template(worker_context: WorkerTestContext) -> None:
+    definition = ImportTemplateDefinition.model_validate(
+        {
+            "file_kind": "xlsx",
+            "sheet_name": "数据",
+            "columns": [
+                {
+                    "source_key": "column_1",
+                    "source_name": "城市",
+                    "target_name": "city",
+                    "data_type": "string",
+                    "nullable": False,
+                },
+                {
+                    "source_key": "column_2",
+                    "source_name": "金额",
+                    "target_name": "amount",
+                    "data_type": "decimal",
+                    "nullable": False,
+                },
+                {
+                    "source_key": "column_3",
+                    "source_name": "日期",
+                    "target_name": "report_date",
+                    "data_type": "date",
+                    "nullable": False,
+                },
+            ],
+            "business_key": ["city", "report_date"],
+        },
+    )
+    workbook = Workbook()
+    worksheet = workbook.active
+    assert worksheet is not None
+    worksheet.title = "数据"
+    worksheet.append(["城市", "金额", "日期"])
+    worksheet.append(["北京", 120.5, "2026-07-15"])
+    worksheet.append(["上海", 88, "2026-07-16"])
+    content = BytesIO()
+    workbook.save(content)
+    workbook.close()
+    content.seek(0)
+
+    with worker_context.session_factory() as session:
+        template = create_import_template(
+            session,
+            workspace_id=worker_context.workspace_id,
+            request=CreateImportTemplate(name="城市日报", definition=definition),
+        )
+        source = register_source_file(
+            session,
+            worker_context.storage,
+            workspace_id=worker_context.workspace_id,
+            original_name="城市日报.xlsx",
+            stream=content,
+            xlsx_max_uncompressed_bytes=worker_context.settings.xlsx_max_uncompressed_bytes,
+            xlsx_max_compression_ratio=worker_context.settings.xlsx_max_compression_ratio,
+        )
+        stored = create_import_batch(
+            session,
+            workspace_id=worker_context.workspace_id,
+            request=CreateImportBatch(
+                source_file_id=source.source_file.id,
+                template_id=template.template.id,
+                target_name="城市日报数据",
+                mode=ImportMode.APPEND,
+            ),
+        )
+
+    result = run_worker(worker_context)
+
+    assert result.id == stored.batch.id
+    assert result.status == "succeeded"
+    rows = active_rows(worker_context, stored.target.id, definition)
+    assert [(row["city"], row["amount"], str(row["report_date"])) for row in rows] == [
+        ("北京", 120.5, "2026-07-15"),
+        ("上海", 88, "2026-07-16"),
     ]
 
 
