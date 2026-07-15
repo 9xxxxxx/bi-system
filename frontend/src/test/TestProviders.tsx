@@ -4,7 +4,14 @@ import zhCN from "antd/locale/zh_CN";
 import type { PropsWithChildren } from "react";
 import { MemoryRouter } from "react-router-dom";
 
-export function TestProviders({ children }: PropsWithChildren) {
+interface TestProvidersProps extends PropsWithChildren {
+  initialEntries?: string[];
+}
+
+export function TestProviders({
+  children,
+  initialEntries,
+}: TestProvidersProps) {
   const queryClient = new QueryClient({
     defaultOptions: {
       queries: {
@@ -16,7 +23,7 @@ export function TestProviders({ children }: PropsWithChildren) {
   return (
     <ConfigProvider locale={zhCN}>
       <QueryClientProvider client={queryClient}>
-        <MemoryRouter>{children}</MemoryRouter>
+        <MemoryRouter initialEntries={initialEntries}>{children}</MemoryRouter>
       </QueryClientProvider>
     </ConfigProvider>
   );
