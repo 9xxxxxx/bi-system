@@ -23,3 +23,7 @@ An import batch moves through `pending`, `processing`, `succeeded`, `partially_s
 ## Consequences
 
 This design keeps local operation lightweight and makes restart recovery possible without a new service. SQLite remains intentionally single-worker and is not a concurrency benchmark. PostgreSQL-specific locking and bulk-write optimizations require portable fallbacks and dual-database tests. A future Redis queue must preserve the same batch contract and may not become the source of truth for status.
+
+## Dependency Evidence
+
+Checked on 2026-07-15: openpyxl 3.1.5 is MIT licensed and python-multipart 0.0.32 is Apache-2.0 licensed. Six reader tests verify UTF-8/GB18030 CSV, Chinese XLSX values, worksheet selection, dates, formula text without execution, and controlled corrupt-workbook errors. Neither dependency introduces a second data-frame or task-queue runtime.
