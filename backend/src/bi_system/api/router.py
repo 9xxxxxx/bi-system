@@ -1,7 +1,9 @@
 from fastapi import APIRouter
 
 from bi_system.api.routes import (
+    auth,
     data_sources,
+    dataset_queries,
     datasets,
     health,
     import_batches,
@@ -12,9 +14,15 @@ from bi_system.api.routes import (
 
 api_router = APIRouter()
 api_router.include_router(health.router, prefix="/health", tags=["health"])
+api_router.include_router(auth.router, prefix="/auth", tags=["auth"])
 api_router.include_router(source_files.router, prefix="/source-files", tags=["source-files"])
 api_router.include_router(data_sources.router, prefix="/data-sources", tags=["data-sources"])
 api_router.include_router(datasets.router, prefix="/datasets", tags=["datasets"])
+api_router.include_router(
+    dataset_queries.router,
+    prefix="/dataset-queries",
+    tags=["dataset-queries"],
+)
 api_router.include_router(
     semantic_models.router,
     prefix="/semantic-models",
