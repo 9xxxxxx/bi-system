@@ -41,7 +41,7 @@ body {
 
 .app-content {
   margin: 0 auto;
-  max-width: 1120px;
+  max-width: 1440px;
   padding: 32px;
   width: 100%;
 }
@@ -67,6 +67,131 @@ body {
   margin-bottom: 0;
 }
 
+.ingestion-workspace {
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  min-height: calc(100vh - 64px);
+  overflow: hidden;
+}
+
+.ingestion-overview {
+  align-items: flex-start;
+  border-bottom: 1px solid #eef0f4;
+  display: flex;
+  justify-content: space-between;
+  padding: 24px 28px 20px;
+}
+
+.ingestion-overview .ant-typography,
+.section-heading .ant-typography {
+  margin-bottom: 2px;
+  margin-top: 0;
+}
+
+.ingestion-steps {
+  background: #fafbfc;
+  border-bottom: 1px solid #eef0f4;
+  padding: 20px 28px;
+}
+
+.wizard-section {
+  display: grid;
+  gap: 22px;
+  min-width: 0;
+  padding: 28px;
+}
+
+.wizard-section > * {
+  min-width: 0;
+}
+
+.section-heading,
+.batch-progress-heading {
+  align-items: flex-start;
+  display: flex;
+  gap: 16px;
+  justify-content: space-between;
+}
+
+.upload-section {
+  margin: 0 auto;
+  max-width: 920px;
+}
+
+.template-select {
+  width: min(420px, 100%);
+}
+
+.wizard-actions {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.split-actions {
+  justify-content: space-between;
+}
+
+.preview-table {
+  margin-top: 2px;
+}
+
+.column-meta {
+  font-size: 12px;
+}
+
+.business-key-field,
+.execution-field {
+  display: grid;
+  gap: 10px;
+}
+
+.business-key-field .ant-select,
+.execution-field .ant-select {
+  width: min(560px, 100%);
+}
+
+.execution-grid {
+  display: grid;
+  gap: 28px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.execution-field .ant-radio-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px 20px;
+}
+
+.template-save-row {
+  align-items: center;
+  display: flex;
+  gap: 16px;
+}
+
+.template-save-row .ant-input {
+  max-width: 360px;
+}
+
+.batch-result {
+  display: grid;
+  gap: 22px;
+}
+
+.batch-progress {
+  display: grid;
+  gap: 8px;
+}
+
+.issue-section {
+  border-top: 1px solid #eef0f4;
+  padding-top: 20px;
+}
+
+.issue-section .ant-typography {
+  margin-top: 0;
+}
+
 @media (max-width: 768px) {
   .app-sider {
     height: 100vh;
@@ -77,7 +202,8 @@ body {
 
   .app-sider .ant-layout-sider-zero-width-trigger {
     border-radius: 6px;
-    inset-inline-end: -52px;
+    inset-inline-end: 12px;
+    position: fixed;
     top: 12px;
   }
 
@@ -87,5 +213,54 @@ body {
 
   .status-grid {
     padding: 18px;
+  }
+
+  .ingestion-workspace {
+    min-height: calc(100vh - 92px);
+  }
+
+  .ingestion-overview,
+  .section-heading {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .ingestion-overview,
+  .ingestion-steps,
+  .wizard-section {
+    padding-left: 16px;
+    padding-right: 16px;
+  }
+
+  .ingestion-steps .ant-steps-item-title {
+    font-size: 13px;
+  }
+
+  .execution-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .template-save-row {
+    align-items: stretch;
+    flex-direction: column;
+  }
+}
+
+@media (max-width: 420px) {
+  .app-content {
+    padding-left: 10px;
+    padding-right: 10px;
+  }
+
+  .ingestion-overview > .ant-space {
+    display: none;
+  }
+
+  .wizard-section {
+    gap: 18px;
+  }
+
+  .wizard-actions .ant-btn {
+    min-height: 40px;
   }
 }
