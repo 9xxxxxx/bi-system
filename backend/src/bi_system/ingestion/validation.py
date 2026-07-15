@@ -4,6 +4,7 @@ from datetime import date, datetime
 from decimal import Decimal, InvalidOperation
 
 from bi_system.ingestion.domain import FileDataType, QualitySeverity
+from bi_system.ingestion.duplicate_tracking import DuplicateTracker, InMemoryDuplicateTracker
 from bi_system.ingestion.template_contracts import (
     BusinessKeyRule,
     DataTypeRule,
@@ -45,11 +46,11 @@ class QualityEvaluator:
         definition: ImportTemplateDefinition,
         *,
         warnings_confirmed: bool,
+        duplicate_tracker: DuplicateTracker | None = None,
     ) -> None:
         self.definition = definition
         self.warnings_confirmed = warnings_confirmed
-        self._unique_values: dict[str, set[object]] = {}
-        self._business_keys: dict[str, set[tuple[object, ...]]] = {}
+        self.duplicate_tracker = duplicate_tracker or InMemoryDuplicateTracker()
 
     def evaluate(self, row: tuple[object, ...], *, row_number: int) -> EvaluatedRow:
         raw_values = {
@@ -205,11 +206,7 @@ class QualityEvaluator:
     def _is_duplicate(self, rule_name: str, value: ConvertedValue) -> bool:
         if value is None:
             return False
-        seen = self._unique_values.setdefault(rule_name, set())
-        if value in seen:
-            return True
-        seen.add(value)
-        return False
+        return self.duplicate_tracker.is_duplicate(f"unique:{rule_name}", (value,))
 
     def _evaluate_business_key(
         self,
@@ -226,9 +223,7 @@ class QualityEvaluator:
         key = tuple(converted_values[column] for column in columns)
         if any(value is None for value in key):
             return []
-        seen_keys = self._business_keys.setdefault(tracker_name, set())
-        if key not in seen_keys:
-            seen_keys.add(key)
+        if not self.duplicate_tracker.is_duplicate(f"business:{tracker_name}", key):
             return []
         raw_value = " | ".join(str(raw_values[column]) for column in columns)
         return [

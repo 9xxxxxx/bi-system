@@ -24,6 +24,7 @@ from bi_system.ingestion.domain import (
     QualitySeverity,
     validate_import_batch_transition,
 )
+from bi_system.ingestion.duplicate_tracking import SqliteDuplicateTracker
 from bi_system.ingestion.readers import iter_csv_rows, iter_xlsx_rows
 from bi_system.ingestion.reports import QualityReportWriter, attach_quality_report
 from bi_system.ingestion.storage import LocalContentAddressedStorage
@@ -120,12 +121,17 @@ def process_import_batch(
     )
     target_table = build_target_table(work.target, work.definition)
     ensure_target_table(engine, target_table)
+    rows = _source_data_rows(work)
+    report = QualityReportWriter(storage, batch_id)
+    duplicate_tracker = SqliteDuplicateTracker(
+        storage.root / ".tmp",
+        prefix=f"duplicates-{batch_id}-",
+    )
     evaluator = QualityEvaluator(
         work.definition,
         warnings_confirmed=work.warnings_confirmed,
+        duplicate_tracker=duplicate_tracker,
     )
-    rows = _source_data_rows(work)
-    report = QualityReportWriter(storage, batch_id)
     pending_rows: list[EvaluatedRow] = []
     processed_source_rows = 0
     with session_factory() as session:
@@ -213,6 +219,8 @@ def process_import_batch(
     except Exception:
         report.close()
         raise
+    finally:
+        duplicate_tracker.close()
 
 
 def _load_batch_work(
