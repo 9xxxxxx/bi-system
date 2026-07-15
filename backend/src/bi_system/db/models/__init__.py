@@ -1,4 +1,4 @@
-from bi_system.db.models.identity import Role, User, UserRole
+from bi_system.db.models.identity import Role, User, UserRole, UserSession
 from bi_system.db.models.ingestion import (
     FileBlob,
     ImportBatch,
@@ -44,4 +44,5 @@ __all__ = [
     "SourceFile",
     "User",
     "UserRole",
+    "UserSession",
 ]

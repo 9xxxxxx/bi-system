@@ -99,3 +99,30 @@ class UserRole(Base):
         primary_key=True,
     )
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now)
+
+
+class UserSession(Base):
+    __tablename__ = "user_sessions"
+    __table_args__ = (
+        CheckConstraint(
+            "length(token_hash) = 64",
+            name="ck_user_sessions_token_hash_length",
+        ),
+        CheckConstraint(
+            "expires_at > created_at",
+            name="ck_user_sessions_expiry_after_creation",
+        ),
+        Index("ix_user_sessions_user_revoked", "user_id", "revoked_at"),
+        Index("ix_user_sessions_expires_at", "expires_at"),
+    )
+
+    id: Mapped[UUID] = mapped_column(Uuid(as_uuid=True), primary_key=True, default=uuid4)
+    user_id: Mapped[UUID] = mapped_column(
+        Uuid(as_uuid=True),
+        ForeignKey("users.id", ondelete="CASCADE"),
+        nullable=False,
+    )
+    token_hash: Mapped[str] = mapped_column(String(64), nullable=False, unique=True)
+    expires_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    revoked_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now)

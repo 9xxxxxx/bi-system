@@ -34,7 +34,7 @@ def test_database_is_at_current_migration_head() -> None:
     head_revision = ScriptDirectory.from_config(alembic_config()).get_current_head()
 
     assert current_revision == head_revision
-    assert current_revision == "0003_modeling_foundation"
+    assert current_revision == "0004_identity_sessions"
     assert {
         "dataset_fields",
         "datasets",
@@ -56,5 +56,6 @@ def test_database_is_at_current_migration_head() -> None:
         "semantic_models",
         "source_files",
         "user_roles",
+        "user_sessions",
         "users",
     } <= table_names
