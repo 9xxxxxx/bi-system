@@ -84,3 +84,34 @@ class QueryRequest(StrictQueryModel):
         if predicate_count(self.filter) > 50:
             raise ValueError("Query has too many filter predicates")
         return self
+
+
+class DatasetQueryRequest(StrictQueryModel):
+    dataset_id: UUID
+    selections: list[QuerySelection] = Field(min_length=1, max_length=100)
+    filter: FilterExpression | None = None
+    group_by: list[UUID] = Field(default_factory=list, max_length=20)
+    order_by: list[QuerySort] = Field(default_factory=list, max_length=10)
+    limit: Annotated[int, Field(ge=1, le=10_000)] = 500
+
+    @model_validator(mode="after")
+    def validate_query_shape(self) -> DatasetQueryRequest:
+        QueryRequest(
+            source_id=self.dataset_id,
+            selections=self.selections,
+            filter=self.filter,
+            group_by=self.group_by,
+            order_by=self.order_by,
+            limit=self.limit,
+        )
+        return self
+
+    def for_source(self, source_id: UUID) -> QueryRequest:
+        return QueryRequest(
+            source_id=source_id,
+            selections=self.selections,
+            filter=self.filter,
+            group_by=self.group_by,
+            order_by=self.order_by,
+            limit=self.limit,
+        )

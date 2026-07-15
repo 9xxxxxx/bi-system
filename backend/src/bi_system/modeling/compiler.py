@@ -126,6 +126,25 @@ class QueryCompiler:
             output_names=tuple(selection.output_name for selection in request.selections),
         )
 
+    def compile_filter(
+        self,
+        expression: FilterExpression,
+        source: ResolvedSource,
+    ) -> ColumnElement[bool]:
+        predicates = (
+            expression.predicates if isinstance(expression, LogicalPredicate) else (expression,)
+        )
+        for predicate in predicates:
+            self._required_field(predicate.field_id, source)
+            if isinstance(predicate, TextPredicate):
+                column = self._required_field(predicate.field_id, source)
+                if not isinstance(column.type, (String, Text)):
+                    raise QueryCompilationError(
+                        "invalid_text_filter_type",
+                        "Text filters require a string field",
+                    )
+        return self._filter_expression(expression, source)
+
     def _validate_request(self, request: QueryRequest, source: ResolvedSource) -> None:
         if request.source_id != source.source_id:
             raise QueryCompilationError(
