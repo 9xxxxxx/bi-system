@@ -3,6 +3,7 @@ __pycache__/
 *.py[cod]
 .pytest_cache/
 .ruff_cache/
+.playwright-cli/
 .coverage
 coverage.xml
 .mypy_cache/

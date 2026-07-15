@@ -68,8 +68,21 @@ body {
 }
 
 @media (max-width: 768px) {
+  .app-sider {
+    height: 100vh;
+    inset: 0 auto 0 0;
+    position: fixed !important;
+    z-index: 1000;
+  }
+
+  .app-sider .ant-layout-sider-zero-width-trigger {
+    border-radius: 6px;
+    inset-inline-end: -52px;
+    top: 12px;
+  }
+
   .app-content {
-    padding: 20px;
+    padding: 72px 20px 20px;
   }
 
   .status-grid {
