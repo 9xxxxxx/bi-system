@@ -34,14 +34,27 @@ def test_database_is_at_current_migration_head() -> None:
     head_revision = ScriptDirectory.from_config(alembic_config()).get_current_head()
 
     assert current_revision == head_revision
-    assert current_revision == "0002_ingestion_foundation"
+    assert current_revision == "0003_modeling_foundation"
     assert {
+        "dataset_fields",
+        "datasets",
         "file_blobs",
         "import_batches",
         "import_columns",
         "import_issue_samples",
         "import_targets",
         "import_templates",
+        "metric_dimensions",
+        "metrics",
         "quality_rules",
+        "roles",
+        "row_policies",
+        "row_policy_assignments",
+        "semantic_model_join_keys",
+        "semantic_model_joins",
+        "semantic_model_sources",
+        "semantic_models",
         "source_files",
+        "user_roles",
+        "users",
     } <= table_names

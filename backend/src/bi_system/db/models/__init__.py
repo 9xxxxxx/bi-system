@@ -1,3 +1,4 @@
+from bi_system.db.models.identity import Role, User, UserRole
 from bi_system.db.models.ingestion import (
     FileBlob,
     ImportBatch,
@@ -8,14 +9,39 @@ from bi_system.db.models.ingestion import (
     QualityRule,
     SourceFile,
 )
+from bi_system.db.models.modeling import (
+    Dataset,
+    DatasetField,
+    Metric,
+    MetricDimension,
+    RowPolicy,
+    RowPolicyAssignment,
+    SemanticModel,
+    SemanticModelJoin,
+    SemanticModelJoinKey,
+    SemanticModelSource,
+)
 
 __all__ = [
+    "Dataset",
+    "DatasetField",
     "FileBlob",
     "ImportBatch",
     "ImportColumn",
     "ImportIssueSample",
     "ImportTarget",
     "ImportTemplate",
+    "Metric",
+    "MetricDimension",
     "QualityRule",
+    "Role",
+    "RowPolicy",
+    "RowPolicyAssignment",
+    "SemanticModel",
+    "SemanticModelJoin",
+    "SemanticModelJoinKey",
+    "SemanticModelSource",
     "SourceFile",
+    "User",
+    "UserRole",
 ]
