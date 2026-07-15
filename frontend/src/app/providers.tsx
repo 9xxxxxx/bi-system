@@ -15,7 +15,20 @@ const queryClient = new QueryClient({
 
 export function AppProviders({ children }: PropsWithChildren) {
   return (
-    <ConfigProvider locale={zhCN} theme={{ token: { borderRadius: 6 } }}>
+    <ConfigProvider
+      locale={zhCN}
+      theme={{
+        token: {
+          borderRadius: 6,
+          colorPrimary: "#1677ff",
+          colorSuccess: "#52c41a",
+          colorError: "#ff4d4f",
+          colorText: "#1f2937",
+          colorTextSecondary: "#6b7280",
+          colorBorder: "#e5e7eb",
+        },
+      }}
+    >
       <AntdApp>
         <QueryClientProvider client={queryClient}>
           <BrowserRouter>{children}</BrowserRouter>
