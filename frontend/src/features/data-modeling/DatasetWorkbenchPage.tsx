@@ -13,7 +13,6 @@ import {
   Descriptions,
   Empty,
   Input,
-  List,
   Result,
   Skeleton,
   Space,
@@ -72,26 +71,32 @@ function DataSourceList({
         value={search}
         onChange={(event) => setSearch(event.target.value)}
       />
-      <List
-        className="source-list"
-        dataSource={visibleSources}
-        locale={{ emptyText: "没有可用数据源" }}
-        renderItem={(source) => (
-          <List.Item>
-            <button
-              type="button"
-              className={`source-list-button${selectedId === source.id ? " is-selected" : ""}`}
-              onClick={() => onSelect(source.id)}
-            >
-              <span>{source.name}</span>
-              <small>
-                {source.fields.length} 个字段
-                {` · ${source.active_row_count} 行`}
-              </small>
-            </button>
-          </List.Item>
+      <div className="source-list">
+        {visibleSources.length > 0 ? (
+          <ul>
+            {visibleSources.map((source) => (
+              <li key={source.id}>
+                <button
+                  type="button"
+                  className={`source-list-button${selectedId === source.id ? " is-selected" : ""}`}
+                  onClick={() => onSelect(source.id)}
+                >
+                  <span>{source.name}</span>
+                  <small>
+                    {source.fields.length} 个字段
+                    {` · ${source.active_row_count} 行`}
+                  </small>
+                </button>
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <Empty
+            image={Empty.PRESENTED_IMAGE_SIMPLE}
+            description="没有可用数据源"
+          />
         )}
-      />
+      </div>
     </aside>
   );
 }
@@ -166,22 +171,26 @@ function SourceInspector({ source }: { source?: DataSource }) {
           </Descriptions>
           <div className="field-preview">
             <Typography.Text strong>字段预览</Typography.Text>
-            <List
-              size="small"
-              dataSource={source.fields.slice(0, 8)}
-              locale={{ emptyText: "暂无字段" }}
-              renderItem={(field) => (
-                <List.Item>
-                  <span className="field-name">
-                    <FieldNumberOutlined aria-hidden />
-                    {field.display_name}
-                  </span>
-                  <Typography.Text type="secondary">
-                    {field.data_type}
-                  </Typography.Text>
-                </List.Item>
-              )}
-            />
+            {source.fields.length > 0 ? (
+              <ul className="field-list">
+                {source.fields.slice(0, 8).map((field) => (
+                  <li key={field.id}>
+                    <span className="field-name">
+                      <FieldNumberOutlined aria-hidden />
+                      {field.display_name}
+                    </span>
+                    <Typography.Text type="secondary">
+                      {field.data_type}
+                    </Typography.Text>
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <Empty
+                image={Empty.PRESENTED_IMAGE_SIMPLE}
+                description="暂无字段"
+              />
+            )}
           </div>
         </>
       ) : (

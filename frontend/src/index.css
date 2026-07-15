@@ -362,7 +362,14 @@ body {
   margin-top: 10px;
 }
 
-.source-list .ant-list-item {
+.source-list ul,
+.field-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.source-list li {
   padding: 3px 0;
 }
 
@@ -479,6 +486,15 @@ body {
 .field-preview > .ant-typography {
   display: block;
   margin-bottom: 8px;
+}
+
+.field-list li {
+  align-items: center;
+  border-block-end: 1px solid #f0f0f0;
+  display: flex;
+  justify-content: space-between;
+  min-height: 40px;
+  padding: 8px 0;
 }
 
 .field-name {
