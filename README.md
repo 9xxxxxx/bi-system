@@ -41,6 +41,16 @@ npm --prefix frontend run dev
 前端默认地址为 `http://localhost:5173`，API 文档为 `http://127.0.0.1:8000/docs`。就绪探针位于 `/api/v1/health/ready`。
 前端默认进入数据导入工作台，系统状态页位于 `/system-status`。
 
+## 初始化管理员
+
+应用迁移完成后，显式创建首个本地系统管理员：
+
+```powershell
+uv run python scripts/create_initial_admin.py --username admin --display-name "System Administrator"
+```
+
+命令默认使用隐藏的两次交互输入读取密码，不会创建默认账号或默认密码。自动化部署可选择 `--password-stdin`，或用 `--password-env-var <变量名>` 从指定环境变量读取；不要把密码放入命令参数、日志或提交文件。重复用户名不会重置现有密码，命令会清晰失败并保持数据库不变。
+
 ## PostgreSQL 兼容性
 
 本机安装 PostgreSQL 18 后，可执行隔离测试；脚本使用临时数据目录和端口 `55432`，完成迁移升降级后自动停止并清理：
