@@ -26,6 +26,26 @@ class QualitySeverity(StrEnum):
     WARNING = "warning"
 
 
+class FileDataType(StrEnum):
+    STRING = "string"
+    INTEGER = "integer"
+    DECIMAL = "decimal"
+    BOOLEAN = "boolean"
+    DATE = "date"
+    DATETIME = "datetime"
+
+
+class QualityRuleType(StrEnum):
+    REQUIRED = "required"
+    UNIQUE = "unique"
+    DATA_TYPE = "data_type"
+    LENGTH = "length"
+    RANGE = "range"
+    ENUM = "enum"
+    REGEX = "regex"
+    BUSINESS_KEY = "business_key"
+
+
 class InvalidImportBatchTransition(ValueError):
     pass
 

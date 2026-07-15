@@ -76,6 +76,8 @@ M1 已提供流式源文件上传和有界预览基础接口：
 - `POST /api/v1/source-files`：上传 CSV/XLSX，计算 SHA256 并复用重复内容。
 - `GET /api/v1/source-files/{id}`：读取当前工作区文件元数据。
 - `POST /api/v1/source-files/{id}/preview`：选择 CSV 编码或 XLSX 工作表并获取最多 100 行预览。
+- `POST /api/v1/import-templates`：保存字段映射和强类型质量规则的新版本。
+- `GET /api/v1/import-templates`：读取当前有效模板；可显式包含历史版本。
 
 支持 UTF-8、UTF-8 BOM 和显式 GB18030 CSV。旧版 `.xls`、宏工作簿、加密或损坏 XLSX 会返回可执行的转换建议。上传内容保存在 `BI_STORAGE_ROOT`，不得手工改名或移动哈希对象。
 
