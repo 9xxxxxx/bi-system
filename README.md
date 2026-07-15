@@ -65,6 +65,8 @@ uv run python scripts/run_postgres_tests.py
 | `BI_IMPORT_MAX_ROWS` | `1000000` | 单批数据行上限 |
 | `BI_IMPORT_CHUNK_ROWS` | `2000` | 后台处理提交块行数 |
 | `BI_PREVIEW_MAX_ROWS` | `100` | 文件预览最大样例行数 |
+| `BI_IMPORT_ISSUE_SAMPLE_LIMIT` | `1000` | 数据库保留的问题样本上限 |
+| `BI_IMPORT_WORKER_LEASE_SECONDS` | `120` | worker 领取批次的租约秒数 |
 | `VITE_API_BASE_URL` | `http://127.0.0.1:8000/api/v1` | 前端 API 根地址 |
 
 生产环境必须显式设置 CORS 来源。不要提交 `.env`、Cookie、令牌、下载数据或生产凭据；发送到外部模型的数据必须先脱敏。
@@ -80,6 +82,15 @@ M1 已提供流式源文件上传和有界预览基础接口：
 - `GET /api/v1/import-templates`：读取当前有效模板；可显式包含历史版本。
 - `POST /api/v1/import-batches`：冻结导入定义并创建可恢复的待处理批次。
 - `GET /api/v1/import-batches`：读取最近批次及进度；单批次支持查询、取消和失败重试。
+- `POST /api/v1/import-batches/{id}/confirm-warnings`：确认警告后从头重新校验并提交。
+
+批次由独立 worker 处理。开发时执行一次可用任务：
+
+```powershell
+uv run python scripts/run_import_worker.py --once
+```
+
+持续运行时省略 `--once`。SQLite 只能启动一个 worker；PostgreSQL 可启动多个实例，租约和行锁会避免重复领取。
 
 支持 UTF-8、UTF-8 BOM 和显式 GB18030 CSV。旧版 `.xls`、宏工作簿、加密或损坏 XLSX 会返回可执行的转换建议。上传内容保存在 `BI_STORAGE_ROOT`，不得手工改名或移动哈希对象。
 

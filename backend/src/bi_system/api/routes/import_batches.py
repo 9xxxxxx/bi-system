@@ -16,6 +16,7 @@ from bi_system.ingestion.batches import (
     ImportBatchStateError,
     StoredImportBatch,
     cancel_import_batch,
+    confirm_import_batch_warnings,
     create_import_batch,
     get_import_batch,
     list_import_batches,
@@ -163,6 +164,43 @@ def retry_import_batch_endpoint(
     if stored is None:
         raise _batch_http_error(
             404, "import_batch_not_found", "Import batch was not found", "Refresh the batch list"
+        )
+    return _stored_batch_response(stored)
+
+
+@router.post("/{batch_id}/confirm-warnings", response_model=ImportBatchResponse)
+def confirm_import_batch_warnings_endpoint(
+    batch_id: UUID,
+    session: DatabaseSession,
+    settings: ApplicationSettings,
+) -> ImportBatchResponse:
+    try:
+        confirm_import_batch_warnings(
+            session,
+            workspace_id=settings.workspace_id,
+            batch_id=batch_id,
+        )
+    except ImportBatchResourceNotFoundError as exc:
+        raise _batch_http_error(
+            404,
+            "import_batch_not_found",
+            str(exc),
+            "Refresh the batch list",
+        ) from exc
+    except ImportBatchStateError as exc:
+        raise _batch_http_error(
+            409,
+            "invalid_batch_state",
+            str(exc),
+            "Confirm warnings only when requested",
+        ) from exc
+    stored = get_import_batch(session, workspace_id=settings.workspace_id, batch_id=batch_id)
+    if stored is None:
+        raise _batch_http_error(
+            404,
+            "import_batch_not_found",
+            "Import batch was not found",
+            "Refresh the batch list",
         )
     return _stored_batch_response(stored)
 

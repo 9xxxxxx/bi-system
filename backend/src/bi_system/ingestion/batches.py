@@ -2,10 +2,17 @@ from dataclasses import dataclass
 from datetime import UTC, datetime, timedelta
 from uuid import UUID, uuid4
 
-from sqlalchemy import and_, or_, select
+from sqlalchemy import and_, delete, or_, select
 from sqlalchemy.orm import Session
 
-from bi_system.db.models import ImportBatch, ImportColumn, ImportTarget, ImportTemplate, SourceFile
+from bi_system.db.models import (
+    ImportBatch,
+    ImportColumn,
+    ImportIssueSample,
+    ImportTarget,
+    ImportTemplate,
+    SourceFile,
+)
 from bi_system.ingestion.batch_contracts import CreateImportBatch
 from bi_system.ingestion.domain import (
     FileKind,
@@ -181,6 +188,41 @@ def retry_import_batch(
         batch.error_message = None
         batch.finished_at = None
         batch.updated_at = current_time
+        if batch.checkpoint_row == 0:
+            _reset_batch_results(session, batch)
+    return batch
+
+
+def confirm_import_batch_warnings(
+    session: Session,
+    *,
+    workspace_id: UUID,
+    batch_id: UUID,
+    now: datetime | None = None,
+) -> ImportBatch:
+    current_time = now or datetime.now(UTC)
+    with session.begin():
+        batch = _required_batch(session, workspace_id=workspace_id, batch_id=batch_id)
+        if (
+            batch.status != ImportBatchStatus.FAILED.value
+            or batch.error_code != "warnings_confirmation_required"
+        ):
+            raise ImportBatchStateError("Batch is not waiting for warning confirmation")
+        configuration = dict(batch.configuration)
+        configuration["warnings_confirmed"] = True
+        batch.configuration = configuration
+        validate_import_batch_transition(
+            ImportBatchStatus.FAILED,
+            ImportBatchStatus.PENDING,
+        )
+        batch.status = ImportBatchStatus.PENDING.value
+        batch.available_at = current_time
+        batch.error_code = None
+        batch.error_message = None
+        batch.finished_at = None
+        batch.updated_at = current_time
+        batch.checkpoint_row = 0
+        _reset_batch_results(session, batch)
     return batch
 
 
@@ -332,3 +374,12 @@ def _required_batch(session: Session, *, workspace_id: UUID, batch_id: UUID) -> 
     if batch is None or batch.workspace_id != workspace_id:
         raise ImportBatchResourceNotFoundError("Import batch was not found")
     return batch
+
+
+def _reset_batch_results(session: Session, batch: ImportBatch) -> None:
+    session.execute(delete(ImportIssueSample).where(ImportIssueSample.batch_id == batch.id))
+    batch.total_rows = None
+    batch.processed_rows = 0
+    batch.valid_rows = 0
+    batch.error_rows = 0
+    batch.warning_rows = 0
