@@ -1,4 +1,5 @@
 from functools import lru_cache
+from pathlib import Path
 from typing import Annotated, Literal
 
 from pydantic import Field, field_validator, model_validator
@@ -20,6 +21,11 @@ class Settings(BaseSettings):
     environment: Literal["development", "test", "production"] = "development"
     api_prefix: str = "/api/v1"
     database_url: str = DEFAULT_DATABASE_URL
+    storage_root: Path = Path("data/uploads")
+    upload_max_bytes: Annotated[int, Field(gt=0)] = 100 * 1024 * 1024
+    import_max_rows: Annotated[int, Field(gt=0)] = 1_000_000
+    import_chunk_rows: Annotated[int, Field(gt=0)] = 2_000
+    preview_max_rows: Annotated[int, Field(gt=0)] = 100
     cors_origins: Annotated[list[str], NoDecode] = Field(
         default_factory=lambda: DEFAULT_CORS_ORIGINS.copy(),
     )
@@ -39,6 +45,17 @@ class Settings(BaseSettings):
 
         if self.environment == "production" and self.cors_origins == DEFAULT_CORS_ORIGINS:
             msg = "BI_CORS_ORIGINS must be set explicitly in production"
+            raise ValueError(msg)
+
+        return self
+
+    @model_validator(mode="after")
+    def validate_ingestion_limits(self) -> "Settings":
+        if self.preview_max_rows > self.import_chunk_rows:
+            msg = "BI_PREVIEW_MAX_ROWS must not exceed BI_IMPORT_CHUNK_ROWS"
+            raise ValueError(msg)
+        if self.import_chunk_rows > self.import_max_rows:
+            msg = "BI_IMPORT_CHUNK_ROWS must not exceed BI_IMPORT_MAX_ROWS"
             raise ValueError(msg)
 
         return self

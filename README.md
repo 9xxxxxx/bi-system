@@ -57,6 +57,11 @@ uv run python scripts/run_postgres_tests.py
 | `BI_ENVIRONMENT` | `development` | `development`、`test` 或 `production` |
 | `BI_DATABASE_URL` | `sqlite+pysqlite:///./data/bi_system.db` | SQLAlchemy 数据库连接 |
 | `BI_CORS_ORIGINS` | 本地 Vite 地址 | 逗号分隔的允许来源 |
+| `BI_STORAGE_ROOT` | `data/uploads` | 内容寻址上传文件根目录 |
+| `BI_UPLOAD_MAX_BYTES` | `104857600` | 单文件字节上限 |
+| `BI_IMPORT_MAX_ROWS` | `1000000` | 单批数据行上限 |
+| `BI_IMPORT_CHUNK_ROWS` | `2000` | 后台处理提交块行数 |
+| `BI_PREVIEW_MAX_ROWS` | `100` | 文件预览最大样例行数 |
 | `VITE_API_BASE_URL` | `http://127.0.0.1:8000/api/v1` | 前端 API 根地址 |
 
 生产环境必须显式设置 CORS 来源。不要提交 `.env`、Cookie、令牌、下载数据或生产凭据；发送到外部模型的数据必须先脱敏。
