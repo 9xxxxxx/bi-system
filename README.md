@@ -1,6 +1,6 @@
 # BI 报表与通报编辑系统
 
-面向团组内部的数据分析、仪表盘制作和经营通报发布平台。项目采用 FastAPI 模块化单体后端与 React 单页前端，默认使用 SQLite 轻量开发，并持续验证 PostgreSQL 18 生产兼容性。当前 M0 只提供工程基础和系统状态页，业务能力按 `M1` 至 `M6` 里程碑逐步交付。
+面向团组内部的数据分析、仪表盘制作和经营通报发布平台。项目采用 FastAPI 模块化单体后端与 React 单页前端，默认使用 SQLite 轻量开发，并持续验证 PostgreSQL 18 生产兼容性。M1 数据接入已交付，后续数据建模、BI 可视化与通报编辑能力按 `M2` 至 `M6` 里程碑推进。
 
 ## 技术栈与目录
 
@@ -39,6 +39,7 @@ npm --prefix frontend run dev
 ```
 
 前端默认地址为 `http://localhost:5173`，API 文档为 `http://127.0.0.1:8000/docs`。就绪探针位于 `/api/v1/health/ready`。
+前端默认进入数据导入工作台，系统状态页位于 `/system-status`。
 
 ## PostgreSQL 兼容性
 
@@ -101,6 +102,14 @@ uv run python scripts/cleanup_ingestion_files.py --older-hours 24 --dry-run
 ```
 
 确认输出后移除 `--dry-run` 执行清理。命令不会删除数据库已登记的源文件或质量报告。
+
+复跑 M1 的 100 万行规模验收：
+
+```powershell
+uv run python scripts/benchmark_m1_ingestion.py --rows 1000000 --chunk-rows 2000
+```
+
+最新验收结果、跨数据库矩阵和浏览器截图见 [M1 验收记录](docs/verification/m1-verification.md)。
 
 支持 UTF-8、UTF-8 BOM 和显式 GB18030 CSV。旧版 `.xls`、宏工作簿、加密或损坏 XLSX 会返回可执行的转换建议。上传内容保存在 `BI_STORAGE_ROOT`，不得手工改名或移动哈希对象。
 
