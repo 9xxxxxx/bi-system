@@ -25,6 +25,7 @@ from bi_system.ingestion.domain import (
     validate_import_batch_transition,
 )
 from bi_system.ingestion.readers import iter_csv_rows, iter_xlsx_rows
+from bi_system.ingestion.reports import QualityReportWriter, attach_quality_report
 from bi_system.ingestion.storage import LocalContentAddressedStorage
 from bi_system.ingestion.target_tables import (
     build_target_table,
@@ -124,6 +125,7 @@ def process_import_batch(
         warnings_confirmed=work.warnings_confirmed,
     )
     rows = _source_data_rows(work)
+    report = QualityReportWriter(storage, batch_id)
     pending_rows: list[EvaluatedRow] = []
     processed_source_rows = 0
     with session_factory() as session:
@@ -141,6 +143,7 @@ def process_import_batch(
             if processed_source_rows > settings.import_max_rows:
                 raise ImportRowLimitExceededError
             evaluated = evaluator.evaluate(row, row_number=row_number)
+            report.write_row(evaluated)
             if processed_source_rows <= work.checkpoint_row:
                 continue
             pending_rows.append(evaluated)
@@ -157,6 +160,7 @@ def process_import_batch(
                 sample_count += added_samples
                 pending_rows = []
                 if not committed:
+                    report.discard()
                     return
 
         if pending_rows:
@@ -170,8 +174,17 @@ def process_import_batch(
                 sample_count=sample_count,
             )
             if not committed:
+                report.discard()
                 return
 
+        report.close()
+        _attach_report_if_needed(
+            session_factory,
+            storage,
+            settings,
+            report=report,
+            batch_id=batch_id,
+        )
         _finalize_batch(
             session_factory,
             target_table,
@@ -181,6 +194,14 @@ def process_import_batch(
             definition=work.definition,
         )
     except ImportRowLimitExceededError:
+        report.close()
+        _attach_report_if_needed(
+            session_factory,
+            storage,
+            settings,
+            report=report,
+            batch_id=batch_id,
+        )
         _fail_and_discard_batch(
             session_factory,
             target_table,
@@ -189,6 +210,9 @@ def process_import_batch(
             error_code="row_limit_exceeded",
             error_message=f"Import exceeds the {settings.import_max_rows} row limit",
         )
+    except Exception:
+        report.close()
+        raise
 
 
 def _load_batch_work(
@@ -222,6 +246,28 @@ def _load_batch_work(
             warnings_confirmed=bool(batch.configuration.get("warnings_confirmed", False)),
             checkpoint_row=batch.checkpoint_row,
         )
+
+
+def _attach_report_if_needed(
+    session_factory: sessionmaker[Session],
+    storage: LocalContentAddressedStorage,
+    settings: Settings,
+    *,
+    report: QualityReportWriter,
+    batch_id: UUID,
+) -> None:
+    if report.issue_count == 0:
+        report.discard()
+        return
+    with session_factory() as session:
+        attach_quality_report(
+            session,
+            storage,
+            batch_id=batch_id,
+            report_path=report.path,
+            max_bytes=settings.xlsx_max_uncompressed_bytes,
+        )
+    report.discard()
 
 
 def _source_data_rows(work: BatchWork) -> Iterator[tuple[int, int, tuple[object, ...]]]:

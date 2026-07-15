@@ -7,9 +7,10 @@ from typing import Any, cast
 from uuid import UUID, uuid4
 
 import pytest
-from bi_system.core.config import Settings
+from bi_system.api.dependencies import get_database_session, get_file_storage
+from bi_system.core.config import Settings, get_settings
 from bi_system.db.base import Base
-from bi_system.db.models import ImportBatch, ImportIssueSample, ImportTarget
+from bi_system.db.models import FileBlob, ImportBatch, ImportIssueSample, ImportTarget
 from bi_system.db.session import create_database_engine, create_session_factory
 from bi_system.ingestion import worker as worker_module
 from bi_system.ingestion.batch_contracts import CreateImportBatch
@@ -26,6 +27,9 @@ from bi_system.ingestion.storage import LocalContentAddressedStorage
 from bi_system.ingestion.target_tables import build_target_table, read_active_rows
 from bi_system.ingestion.template_contracts import ImportTemplateDefinition
 from bi_system.ingestion.worker import process_import_batch, run_next_import_batch
+from bi_system.main import create_app
+from fastapi.testclient import TestClient
+from httpx import Response
 from sqlalchemy import func, select
 from sqlalchemy.engine import Engine
 from sqlalchemy.orm import Session, sessionmaker
@@ -47,6 +51,7 @@ def worker_context(tmp_path: Path) -> Iterator[WorkerTestContext]:
     session_factory = create_session_factory(engine)
     storage_root = tmp_path / "uploads"
     storage = LocalContentAddressedStorage(storage_root, max_bytes=1_000_000)
+    workspace_id = uuid4()
     settings = Settings(
         database_url=f"sqlite+pysqlite:///{(tmp_path / 'worker.db').as_posix()}",
         storage_root=storage_root,
@@ -57,13 +62,14 @@ def worker_context(tmp_path: Path) -> Iterator[WorkerTestContext]:
         preview_max_rows=2,
         import_issue_sample_limit=10,
         import_worker_lease_seconds=30,
+        workspace_id=workspace_id,
     )
     yield WorkerTestContext(
         engine=engine,
         session_factory=session_factory,
         storage=storage,
         settings=settings,
-        workspace_id=uuid4(),
+        workspace_id=workspace_id,
     )
     engine.dispose()
 
@@ -219,14 +225,15 @@ def test_quality_errors_block_activation_and_store_samples(
 ) -> None:
     batch_id, target_id, definition = create_batch(
         worker_context,
-        csv_text="城市,金额\n,10\n北京,bad\n",
+        csv_text="城市,金额\n" + ",10\n" * 12,
     )
 
     result = run_worker(worker_context)
 
     assert result.status == "failed"
     assert result.error_code == "quality_errors"
-    assert result.error_rows == 2
+    assert result.error_rows == 12
+    assert result.error_report_blob_id is not None
     assert active_rows(worker_context, target_id, definition) == []
     with worker_context.session_factory() as session:
         issue_count = session.scalar(
@@ -234,7 +241,40 @@ def test_quality_errors_block_activation_and_store_samples(
             .select_from(ImportIssueSample)
             .where(ImportIssueSample.batch_id == batch_id),
         )
-        assert issue_count == 2
+        assert issue_count == 10
+        report_blob = session.get(FileBlob, result.error_report_blob_id)
+        assert report_blob is not None
+        report_text = worker_context.storage.path_for(report_blob.storage_key).read_text(
+            encoding="utf-8-sig",
+        )
+        assert "row_number,column_name,severity,code,message,raw_value" in report_text
+        assert "required" in report_text
+        assert len(report_text.splitlines()) == 13
+
+    application = create_app()
+
+    def override_session() -> Iterator[Session]:
+        with worker_context.session_factory() as session:
+            yield session
+
+    application.dependency_overrides[get_database_session] = override_session
+    application.dependency_overrides[get_file_storage] = lambda: worker_context.storage
+    application.dependency_overrides[get_settings] = lambda: worker_context.settings
+    with TestClient(application) as client:
+        issues_response = cast(
+            Response,
+            client.get(f"/api/v1/import-batches/{batch_id}/issues?limit=1"),
+        )
+        report_response = cast(
+            Response,
+            client.get(f"/api/v1/import-batches/{batch_id}/report"),
+        )
+    assert issues_response.status_code == 200, issues_response.text
+    assert issues_response.json()["total"] == 10
+    assert len(issues_response.json()["items"]) == 1
+    assert report_response.status_code == 200
+    assert report_response.content.startswith(b"\xef\xbb\xbf")
+    assert "attachment" in report_response.headers["content-disposition"]
 
 
 def test_warning_confirmation_requeues_and_commits_rows(

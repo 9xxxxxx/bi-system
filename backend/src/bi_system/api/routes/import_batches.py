@@ -3,12 +3,14 @@ from typing import Annotated
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
+from fastapi.responses import FileResponse
 from pydantic import BaseModel
+from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
-from bi_system.api.dependencies import get_database_session
+from bi_system.api.dependencies import get_database_session, get_file_storage
 from bi_system.core.config import Settings, get_settings
-from bi_system.db.models import ImportBatch, ImportTarget
+from bi_system.db.models import FileBlob, ImportBatch, ImportIssueSample, ImportTarget
 from bi_system.ingestion.batch_contracts import CreateImportBatch
 from bi_system.ingestion.batches import (
     ImportBatchConfigurationError,
@@ -23,11 +25,13 @@ from bi_system.ingestion.batches import (
     retry_import_batch,
 )
 from bi_system.ingestion.domain import ImportBatchStatus, ImportMode
+from bi_system.ingestion.storage import LocalContentAddressedStorage
 
 router = APIRouter()
 
 DatabaseSession = Annotated[Session, Depends(get_database_session)]
 ApplicationSettings = Annotated[Settings, Depends(get_settings)]
+FileStorage = Annotated[LocalContentAddressedStorage, Depends(get_file_storage)]
 
 
 class ImportTargetSummary(BaseModel):
@@ -57,6 +61,23 @@ class ImportBatchResponse(BaseModel):
     started_at: datetime | None
     finished_at: datetime | None
     updated_at: datetime
+
+
+class ImportIssueResponse(BaseModel):
+    id: UUID
+    row_number: int
+    column_name: str | None
+    severity: str
+    code: str
+    message: str
+    raw_value: str | None
+
+
+class ImportIssuePageResponse(BaseModel):
+    total: int
+    offset: int
+    limit: int
+    items: list[ImportIssueResponse]
 
 
 @router.post("", response_model=ImportBatchResponse, status_code=status.HTTP_201_CREATED)
@@ -110,6 +131,93 @@ def read_import_batch_endpoint(
             404, "import_batch_not_found", "Import batch was not found", "Refresh the batch list"
         )
     return _stored_batch_response(stored)
+
+
+@router.get("/{batch_id}/issues", response_model=ImportIssuePageResponse)
+def list_import_batch_issues_endpoint(
+    batch_id: UUID,
+    session: DatabaseSession,
+    settings: ApplicationSettings,
+    offset: Annotated[int, Query(ge=0)] = 0,
+    limit: Annotated[int, Query(ge=1, le=200)] = 50,
+) -> ImportIssuePageResponse:
+    stored = get_import_batch(session, workspace_id=settings.workspace_id, batch_id=batch_id)
+    if stored is None:
+        raise _batch_http_error(
+            404,
+            "import_batch_not_found",
+            "Import batch was not found",
+            "Refresh the batch list",
+        )
+    total = (
+        session.scalar(
+            select(func.count())
+            .select_from(ImportIssueSample)
+            .where(ImportIssueSample.batch_id == batch_id),
+        )
+        or 0
+    )
+    issues = session.scalars(
+        select(ImportIssueSample)
+        .where(ImportIssueSample.batch_id == batch_id)
+        .order_by(ImportIssueSample.row_number, ImportIssueSample.created_at)
+        .offset(offset)
+        .limit(limit),
+    ).all()
+    return ImportIssuePageResponse(
+        total=total,
+        offset=offset,
+        limit=limit,
+        items=[
+            ImportIssueResponse(
+                id=issue.id,
+                row_number=issue.row_number,
+                column_name=issue.column_name,
+                severity=issue.severity,
+                code=issue.code,
+                message=issue.message,
+                raw_value=issue.raw_value,
+            )
+            for issue in issues
+        ],
+    )
+
+
+@router.get("/{batch_id}/report", response_class=FileResponse)
+def download_import_batch_report_endpoint(
+    batch_id: UUID,
+    session: DatabaseSession,
+    storage: FileStorage,
+    settings: ApplicationSettings,
+) -> FileResponse:
+    stored = get_import_batch(session, workspace_id=settings.workspace_id, batch_id=batch_id)
+    if stored is None:
+        raise _batch_http_error(
+            404,
+            "import_batch_not_found",
+            "Import batch was not found",
+            "Refresh the batch list",
+        )
+    if stored.batch.error_report_blob_id is None:
+        raise _batch_http_error(
+            404,
+            "quality_report_not_found",
+            "Quality report is not available",
+            "Wait for validation to finish",
+        )
+    blob = session.get(FileBlob, stored.batch.error_report_blob_id)
+    if blob is None:
+        raise _batch_http_error(
+            404,
+            "quality_report_not_found",
+            "Quality report file is missing",
+            "Run the import again",
+        )
+    return FileResponse(
+        storage.path_for(blob.storage_key),
+        media_type=blob.media_type,
+        filename=f"import-errors-{batch_id}.csv",
+    )
 
 
 @router.post("/{batch_id}/cancel", response_model=ImportBatchResponse)

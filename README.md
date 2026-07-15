@@ -83,6 +83,8 @@ M1 已提供流式源文件上传和有界预览基础接口：
 - `POST /api/v1/import-batches`：冻结导入定义并创建可恢复的待处理批次。
 - `GET /api/v1/import-batches`：读取最近批次及进度；单批次支持查询、取消和失败重试。
 - `POST /api/v1/import-batches/{id}/confirm-warnings`：确认警告后从头重新校验并提交。
+- `GET /api/v1/import-batches/{id}/issues`：分页读取有上限的问题样本。
+- `GET /api/v1/import-batches/{id}/report`：下载包含全部问题的 UTF-8 BOM CSV。
 
 批次由独立 worker 处理。开发时执行一次可用任务：
 
@@ -91,6 +93,14 @@ uv run python scripts/run_import_worker.py --once
 ```
 
 持续运行时省略 `--once`。SQLite 只能启动一个 worker；PostgreSQL 可启动多个实例，租约和行锁会避免重复领取。
+
+仅查看 24 小时前可清理的临时文件和孤立 blob：
+
+```powershell
+uv run python scripts/cleanup_ingestion_files.py --older-hours 24 --dry-run
+```
+
+确认输出后移除 `--dry-run` 执行清理。命令不会删除数据库已登记的源文件或质量报告。
 
 支持 UTF-8、UTF-8 BOM 和显式 GB18030 CSV。旧版 `.xls`、宏工作簿、加密或损坏 XLSX 会返回可执行的转换建议。上传内容保存在 `BI_STORAGE_ROOT`，不得手工改名或移动哈希对象。
 

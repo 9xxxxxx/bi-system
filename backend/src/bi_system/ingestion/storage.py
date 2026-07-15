@@ -45,7 +45,10 @@ class LocalContentAddressedStorage:
         self.max_bytes = max_bytes
         self.read_chunk_bytes = read_chunk_bytes
 
-    def store(self, stream: BinaryIO) -> StoredBlob:
+    def store(self, stream: BinaryIO, *, max_bytes: int | None = None) -> StoredBlob:
+        effective_max_bytes = max_bytes or self.max_bytes
+        if effective_max_bytes <= 0:
+            raise ValueError("max_bytes override must be positive")
         temporary_directory = self.root / ".tmp"
         temporary_directory.mkdir(parents=True, exist_ok=True)
         temporary_path: Path | None = None
@@ -64,8 +67,8 @@ class LocalContentAddressedStorage:
 
                 while chunk := stream.read(self.read_chunk_bytes):
                     size_bytes += len(chunk)
-                    if size_bytes > self.max_bytes:
-                        msg = f"Upload exceeds the {self.max_bytes} byte limit"
+                    if size_bytes > effective_max_bytes:
+                        msg = f"Upload exceeds the {effective_max_bytes} byte limit"
                         raise UploadTooLargeError(msg)
                     digest.update(chunk)
                     temporary_file.write(chunk)
