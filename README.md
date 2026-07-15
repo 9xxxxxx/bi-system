@@ -57,14 +57,27 @@ uv run python scripts/run_postgres_tests.py
 | `BI_ENVIRONMENT` | `development` | `development`、`test` 或 `production` |
 | `BI_DATABASE_URL` | `sqlite+pysqlite:///./data/bi_system.db` | SQLAlchemy 数据库连接 |
 | `BI_CORS_ORIGINS` | 本地 Vite 地址 | 逗号分隔的允许来源 |
+| `BI_WORKSPACE_ID` | `00000000-0000-0000-0000-000000000001` | 当前默认工作区 UUID |
 | `BI_STORAGE_ROOT` | `data/uploads` | 内容寻址上传文件根目录 |
 | `BI_UPLOAD_MAX_BYTES` | `104857600` | 单文件字节上限 |
+| `BI_XLSX_MAX_UNCOMPRESSED_BYTES` | `1073741824` | XLSX 解压后字节上限 |
+| `BI_XLSX_MAX_COMPRESSION_RATIO` | `200` | XLSX 最大安全压缩比 |
 | `BI_IMPORT_MAX_ROWS` | `1000000` | 单批数据行上限 |
 | `BI_IMPORT_CHUNK_ROWS` | `2000` | 后台处理提交块行数 |
 | `BI_PREVIEW_MAX_ROWS` | `100` | 文件预览最大样例行数 |
 | `VITE_API_BASE_URL` | `http://127.0.0.1:8000/api/v1` | 前端 API 根地址 |
 
 生产环境必须显式设置 CORS 来源。不要提交 `.env`、Cookie、令牌、下载数据或生产凭据；发送到外部模型的数据必须先脱敏。
+
+## 文件上传与预览
+
+M1 已提供流式源文件上传和有界预览基础接口：
+
+- `POST /api/v1/source-files`：上传 CSV/XLSX，计算 SHA256 并复用重复内容。
+- `GET /api/v1/source-files/{id}`：读取当前工作区文件元数据。
+- `POST /api/v1/source-files/{id}/preview`：选择 CSV 编码或 XLSX 工作表并获取最多 100 行预览。
+
+支持 UTF-8、UTF-8 BOM 和显式 GB18030 CSV。旧版 `.xls`、宏工作簿、加密或损坏 XLSX 会返回可执行的转换建议。上传内容保存在 `BI_STORAGE_ROOT`，不得手工改名或移动哈希对象。
 
 ## 迁移与质量检查
 

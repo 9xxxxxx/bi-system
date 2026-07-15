@@ -11,6 +11,8 @@ def test_settings_default_to_sqlite(monkeypatch: pytest.MonkeyPatch) -> None:
     assert settings.database_url.startswith("sqlite+pysqlite:///")
     assert settings.storage_root.as_posix() == "data/uploads"
     assert settings.upload_max_bytes == 100 * 1024 * 1024
+    assert settings.xlsx_max_uncompressed_bytes == 1024 * 1024 * 1024
+    assert settings.xlsx_max_compression_ratio == 200
     assert settings.import_max_rows == 1_000_000
     assert settings.import_chunk_rows == 2_000
     assert settings.preview_max_rows == 100

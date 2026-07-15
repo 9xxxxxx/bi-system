@@ -6,7 +6,8 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from bi_system.api.router import api_router
 from bi_system.core.config import get_settings
-from bi_system.db.session import create_database_engine
+from bi_system.db.session import create_database_engine, create_session_factory
+from bi_system.ingestion.storage import LocalContentAddressedStorage
 
 
 @asynccontextmanager
@@ -14,6 +15,11 @@ async def lifespan(application: FastAPI) -> AsyncGenerator[None]:
     settings = get_settings()
     engine = create_database_engine(settings.database_url)
     application.state.engine = engine
+    application.state.session_factory = create_session_factory(engine)
+    application.state.file_storage = LocalContentAddressedStorage(
+        settings.storage_root,
+        max_bytes=settings.upload_max_bytes,
+    )
 
     try:
         yield

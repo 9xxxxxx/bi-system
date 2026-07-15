@@ -1,10 +1,13 @@
 import csv
-from collections.abc import Iterator
+from collections.abc import Generator, Iterator
+from contextlib import contextmanager
 from pathlib import Path
+from typing import BinaryIO
 from zipfile import BadZipFile
 
 from openpyxl import load_workbook
 from openpyxl.utils.exceptions import InvalidFileException
+from openpyxl.workbook.workbook import Workbook
 
 SUPPORTED_CSV_ENCODINGS = frozenset({"utf-8", "utf-8-sig", "gb18030"})
 
@@ -38,11 +41,8 @@ def iter_csv_rows(path: Path, *, encoding: str = "utf-8-sig") -> Iterator[tuple[
 
 
 def xlsx_sheet_names(path: Path) -> tuple[str, ...]:
-    workbook = _load_xlsx_workbook(path)
-    try:
+    with _open_xlsx_workbook(path) as workbook:
         return tuple(workbook.sheetnames)
-    finally:
-        workbook.close()
 
 
 def iter_xlsx_rows(
@@ -50,8 +50,7 @@ def iter_xlsx_rows(
     *,
     sheet_name: str | None = None,
 ) -> Iterator[tuple[object, ...]]:
-    workbook = _load_xlsx_workbook(path)
-    try:
+    with _open_xlsx_workbook(path) as workbook:
         selected_sheet = sheet_name or workbook.sheetnames[0]
         if selected_sheet not in workbook.sheetnames:
             msg = f"Worksheet {selected_sheet!r} does not exist"
@@ -60,17 +59,26 @@ def iter_xlsx_rows(
         worksheet = workbook[selected_sheet]
         for row in worksheet.iter_rows(values_only=True):
             yield tuple(row)
-    finally:
-        workbook.close()
 
 
-def _load_xlsx_workbook(path: Path):  # type: ignore[no-untyped-def]
+@contextmanager
+def _open_xlsx_workbook(path: Path) -> Generator[Workbook]:
+    file_handle: BinaryIO | None = None
     try:
-        return load_workbook(
-            filename=path,
+        file_handle = path.open("rb")
+        workbook = load_workbook(
+            filename=file_handle,
             read_only=True,
             data_only=False,
             keep_links=False,
         )
     except (BadZipFile, InvalidFileException, OSError, ValueError) as exc:
+        if file_handle is not None:
+            file_handle.close()
         raise InvalidWorkbookError("The XLSX workbook is invalid or unreadable") from exc
+
+    try:
+        yield workbook
+    finally:
+        workbook.close()
+        file_handle.close()
