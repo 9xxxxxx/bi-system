@@ -1,0 +1,30 @@
+repos:
+  - repo: local
+    hooks:
+      - id: text-hygiene
+        name: text hygiene
+        entry: uv run python scripts/check_files.py text
+        language: system
+        types: [text]
+      - id: check-yaml
+        name: check yaml
+        entry: uv run python scripts/check_files.py yaml
+        language: system
+        files: \.(yaml|yml)$
+      - id: ruff-check
+        name: ruff check
+        entry: uv run ruff check --fix backend scripts
+        language: system
+        types_or: [python, pyi]
+        pass_filenames: false
+      - id: ruff-format
+        name: ruff format
+        entry: uv run ruff format backend scripts
+        language: system
+        types_or: [python, pyi]
+        pass_filenames: false
+      - id: conventional-commit
+        name: conventional commit message
+        entry: uv run python scripts/validate_commit_message.py
+        language: system
+        stages: [commit-msg]
