@@ -7,19 +7,23 @@ from typing import cast
 from uuid import UUID, uuid4
 
 import pytest
+from bi_system.api.dependencies import get_query_principal
 from bi_system.api.routes.datasets import router as datasets_router
 from bi_system.core.config import clear_settings_cache
 from bi_system.db.base import Base
 from bi_system.db.models import (
     Dataset,
     DatasetField,
+    ImportColumn,
     ImportTarget,
     Metric,
     SemanticModel,
     SemanticModelSource,
     User,
 )
+from bi_system.identity import QueryPrincipal
 from bi_system.main import create_app
+from fastapi import FastAPI
 from fastapi.testclient import TestClient
 from httpx import Response
 from sqlalchemy.engine import Engine
@@ -29,6 +33,14 @@ from sqlalchemy.orm import Session, sessionmaker
 @dataclass(frozen=True)
 class DatasetApiContext:
     client: TestClient
+    application: FastAPI
+    workspace_id: UUID
+    owner_user_id: UUID
+    semantic_model_id: UUID
+    inactive_semantic_model_id: UUID
+    foreign_semantic_model_id: UUID
+    model_source_id: UUID
+    source_column_id: UUID
     active_dataset_id: UUID
     draft_dataset_id: UUID
     deleted_dataset_id: UUID
@@ -53,7 +65,18 @@ def dataset_api_context(
         Base.metadata.create_all(cast(Engine, application.state.engine))
         session_factory = cast(sessionmaker[Session], application.state.session_factory)
         ids = _seed_datasets(session_factory, workspace_id=workspace_id)
-        yield DatasetApiContext(client=client, **ids)
+        manager = QueryPrincipal(
+            user_id=ids["owner_user_id"],
+            workspace_id=workspace_id,
+            permissions=frozenset({"datasets:manage"}),
+        )
+        application.dependency_overrides[get_query_principal] = lambda: manager
+        yield DatasetApiContext(
+            client=client,
+            application=application,
+            workspace_id=workspace_id,
+            **ids,
+        )
 
     clear_settings_cache()
 
@@ -121,6 +144,15 @@ def _seed_datasets(
         )
         session.add(target)
         session.flush()
+        source_column = ImportColumn(
+            target_id=target.id,
+            source_name="销售金额",
+            physical_name="amount",
+            data_type="decimal",
+            nullable=False,
+            ordinal=0,
+        )
+        session.add(source_column)
         model_source = SemanticModelSource(
             semantic_model_id=active_model.id,
             target_id=target.id,
@@ -129,6 +161,7 @@ def _seed_datasets(
             ordinal=0,
         )
         session.add(model_source)
+        session.flush()
 
         active_dataset = Dataset(
             workspace_id=workspace_id,
@@ -215,6 +248,12 @@ def _seed_datasets(
         )
 
     return {
+        "owner_user_id": owner.id,
+        "semantic_model_id": active_model.id,
+        "inactive_semantic_model_id": deleted_model.id,
+        "foreign_semantic_model_id": foreign_model.id,
+        "model_source_id": model_source.id,
+        "source_column_id": source_column.id,
         "active_dataset_id": active_dataset.id,
         "draft_dataset_id": draft_dataset.id,
         "deleted_dataset_id": deleted_dataset.id,
@@ -300,3 +339,175 @@ def test_dataset_list_validates_pagination(
 
     assert negative_offset.status_code == 422
     assert excessive_limit.status_code == 422
+
+
+def _create_dataset_payload(context: DatasetApiContext) -> dict[str, object]:
+    return {
+        "semantic_model_id": str(context.semantic_model_id),
+        "name": "销售目标数据集",
+        "description": "销售目标分析口径",
+        "fields": [
+            {
+                "model_source_id": str(context.model_source_id),
+                "source_column_id": str(context.source_column_id),
+                "name": "sales_amount",
+                "label": "销售金额",
+                "role": "measure",
+                "hidden": False,
+            }
+        ],
+    }
+
+
+def test_dataset_api_creates_draft_and_returns_fields(
+    dataset_api_context: DatasetApiContext,
+) -> None:
+    created = cast(
+        Response,
+        dataset_api_context.client.post(
+            "/api/v1/datasets",
+            json=_create_dataset_payload(dataset_api_context),
+        ),
+    )
+
+    assert created.status_code == 201
+    payload = created.json()
+    assert payload["status"] == "draft"
+    assert payload["version"] == 1
+    assert payload["semantic_model_id"] == str(dataset_api_context.semantic_model_id)
+    assert payload["field_count"] == 1
+    assert payload["fields"] == [
+        {
+            "id": payload["fields"][0]["id"],
+            "model_source_id": str(dataset_api_context.model_source_id),
+            "source_column_id": str(dataset_api_context.source_column_id),
+            "name": "sales_amount",
+            "label": "销售金额",
+            "field_kind": "source",
+            "role": "measure",
+            "data_type": "decimal",
+            "hidden": False,
+            "ordinal": 0,
+        }
+    ]
+
+    stored = cast(
+        Response,
+        dataset_api_context.client.get(f"/api/v1/datasets/{payload['id']}"),
+    )
+    assert stored.status_code == 200
+    assert stored.json()["fields"] == payload["fields"]
+
+    duplicate = cast(
+        Response,
+        dataset_api_context.client.post(
+            "/api/v1/datasets",
+            json=_create_dataset_payload(dataset_api_context),
+        ),
+    )
+    assert duplicate.status_code == 422
+    assert duplicate.json()["detail"]["code"] == "invalid_dataset_configuration"
+
+
+def test_dataset_api_versions_copy_then_replace_fields(
+    dataset_api_context: DatasetApiContext,
+) -> None:
+    original = cast(
+        Response,
+        dataset_api_context.client.get(f"/api/v1/datasets/{dataset_api_context.active_dataset_id}"),
+    ).json()
+    copied = cast(
+        Response,
+        dataset_api_context.client.post(
+            f"/api/v1/datasets/{dataset_api_context.active_dataset_id}/versions",
+            json={},
+        ),
+    )
+    replaced = cast(
+        Response,
+        dataset_api_context.client.post(
+            f"/api/v1/datasets/{dataset_api_context.active_dataset_id}/versions",
+            json={"fields": _create_dataset_payload(dataset_api_context)["fields"]},
+        ),
+    )
+
+    assert copied.status_code == 201
+    assert copied.json()["version"] == 2
+    assert copied.json()["series_id"] == original["series_id"]
+    assert copied.json()["fields"][0]["field_kind"] == "calculated"
+    assert replaced.status_code == 201
+    assert replaced.json()["version"] == 3
+    assert replaced.json()["fields"][0]["field_kind"] == "source"
+    assert replaced.json()["fields"][0]["data_type"] == "decimal"
+
+    unchanged = cast(
+        Response,
+        dataset_api_context.client.get(f"/api/v1/datasets/{dataset_api_context.active_dataset_id}"),
+    )
+    assert unchanged.json()["version"] == 1
+    assert unchanged.json()["fields"][0]["field_kind"] == "calculated"
+
+
+def test_dataset_api_rejects_foreign_models_and_invalid_field_ownership(
+    dataset_api_context: DatasetApiContext,
+) -> None:
+    foreign_model_payload = _create_dataset_payload(dataset_api_context)
+    foreign_model_payload["semantic_model_id"] = str(dataset_api_context.foreign_semantic_model_id)
+    foreign_model = cast(
+        Response,
+        dataset_api_context.client.post(
+            "/api/v1/datasets",
+            json=foreign_model_payload,
+        ),
+    )
+
+    inactive_model_payload = _create_dataset_payload(dataset_api_context)
+    inactive_model_payload["semantic_model_id"] = str(
+        dataset_api_context.inactive_semantic_model_id
+    )
+    inactive_model = cast(
+        Response,
+        dataset_api_context.client.post(
+            "/api/v1/datasets",
+            json=inactive_model_payload,
+        ),
+    )
+
+    invalid_field_payload = _create_dataset_payload(dataset_api_context)
+    invalid_fields = cast(list[dict[str, object]], invalid_field_payload["fields"])
+    invalid_fields[0]["source_column_id"] = str(uuid4())
+    invalid_field = cast(
+        Response,
+        dataset_api_context.client.post(
+            "/api/v1/datasets",
+            json=invalid_field_payload,
+        ),
+    )
+
+    assert foreign_model.status_code == 404
+    assert foreign_model.json()["detail"]["code"] == "dataset_resource_not_found"
+    assert inactive_model.status_code == 404
+    assert inactive_model.json()["detail"]["code"] == "dataset_resource_not_found"
+    assert invalid_field.status_code == 422
+    assert invalid_field.json()["detail"]["code"] == "invalid_dataset_configuration"
+
+
+def test_dataset_write_requires_manage_permission(
+    dataset_api_context: DatasetApiContext,
+) -> None:
+    viewer = QueryPrincipal(
+        user_id=dataset_api_context.owner_user_id,
+        workspace_id=dataset_api_context.workspace_id,
+    )
+    dataset_api_context.application.dependency_overrides[get_query_principal] = lambda: viewer
+
+    response = cast(
+        Response,
+        dataset_api_context.client.post(
+            "/api/v1/datasets",
+            json=_create_dataset_payload(dataset_api_context),
+        ),
+    )
+
+    assert response.status_code == 403
+    assert response.json()["detail"]["code"] == "dataset_manage_forbidden"
