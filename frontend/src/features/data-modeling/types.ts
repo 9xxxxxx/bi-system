@@ -30,7 +30,7 @@ export interface DataSource {
   id: string;
   name: string;
   status: string;
-  row_count: number | null;
+  active_row_count: number;
   latest_batch_id: string | null;
   fields: DataSourceField[];
 }

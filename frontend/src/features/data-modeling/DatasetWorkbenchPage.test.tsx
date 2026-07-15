@@ -22,7 +22,7 @@ function responseFor(url: string): Response {
           id: "source-sales",
           name: "销售明细",
           status: "active",
-          row_count: 1800,
+          active_row_count: 1800,
           latest_batch_id: "batch-1",
           fields: [
             {

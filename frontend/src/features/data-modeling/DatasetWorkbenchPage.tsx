@@ -86,7 +86,7 @@ function DataSourceList({
               <span>{source.name}</span>
               <small>
                 {source.fields.length} 个字段
-                {source.row_count === null ? "" : ` · ${source.row_count} 行`}
+                {` · ${source.active_row_count} 行`}
               </small>
             </button>
           </List.Item>
@@ -158,7 +158,7 @@ function SourceInspector({ source }: { source?: DataSource }) {
               </Tag>
             </Descriptions.Item>
             <Descriptions.Item label="数据行数">
-              {source.row_count ?? "待统计"}
+              {source.active_row_count}
             </Descriptions.Item>
             <Descriptions.Item label="字段数量">
               {source.fields.length}
