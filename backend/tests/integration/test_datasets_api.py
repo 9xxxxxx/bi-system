@@ -448,6 +448,49 @@ def test_dataset_api_versions_copy_then_replace_fields(
     assert unchanged.json()["fields"][0]["field_kind"] == "calculated"
 
 
+def test_dataset_api_activation_archives_previous_active_version(
+    dataset_api_context: DatasetApiContext,
+) -> None:
+    version = cast(
+        Response,
+        dataset_api_context.client.post(
+            f"/api/v1/datasets/{dataset_api_context.active_dataset_id}/versions",
+            json={"fields": _create_dataset_payload(dataset_api_context)["fields"]},
+        ),
+    )
+
+    activated = cast(
+        Response,
+        dataset_api_context.client.post(
+            f"/api/v1/datasets/{version.json()['id']}/activate",
+        ),
+    )
+    previous = cast(
+        Response,
+        dataset_api_context.client.get(f"/api/v1/datasets/{dataset_api_context.active_dataset_id}"),
+    )
+
+    assert activated.status_code == 200
+    assert activated.json()["status"] == "active"
+    assert activated.json()["version"] == 2
+    assert previous.status_code == 200
+    assert previous.json()["status"] == "archived"
+
+
+def test_dataset_api_activation_requires_active_model_and_fields(
+    dataset_api_context: DatasetApiContext,
+) -> None:
+    response = cast(
+        Response,
+        dataset_api_context.client.post(
+            f"/api/v1/datasets/{dataset_api_context.draft_dataset_id}/activate"
+        ),
+    )
+
+    assert response.status_code == 409
+    assert response.json()["detail"]["code"] == "dataset_activation_conflict"
+
+
 def test_dataset_api_rejects_foreign_models_and_invalid_field_ownership(
     dataset_api_context: DatasetApiContext,
 ) -> None:

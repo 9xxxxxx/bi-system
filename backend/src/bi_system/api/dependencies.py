@@ -36,6 +36,10 @@ def get_query_principal(
         if token
         else None
     )
+    if principal is not None:
+        # Authentication is read-only. End its implicit transaction so endpoint
+        # services can open their own explicit unit of work on this Session.
+        session.rollback()
     if principal is None:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,

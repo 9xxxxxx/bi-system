@@ -44,3 +44,42 @@ def test_query_principal_dependency_rejects_missing_authentication() -> None:
         "message": "Authentication is required",
         "action": "Sign in and try again",
     }
+
+
+def test_query_principal_dependency_ends_authentication_transaction(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    principal = QueryPrincipal(user_id=uuid4(), workspace_id=uuid4())
+    session = Mock(spec=Session)
+    request = Request(
+        {
+            "type": "http",
+            "method": "GET",
+            "path": "/",
+            "headers": [(b"cookie", b"bi_session=session-token")],
+        }
+    )
+
+    def resolve_principal(
+        _session: Session,
+        *,
+        workspace_id: object,
+        token: str,
+    ) -> QueryPrincipal:
+        assert workspace_id == principal.workspace_id
+        assert token == "session-token"
+        return principal
+
+    monkeypatch.setattr(
+        "bi_system.api.dependencies.resolve_query_principal",
+        resolve_principal,
+    )
+
+    resolved = get_query_principal(
+        request,
+        session,
+        Settings(environment="test", workspace_id=principal.workspace_id),
+    )
+
+    assert resolved == principal
+    session.rollback.assert_called_once_with()

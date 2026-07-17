@@ -13,7 +13,9 @@ from bi_system.modeling.dataset_contracts import CreateDataset, CreateDatasetVer
 from bi_system.modeling.datasets import (
     DatasetConfigurationError,
     DatasetDetail,
+    DatasetLifecycleConflictError,
     DatasetResourceNotFoundError,
+    activate_dataset,
     create_dataset,
     create_dataset_version,
     get_dataset_detail,
@@ -97,6 +99,37 @@ def create_dataset_endpoint(
             "invalid_dataset_configuration",
             str(exc),
             "Correct the dataset fields and try again",
+        ) from exc
+    return _dataset_detail_response(dataset)
+
+
+@router.post("/{dataset_id}/activate", response_model=DatasetDetailResponse)
+def activate_dataset_endpoint(
+    dataset_id: UUID,
+    session: DatabaseSession,
+    settings: ApplicationSettings,
+    actor: CurrentActor,
+) -> DatasetDetailResponse:
+    _require_dataset_manager(actor, settings=settings)
+    try:
+        dataset = activate_dataset(
+            session,
+            workspace_id=settings.workspace_id,
+            dataset_id=dataset_id,
+        )
+    except DatasetResourceNotFoundError as exc:
+        raise _dataset_http_error(
+            status.HTTP_404_NOT_FOUND,
+            "dataset_not_found",
+            str(exc),
+            "Refresh the dataset list",
+        ) from exc
+    except DatasetLifecycleConflictError as exc:
+        raise _dataset_http_error(
+            status.HTTP_409_CONFLICT,
+            "dataset_activation_conflict",
+            str(exc),
+            "Activate the semantic model and complete the dataset fields first",
         ) from exc
     return _dataset_detail_response(dataset)
 

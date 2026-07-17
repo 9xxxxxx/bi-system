@@ -33,6 +33,10 @@ class DatasetConfigurationError(ValueError):
     pass
 
 
+class DatasetLifecycleConflictError(ValueError):
+    pass
+
+
 @dataclass(frozen=True, slots=True)
 class DatasetSummary:
     id: UUID
@@ -249,6 +253,69 @@ def create_dataset_version(
         raise DatasetConfigurationError(
             "Dataset version conflicts with an existing resource"
         ) from exc
+    return detail
+
+
+def activate_dataset(
+    session: Session,
+    *,
+    workspace_id: UUID,
+    dataset_id: UUID,
+) -> DatasetDetail:
+    with session.begin():
+        dataset = session.scalar(
+            select(Dataset)
+            .where(
+                Dataset.id == dataset_id,
+                *_visible_dataset_filters(workspace_id),
+            )
+            .with_for_update()
+        )
+        if dataset is None:
+            raise DatasetResourceNotFoundError("Dataset was not found")
+        if dataset.status not in ("draft", "active"):
+            raise DatasetLifecycleConflictError("Only a draft dataset version can be activated")
+
+        semantic_model = session.scalar(
+            select(SemanticModel)
+            .where(
+                SemanticModel.id == dataset.semantic_model_id,
+                SemanticModel.workspace_id == workspace_id,
+                SemanticModel.deleted_at.is_(None),
+            )
+            .with_for_update()
+        )
+        if semantic_model is None:
+            raise DatasetResourceNotFoundError("Semantic model was not found")
+        if semantic_model.status != "active":
+            raise DatasetLifecycleConflictError(
+                "The semantic model must be active before its dataset can be activated"
+            )
+
+        field_count = session.scalar(
+            select(func.count(DatasetField.id)).where(DatasetField.dataset_id == dataset.id)
+        )
+        if not field_count:
+            raise DatasetLifecycleConflictError(
+                "The dataset must contain at least one field before activation"
+            )
+
+        active_siblings = session.scalars(
+            select(Dataset)
+            .where(
+                Dataset.workspace_id == workspace_id,
+                Dataset.series_id == dataset.series_id,
+                Dataset.id != dataset.id,
+                Dataset.status == "active",
+                Dataset.deleted_at.is_(None),
+            )
+            .with_for_update()
+        ).all()
+        for sibling in active_siblings:
+            sibling.status = "archived"
+        dataset.status = "active"
+        session.flush()
+        detail = _required_detail(session, workspace_id=workspace_id, dataset_id=dataset.id)
     return detail
 
 
