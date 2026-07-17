@@ -6,6 +6,8 @@ Date: 2026-07-17
 
 Remote repository: `git@github.com:9xxxxxx/bi-system.git`
 
+Primary agent instructions: `AGENTS.md`
+
 Current milestone status:
 
 - M0 engineering foundation: accepted.
@@ -13,11 +15,13 @@ Current milestone status:
 - M2 data modeling: accepted and recorded in `docs/verification/m2-verification.md`.
 - M3-M6: planned but not started as production code.
 
-The current stable baseline ends at commit:
+The current M2 code baseline ends at commit:
 
 ```text
 c02061e docs: record M2 verification evidence
 ```
+
+Handoff and forward-plan documents are expected to live after that code baseline on `origin/main`.
 
 Recent M2 closure commits:
 
@@ -69,6 +73,14 @@ Copy-Item frontend/.env.example frontend/.env.local
 uv run alembic -c backend/alembic.ini upgrade head
 ```
 
+Then read these files in order before starting implementation:
+
+1. `AGENTS.md`
+2. `docs/plans/2026-07-17-development-handoff.md`
+3. `docs/verification/m2-verification.md`
+4. `docs/plans/2026-07-17-m3-m6-multi-agent-development.md`
+5. `docs/architecture/evaluations/frontend-components.md`
+
 Start local development:
 
 ```powershell
@@ -98,3 +110,11 @@ Do not start M3 production implementation directly. First complete M3-R0:
 - Create a dedicated M3 architecture plan or ADR before adding migrations or frontend routes.
 
 The broader M3-M6 execution plan is in `docs/plans/2026-07-17-m3-m6-multi-agent-development.md`.
+
+Recommended first commit on the new machine:
+
+```text
+docs: define M3 dashboard architecture
+```
+
+That commit should freeze the dashboard domain contract, chart query contract, layout model, filter merge rules, candidate chart/layout libraries, and M3 verification matrix before adding migrations or feature routes.
