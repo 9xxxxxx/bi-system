@@ -4,7 +4,9 @@ import argparse
 import json
 import math
 import tempfile
+from collections.abc import Generator, Sequence
 from concurrent.futures import ThreadPoolExecutor, as_completed
+from contextlib import contextmanager
 from pathlib import Path
 from time import perf_counter
 from typing import Any
@@ -26,54 +28,75 @@ from bi_system.db.session import create_database_engine, create_session_factory
 from bi_system.identity import QueryPrincipal
 from bi_system.modeling.contracts import DatasetQueryRequest
 from bi_system.modeling.query_service import execute_dataset_query
-from sqlalchemy import Boolean, Column, Integer, MetaData, Numeric, String, Table, Uuid
-from sqlalchemy.engine import Engine
+from sqlalchemy import (
+    Boolean,
+    Column,
+    Integer,
+    MetaData,
+    Numeric,
+    String,
+    Table,
+    Uuid,
+    create_engine,
+)
+from sqlalchemy.engine import Engine, make_url
 from sqlalchemy.orm import Session, sessionmaker
+from sqlalchemy.schema import CreateSchema, DropSchema
 
 
-def parse_args() -> argparse.Namespace:
+def parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Benchmark governed M2 star-model queries")
     parser.add_argument("--rows", type=int, default=100_000)
     parser.add_argument("--concurrency", type=int, default=20)
     parser.add_argument("--iterations", type=int, default=5)
     parser.add_argument("--timeout-seconds", type=int, default=10)
-    args = parser.parse_args()
+    parser.add_argument(
+        "--database-url",
+        help="Isolated PostgreSQL database URL; defaults to a temporary SQLite database",
+    )
+    args = parser.parse_args(argv)
     if min(args.rows, args.concurrency, args.iterations, args.timeout_seconds) < 1:
         parser.error("rows, concurrency, iterations, and timeout must be positive")
+    if args.database_url and make_url(args.database_url).get_backend_name() != "postgresql":
+        parser.error("database-url must use the PostgreSQL dialect")
     return args
 
 
 def main() -> int:
     args = parse_args()
-    with tempfile.TemporaryDirectory(prefix="bi-m2-benchmark-") as temporary_directory:
-        database_path = Path(temporary_directory) / "benchmark.db"
-        engine = create_database_engine(f"sqlite+pysqlite:///{database_path.as_posix()}")
-        try:
-            session_factory = create_session_factory(engine)
-            principal, request = seed_benchmark(
-                engine,
-                session_factory,
-                rows=args.rows,
-            )
-            run_once(
-                session_factory,
-                principal=principal,
-                request=request,
-                timeout_seconds=args.timeout_seconds,
-            )
-            durations, errors, wall_seconds = run_benchmark(
-                session_factory,
-                principal=principal,
-                request=request,
-                concurrency=args.concurrency,
-                iterations=args.iterations,
-                timeout_seconds=args.timeout_seconds,
-            )
-        finally:
-            engine.dispose()
+    with (
+        tempfile.TemporaryDirectory(prefix="bi-m2-benchmark-") as temporary_directory,
+        benchmark_database_engine(
+            args.database_url,
+            temporary_directory=Path(temporary_directory),
+            pool_capacity=args.concurrency,
+        ) as engine,
+    ):
+        dialect = engine.dialect.name
+        session_factory = create_session_factory(engine)
+        principal, request = seed_benchmark(
+            engine,
+            session_factory,
+            rows=args.rows,
+        )
+        run_once(
+            session_factory,
+            principal=principal,
+            request=request,
+            timeout_seconds=args.timeout_seconds,
+        )
+        durations, errors, wall_seconds = run_benchmark(
+            session_factory,
+            principal=principal,
+            request=request,
+            concurrency=args.concurrency,
+            iterations=args.iterations,
+            timeout_seconds=args.timeout_seconds,
+        )
 
     completed = len(durations)
     output = {
+        "dialect": dialect,
         "rows": args.rows,
         "concurrency": args.concurrency,
         "iterations": args.iterations,
@@ -88,6 +111,67 @@ def main() -> int:
     }
     print(json.dumps(output, ensure_ascii=False, indent=2))
     return 0 if not errors else 1
+
+
+@contextmanager
+def benchmark_database_engine(
+    database_url: str | None,
+    *,
+    temporary_directory: Path,
+    pool_capacity: int = 5,
+) -> Generator[Engine]:
+    if database_url is None:
+        database_path = temporary_directory / "benchmark.db"
+        engine = create_benchmark_engine(
+            f"sqlite+pysqlite:///{database_path.as_posix()}",
+            pool_capacity=pool_capacity,
+        )
+        try:
+            yield engine
+        finally:
+            engine.dispose()
+        return
+
+    schema_name = f"bi_m2_benchmark_{uuid4().hex}"
+    administration_engine = create_database_engine(database_url)
+    schema_created = False
+    try:
+        with administration_engine.begin() as connection:
+            connection.execute(CreateSchema(schema_name))
+        schema_created = True
+
+        benchmark_url = make_url(database_url).update_query_dict(
+            {"options": f"-csearch_path={schema_name}"}
+        )
+        engine = create_benchmark_engine(
+            benchmark_url.render_as_string(hide_password=False),
+            pool_capacity=pool_capacity,
+        )
+        try:
+            yield engine
+        finally:
+            engine.dispose()
+    finally:
+        if schema_created:
+            with administration_engine.begin() as connection:
+                connection.execute(DropSchema(schema_name, cascade=True, if_exists=True))
+        administration_engine.dispose()
+
+
+def create_benchmark_engine(url: str, *, pool_capacity: int) -> Engine:
+    dialect = make_url(url).get_backend_name()
+    if dialect == "sqlite":
+        return create_engine(
+            url,
+            connect_args={"check_same_thread": False},
+            pool_size=pool_capacity,
+            max_overflow=0,
+        )
+    if dialect == "postgresql":
+        return create_engine(url, pool_pre_ping=True, pool_size=pool_capacity, max_overflow=0)
+
+    msg = f"Unsupported database dialect: {dialect}"
+    raise ValueError(msg)
 
 
 def run_benchmark(
