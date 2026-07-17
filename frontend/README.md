@@ -9,4 +9,4 @@ React, TypeScript, Vite, Ant Design, TanStack Query, and React Router power the 
 - `npm run check`: run lint, Prettier, TypeScript, and Vitest checks.
 - `npm run build`: run type checks and create the production build.
 
-Set `VITE_API_BASE_URL` when the FastAPI backend is not available at `http://127.0.0.1:8000/api/v1`.
+Set `VITE_API_BASE_URL` when the FastAPI backend is not available at `http://localhost:8000/api/v1`. Authentication uses the HttpOnly session cookie; the client sends requests with credentials and never stores tokens in browser storage.

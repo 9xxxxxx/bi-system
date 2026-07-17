@@ -38,7 +38,7 @@ uv run uvicorn bi_system.main:app --app-dir backend/src --reload
 npm --prefix frontend run dev
 ```
 
-前端默认地址为 `http://localhost:5173`，API 文档为 `http://127.0.0.1:8000/docs`。就绪探针位于 `/api/v1/health/ready`。
+前端默认地址为 `http://localhost:5173`，API 文档为 `http://localhost:8000/docs`。就绪探针位于 `/api/v1/health/ready`。
 前端默认进入数据导入工作台，系统状态页位于 `/system-status`。
 
 ## 初始化管理员
@@ -63,22 +63,22 @@ uv run python scripts/run_postgres_tests.py
 
 ## 配置
 
-| 变量 | 默认值 | 用途 |
-| --- | --- | --- |
-| `BI_ENVIRONMENT` | `development` | `development`、`test` 或 `production` |
-| `BI_DATABASE_URL` | `sqlite+pysqlite:///./data/bi_system.db` | SQLAlchemy 数据库连接 |
-| `BI_CORS_ORIGINS` | 本地 Vite 地址 | 逗号分隔的允许来源 |
-| `BI_WORKSPACE_ID` | `00000000-0000-0000-0000-000000000001` | 当前默认工作区 UUID |
-| `BI_STORAGE_ROOT` | `data/uploads` | 内容寻址上传文件根目录 |
-| `BI_UPLOAD_MAX_BYTES` | `104857600` | 单文件字节上限 |
-| `BI_XLSX_MAX_UNCOMPRESSED_BYTES` | `1073741824` | XLSX 解压后字节上限 |
-| `BI_XLSX_MAX_COMPRESSION_RATIO` | `200` | XLSX 最大安全压缩比 |
-| `BI_IMPORT_MAX_ROWS` | `1000000` | 单批数据行上限 |
-| `BI_IMPORT_CHUNK_ROWS` | `2000` | 后台处理提交块行数 |
-| `BI_PREVIEW_MAX_ROWS` | `100` | 文件预览最大样例行数 |
-| `BI_IMPORT_ISSUE_SAMPLE_LIMIT` | `1000` | 数据库保留的问题样本上限 |
-| `BI_IMPORT_WORKER_LEASE_SECONDS` | `120` | worker 领取批次的租约秒数 |
-| `VITE_API_BASE_URL` | `http://127.0.0.1:8000/api/v1` | 前端 API 根地址 |
+| 变量                             | 默认值                                   | 用途                                                              |
+| -------------------------------- | ---------------------------------------- | ----------------------------------------------------------------- |
+| `BI_ENVIRONMENT`                 | `development`                            | `development`、`test` 或 `production`                             |
+| `BI_DATABASE_URL`                | `sqlite+pysqlite:///./data/bi_system.db` | SQLAlchemy 数据库连接                                             |
+| `BI_CORS_ORIGINS`                | 本地 Vite 地址                           | 逗号分隔的允许来源                                                |
+| `BI_WORKSPACE_ID`                | `00000000-0000-0000-0000-000000000001`   | 当前默认工作区 UUID                                               |
+| `BI_STORAGE_ROOT`                | `data/uploads`                           | 内容寻址上传文件根目录                                            |
+| `BI_UPLOAD_MAX_BYTES`            | `104857600`                              | 单文件字节上限                                                    |
+| `BI_XLSX_MAX_UNCOMPRESSED_BYTES` | `1073741824`                             | XLSX 解压后字节上限                                               |
+| `BI_XLSX_MAX_COMPRESSION_RATIO`  | `200`                                    | XLSX 最大安全压缩比                                               |
+| `BI_IMPORT_MAX_ROWS`             | `1000000`                                | 单批数据行上限                                                    |
+| `BI_IMPORT_CHUNK_ROWS`           | `2000`                                   | 后台处理提交块行数                                                |
+| `BI_PREVIEW_MAX_ROWS`            | `100`                                    | 文件预览最大样例行数                                              |
+| `BI_IMPORT_ISSUE_SAMPLE_LIMIT`   | `1000`                                   | 数据库保留的问题样本上限                                          |
+| `BI_IMPORT_WORKER_LEASE_SECONDS` | `120`                                    | worker 领取批次的租约秒数                                         |
+| `VITE_API_BASE_URL`              | `http://localhost:8000/api/v1`           | 前端 API 根地址；本地应与 Vite 同用 `localhost` 以发送会话 Cookie |
 
 生产环境必须显式设置 CORS 来源。不要提交 `.env`、Cookie、令牌、下载数据或生产凭据；发送到外部模型的数据必须先脱敏。
 
