@@ -78,6 +78,7 @@ uv run python scripts/run_postgres_tests.py
 | `BI_PREVIEW_MAX_ROWS`            | `100`                                    | 文件预览最大样例行数                                              |
 | `BI_IMPORT_ISSUE_SAMPLE_LIMIT`   | `1000`                                   | 数据库保留的问题样本上限                                          |
 | `BI_IMPORT_WORKER_LEASE_SECONDS` | `120`                                    | worker 领取批次的租约秒数                                         |
+| `BI_QUERY_TIMEOUT_SECONDS`       | `10`                                     | 数据集查询执行超时秒数，可设置为 1 至 60                           |
 | `VITE_API_BASE_URL`              | `http://localhost:8000/api/v1`           | 前端 API 根地址；本地应与 Vite 同用 `localhost` 以发送会话 Cookie |
 
 生产环境必须显式设置 CORS 来源。不要提交 `.env`、Cookie、令牌、下载数据或生产凭据；发送到外部模型的数据必须先脱敏。

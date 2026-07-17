@@ -6,17 +6,20 @@ from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
 from bi_system.api.dependencies import CurrentActor, get_database_session
+from bi_system.core.config import Settings, get_settings
 from bi_system.modeling.contracts import DatasetQueryRequest
 from bi_system.modeling.query_service import (
     DatasetQueryError,
     DatasetQueryForbiddenError,
     DatasetQueryNotFoundError,
+    DatasetQueryTimeoutError,
     execute_dataset_query,
     validate_dataset_query,
 )
 
 router = APIRouter()
 DatabaseSession = Annotated[Session, Depends(get_database_session)]
+ApplicationSettings = Annotated[Settings, Depends(get_settings)]
 
 
 class DatasetQueryValidationResponse(BaseModel):
@@ -59,9 +62,15 @@ def execute_dataset_query_endpoint(
     request_body: DatasetQueryRequest,
     session: DatabaseSession,
     actor: CurrentActor,
+    settings: ApplicationSettings,
 ) -> DatasetQueryResponse:
     try:
-        result = execute_dataset_query(session, principal=actor, request=request_body)
+        result = execute_dataset_query(
+            session,
+            principal=actor,
+            request=request_body,
+            timeout_seconds=settings.query_timeout_seconds,
+        )
     except DatasetQueryError as exc:
         raise _dataset_query_http_error(exc) from exc
     return DatasetQueryResponse(
@@ -80,6 +89,8 @@ def _dataset_query_http_error(exc: DatasetQueryError) -> HTTPException:
         status_code = 404
     elif isinstance(exc, DatasetQueryForbiddenError):
         status_code = 403
+    elif isinstance(exc, DatasetQueryTimeoutError):
+        status_code = 504
     else:
         status_code = 422
     return HTTPException(

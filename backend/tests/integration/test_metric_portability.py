@@ -16,7 +16,9 @@ from bi_system.db.models import (
 )
 from bi_system.db.session import create_database_engine, create_session_factory
 from bi_system.identity import QueryPrincipal
+from bi_system.modeling.calculated_field_contracts import CreateCalculatedField
 from bi_system.modeling.contracts import DatasetQueryRequest
+from bi_system.modeling.datasets import create_calculated_field_version
 from bi_system.modeling.metric_contracts import CreateMetric, CreateMetricVersion
 from bi_system.modeling.metrics import create_metric, create_metric_version
 from bi_system.modeling.query_service import execute_dataset_query
@@ -286,6 +288,56 @@ def test_metric_versions_run_on_configured_database() -> None:
             assert version.formula == created.formula
             assert version.dimension_field_ids == [city_id]
 
+            half_dataset = create_calculated_field_version(
+                session,
+                workspace_id=workspace_id,
+                actor_user_id=owner_id,
+                dataset_id=dataset_id,
+                request=CreateCalculatedField.model_validate(
+                    {
+                        "name": "half_amount",
+                        "label": "Half amount",
+                        "role": "measure",
+                        "data_type": "decimal",
+                        "hidden": False,
+                        "expression": {
+                            "op": "safe_divide",
+                            "numerator": {"op": "field", "field_id": amount_id},
+                            "denominator": {"op": "literal", "value": 2},
+                            "fallback": 0,
+                        },
+                    }
+                ),
+            )
+            half_fields = {field.name: field for field in half_dataset.fields}
+            band_dataset = create_calculated_field_version(
+                session,
+                workspace_id=workspace_id,
+                actor_user_id=owner_id,
+                dataset_id=half_dataset.id,
+                request=CreateCalculatedField.model_validate(
+                    {
+                        "name": "value_band",
+                        "label": "Value band",
+                        "role": "dimension",
+                        "data_type": "string",
+                        "hidden": False,
+                        "expression": {
+                            "op": "case",
+                            "when": {
+                                "kind": "comparison",
+                                "field_id": half_fields["half_amount"].id,
+                                "operator": "gt",
+                                "value": 10,
+                            },
+                            "then": {"op": "literal", "value": "high"},
+                            "else": {"op": "literal", "value": "low"},
+                        },
+                    }
+                ),
+            )
+            band_fields = {field.name: field for field in band_dataset.fields}
+
             result = execute_dataset_query(
                 session,
                 principal=QueryPrincipal(
@@ -314,5 +366,50 @@ def test_metric_versions_run_on_configured_database() -> None:
             }
             assert result.metric_version_ids == (created.id,)
             assert set(result.source_batch_ids) == {batch_id, dimension_batch_id}
+
+            calculated_result = execute_dataset_query(
+                session,
+                principal=QueryPrincipal(
+                    user_id=owner_id,
+                    workspace_id=workspace_id,
+                    permissions=frozenset({"datasets:query"}),
+                ),
+                request=DatasetQueryRequest.model_validate(
+                    {
+                        "dataset_id": band_dataset.id,
+                        "selections": [
+                            {
+                                "field_id": band_fields["city_name"].id,
+                                "output_name": "city",
+                            },
+                            {
+                                "field_id": band_fields["half_amount"].id,
+                                "output_name": "half_amount",
+                            },
+                            {
+                                "field_id": band_fields["value_band"].id,
+                                "output_name": "value_band",
+                            },
+                        ],
+                        "filter": {
+                            "kind": "comparison",
+                            "field_id": band_fields["half_amount"].id,
+                            "operator": "gte",
+                            "value": 10,
+                        },
+                    }
+                ),
+            )
+            assert {
+                (row["city"], row["half_amount"], row["value_band"])
+                for row in calculated_result.rows
+            } == {
+                ("Beijing", Decimal("10"), "low"),
+                (None, Decimal("15"), "high"),
+            }
+            assert set(calculated_result.source_batch_ids) == {
+                batch_id,
+                dimension_batch_id,
+            }
     finally:
         engine.dispose()

@@ -33,6 +33,7 @@ class Settings(BaseSettings):
     preview_max_rows: Annotated[int, Field(gt=0)] = 100
     import_issue_sample_limit: Annotated[int, Field(gt=0)] = 1_000
     import_worker_lease_seconds: Annotated[int, Field(gt=0)] = 120
+    query_timeout_seconds: Annotated[int, Field(ge=1, le=60)] = 10
     cors_origins: Annotated[list[str], NoDecode] = Field(
         default_factory=lambda: DEFAULT_CORS_ORIGINS.copy(),
     )

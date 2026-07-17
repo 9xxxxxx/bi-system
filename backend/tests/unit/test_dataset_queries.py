@@ -53,6 +53,8 @@ class QueryResources:
     amount_field_id: UUID
     department_field_id: UUID
     calculated_field_id: UUID
+    half_amount_field_id: UUID
+    value_band_field_id: UUID
     metric_id: UUID
     batch_ids: tuple[UUID, UUID]
 
@@ -206,6 +208,8 @@ def query_store(
             )
             for ordinal, column in enumerate(import_columns)
         ]
+        session.add_all(fields)
+        session.flush()
         calculated = DatasetField(
             dataset_id=dataset.id,
             name="double_amount",
@@ -213,11 +217,54 @@ def query_store(
             field_kind="calculated",
             field_role="measure",
             data_type="integer",
-            expression={"op": "multiply", "value": 2},
+            expression={
+                "op": "multiply",
+                "left": {"op": "field", "field_id": str(fields[1].id)},
+                "right": {"op": "literal", "value": 2},
+            },
             hidden=False,
             ordinal=3,
         )
-        session.add_all([*fields, calculated])
+        session.add(calculated)
+        session.flush()
+        half_amount = DatasetField(
+            dataset_id=dataset.id,
+            name="half_amount",
+            label="Half amount",
+            field_kind="calculated",
+            field_role="measure",
+            data_type="decimal",
+            expression={
+                "op": "safe_divide",
+                "numerator": {"op": "field", "field_id": str(calculated.id)},
+                "denominator": {"op": "literal", "value": 2},
+                "fallback": 0,
+            },
+            hidden=False,
+            ordinal=4,
+        )
+        value_band = DatasetField(
+            dataset_id=dataset.id,
+            name="value_band",
+            label="Value band",
+            field_kind="calculated",
+            field_role="dimension",
+            data_type="string",
+            expression={
+                "op": "case",
+                "when": {
+                    "kind": "comparison",
+                    "field_id": str(fields[1].id),
+                    "operator": "gt",
+                    "value": 15,
+                },
+                "then": {"op": "literal", "value": "high"},
+                "else": {"op": "literal", "value": None},
+            },
+            hidden=False,
+            ordinal=5,
+        )
+        session.add_all([half_amount, value_band])
         session.flush()
         metric = Metric(
             workspace_id=workspace_id,
@@ -229,7 +276,7 @@ def query_store(
             formula={
                 "op": "aggregate",
                 "function": "sum",
-                "field_id": str(fields[1].id),
+                "field_id": str(calculated.id),
             },
             result_type="integer",
             status="active",
@@ -250,6 +297,8 @@ def query_store(
             amount_field_id=fields[1].id,
             department_field_id=fields[2].id,
             calculated_field_id=calculated.id,
+            half_amount_field_id=half_amount.id,
+            value_band_field_id=value_band.id,
             metric_id=metric.id,
             batch_ids=batch_ids,
         )
@@ -307,6 +356,107 @@ def test_query_is_bounded_and_returns_active_batch_context(
     assert result.elapsed_ms >= 0
 
 
+def test_calculated_fields_support_dependencies_safe_divide_case_filter_and_grouping(
+    query_store: tuple[sessionmaker[Session], QueryResources, Engine],
+) -> None:
+    session_factory, resources, _engine = query_store
+    filtered = DatasetQueryRequest.model_validate(
+        {
+            "dataset_id": resources.dataset_id,
+            "selections": [
+                {
+                    "field_id": resources.calculated_field_id,
+                    "output_name": "double_amount",
+                },
+                {
+                    "field_id": resources.half_amount_field_id,
+                    "output_name": "half_amount",
+                },
+                {"field_id": resources.value_band_field_id, "output_name": "value_band"},
+            ],
+            "filter": {
+                "kind": "comparison",
+                "field_id": resources.calculated_field_id,
+                "operator": "gt",
+                "value": 30,
+            },
+            "order_by": [
+                {
+                    "field_id": resources.calculated_field_id,
+                    "direction": "asc",
+                }
+            ],
+        }
+    )
+    grouped = DatasetQueryRequest.model_validate(
+        {
+            "dataset_id": resources.dataset_id,
+            "selections": [
+                {"field_id": resources.value_band_field_id, "output_name": "value_band"},
+                {
+                    "field_id": resources.amount_field_id,
+                    "output_name": "total_amount",
+                    "aggregate": "sum",
+                },
+            ],
+            "group_by": [resources.value_band_field_id],
+        }
+    )
+    with session_factory() as session:
+        filtered_result = execute_dataset_query(
+            session,
+            principal=principal(resources),
+            request=filtered,
+        )
+        grouped_result = execute_dataset_query(
+            session,
+            principal=principal(resources),
+            request=grouped,
+        )
+
+    assert filtered_result.rows == (
+        {"double_amount": 40, "half_amount": 20, "value_band": "high"},
+        {"double_amount": 60, "half_amount": 30, "value_band": "high"},
+    )
+    assert {row["value_band"]: row["total_amount"] for row in grouped_result.rows} == {
+        None: 15,
+        "high": 50,
+    }
+
+
+def test_row_policy_can_filter_on_calculated_field(
+    query_store: tuple[sessionmaker[Session], QueryResources, Engine],
+) -> None:
+    session_factory, resources, _engine = query_store
+    with session_factory.begin() as session:
+        policy = RowPolicy(
+            workspace_id=resources.workspace_id,
+            dataset_id=resources.dataset_id,
+            name="Hide large calculated values",
+            version=1,
+            effect="deny",
+            expression={
+                "kind": "comparison",
+                "field_id": str(resources.half_amount_field_id),
+                "operator": "gt",
+                "value": 20,
+            },
+            status="active",
+            created_by_user_id=resources.user_id,
+        )
+        session.add(policy)
+        session.flush()
+        session.add(RowPolicyAssignment(row_policy_id=policy.id, user_id=resources.user_id))
+    with session_factory() as session:
+        result = execute_dataset_query(
+            session,
+            principal=principal(resources),
+            request=detail_request(resources),
+        )
+
+    assert sorted(row["amount"] for row in result.rows) == [5, 10, 20]
+
+
 def test_metric_query_aggregates_after_active_filter_user_filter_and_rls(
     query_store: tuple[sessionmaker[Session], QueryResources, Engine],
 ) -> None:
@@ -353,7 +503,7 @@ def test_metric_query_aggregates_after_active_filter_user_filter_and_rls(
         )
 
     rows_by_city = {row["city"]: row["governed_amount"] for row in result.rows}
-    assert rows_by_city == {"北京": 15, "上海": 30}
+    assert rows_by_city == {"北京": 30, "上海": 60}
     assert result.metric_version_ids == (resources.metric_id,)
     assert set(result.source_batch_ids) == set(resources.batch_ids)
 
@@ -652,7 +802,7 @@ def test_invalid_active_policy_fails_closed(
     assert error.value.code == "row_policy_configuration_invalid"
 
 
-def test_query_rejects_missing_permission_cross_workspace_and_calculated_field(
+def test_query_rejects_missing_permission_cross_workspace_and_executes_calculated_field(
     query_store: tuple[sessionmaker[Session], QueryResources, Engine],
 ) -> None:
     session_factory, resources, _engine = query_store
@@ -684,13 +834,12 @@ def test_query_rejects_missing_permission_cross_workspace_and_calculated_field(
                 ],
             },
         )
-        with pytest.raises(DatasetQueryValidationError) as error:
-            execute_dataset_query(
-                session,
-                principal=principal(resources),
-                request=calculated,
-            )
-    assert error.value.code == "calculated_field_query_unsupported"
+        result = execute_dataset_query(
+            session,
+            principal=principal(resources),
+            request=calculated,
+        )
+    assert sorted(row["double_amount"] for row in result.rows) == [10, 20, 40, 60]
 
 
 def test_query_hides_dataset_when_semantic_model_workspace_is_inconsistent(
@@ -745,7 +894,7 @@ def test_dataset_query_api_validates_executes_and_returns_structured_errors(
                 },
             ],
         }
-        invalid = cast(
+        calculated_valid = cast(
             Response,
             client.post("/dataset-queries/validate", json=calculated_payload),
         )
@@ -775,8 +924,8 @@ def test_dataset_query_api_validates_executes_and_returns_structured_errors(
     assert len(executed.json()["source_batch_ids"]) == 2
     assert forbidden.status_code == 403
     assert forbidden.json()["detail"]["code"] == "dataset_query_forbidden"
-    assert invalid.status_code == 422
-    assert invalid.json()["detail"]["code"] == "calculated_field_query_unsupported"
+    assert calculated_valid.status_code == 200
+    assert calculated_valid.json()["columns"] == ["double_amount"]
     assert missing.status_code == 404
     assert missing.json()["detail"]["code"] == "dataset_not_found"
     assert metric_validated.status_code == 200

@@ -2,14 +2,14 @@ from __future__ import annotations
 
 import re
 from collections.abc import Sequence
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from time import perf_counter
 from typing import Any, cast
 from uuid import UUID
 
 from pydantic import ValidationError
 from sqlalchemy import Column, MetaData, Table, and_, select, union_all
-from sqlalchemy.exc import NoSuchTableError
+from sqlalchemy.exc import DBAPIError, NoSuchTableError
 from sqlalchemy.orm import Session
 from sqlalchemy.sql.elements import ColumnElement
 from sqlalchemy.sql.selectable import FromClause
@@ -27,6 +27,7 @@ from bi_system.db.models import (
     SemanticModelSource,
 )
 from bi_system.identity import QueryPrincipal
+from bi_system.modeling.calculated_field_contracts import calculated_expression_field_ids
 from bi_system.modeling.compiler import (
     CompiledQuery,
     QueryCompilationError,
@@ -35,8 +36,10 @@ from bi_system.modeling.compiler import (
     ResolvedSource,
 )
 from bi_system.modeling.contracts import DatasetQueryRequest
+from bi_system.modeling.datasets import validate_calculated_field_graph
 from bi_system.modeling.expression import LogicalPredicate
 from bi_system.modeling.metric_contracts import metric_field_ids, parse_metric_expression
+from bi_system.modeling.query_timeout import dataset_query_deadline, is_query_timeout_error
 from bi_system.modeling.row_policies import (
     RowPolicyConfigurationError,
     resolve_row_policy_predicates,
@@ -59,6 +62,10 @@ class DatasetQueryForbiddenError(DatasetQueryError):
 
 
 class DatasetQueryValidationError(DatasetQueryError):
+    pass
+
+
+class DatasetQueryTimeoutError(DatasetQueryError):
     pass
 
 
@@ -145,12 +152,6 @@ def validate_dataset_query(
             "Choose fields from the selected dataset",
         )
     referenced_fields = [fields_by_id[field_id] for field_id in referenced_ids]
-    if any(field.field_kind != "source" for field in referenced_fields):
-        raise DatasetQueryValidationError(
-            "calculated_field_query_unsupported",
-            "Calculated fields are not supported by this query endpoint yet",
-            "Use source fields until calculated field compilation is available",
-        )
 
     source = _resolve_joined_source(
         session,
@@ -160,6 +161,11 @@ def validate_dataset_query(
         referenced_fields=referenced_fields,
     )
     compiler = QueryCompiler(dialect_name=session.get_bind().dialect.name)
+    source = _compile_calculated_fields(
+        dataset_fields=dataset_fields,
+        source=source,
+        compiler=compiler,
+    )
     try:
         policy_predicates = tuple(
             resolve_row_policy_predicates(
@@ -203,14 +209,11 @@ def execute_dataset_query(
     *,
     principal: QueryPrincipal,
     request: DatasetQueryRequest,
+    timeout_seconds: float = 10,
 ) -> DatasetQueryResult:
     started = perf_counter()
     prepared = validate_dataset_query(session, principal=principal, request=request)
     bounded_statement = prepared.compiled.statement.limit(request.limit + 1)
-    result_rows = session.execute(bounded_statement).mappings().all()
-    truncated = len(result_rows) > request.limit
-    rows = tuple(dict(row) for row in result_rows[: request.limit])
-
     batch_filter = prepared.compiled.statement.whereclause
     if batch_filter is None:
         raise DatasetQueryValidationError(
@@ -231,9 +234,26 @@ def execute_dataset_query(
             "Repair the dataset source configuration",
         )
     batch_union = union_all(*batch_selects).subquery()
-    batch_rows = session.scalars(
-        select(batch_union.c.batch_id).distinct().order_by(batch_union.c.batch_id).limit(1_001)
-    ).all()
+    try:
+        with dataset_query_deadline(session, timeout_seconds=timeout_seconds):
+            result_rows = session.execute(bounded_statement).mappings().all()
+            truncated = len(result_rows) > request.limit
+            rows = tuple(dict(row) for row in result_rows[: request.limit])
+            batch_rows = session.scalars(
+                select(batch_union.c.batch_id)
+                .distinct()
+                .order_by(batch_union.c.batch_id)
+                .limit(1_001)
+            ).all()
+    except DBAPIError as exc:
+        if not is_query_timeout_error(exc):
+            raise
+        session.rollback()
+        raise DatasetQueryTimeoutError(
+            "dataset_query_timeout",
+            "Dataset query exceeded its execution deadline",
+            "Reduce the query scope or ask an administrator to increase the timeout",
+        ) from exc
     if len(batch_rows) > 1_000:
         raise DatasetQueryValidationError(
             "source_batch_limit_exceeded",
@@ -462,7 +482,10 @@ def _resolve_joined_source(
         table = tables_by_source_id[model_source.id]
         if import_column.physical_name in table.c:
             resolved_fields[field.id] = cast(Column[Any], table.c[import_column.physical_name])
-    if any(field.id not in resolved_fields for field in referenced_fields):
+    if any(
+        field.field_kind == "source" and field.id not in resolved_fields
+        for field in referenced_fields
+    ):
         raise DatasetQueryValidationError(
             "dataset_field_source_mismatch",
             "A dataset field does not belong to its declared model source",
@@ -478,6 +501,76 @@ def _resolve_joined_source(
         tables=ordered_tables,
         mandatory_predicates=(fact_table.c._active.is_(True),),
         batch_columns=tuple(cast(Column[Any], table.c._batch_id) for table in ordered_tables),
+    )
+
+
+def _compile_calculated_fields(
+    *,
+    dataset_fields: Sequence[DatasetField],
+    source: ResolvedSource,
+    compiler: QueryCompiler,
+) -> ResolvedSource:
+    try:
+        parsed_expressions = validate_calculated_field_graph(list(dataset_fields))
+    except ValueError as exc:
+        raise DatasetQueryValidationError(
+            "calculated_field_configuration_invalid",
+            "A calculated field has an invalid dependency or type configuration",
+            "Create a corrected dataset version",
+        ) from exc
+    fields_by_id = {field.id: field for field in dataset_fields}
+    dependencies = {
+        field_id: {
+            dependency_id
+            for dependency_id in calculated_expression_field_ids(expression)
+            if dependency_id in parsed_expressions
+        }
+        for field_id, expression in parsed_expressions.items()
+    }
+    resolved_fields = dict(source.fields)
+    resolved_calculated_ids: set[UUID] = set()
+    pending_ids = set(parsed_expressions)
+    while pending_ids:
+        ready_ids = sorted(
+            (
+                field_id
+                for field_id in pending_ids
+                if dependencies[field_id].issubset(resolved_calculated_ids)
+            ),
+            key=str,
+        )
+        if not ready_ids:
+            raise DatasetQueryValidationError(
+                "calculated_field_configuration_invalid",
+                "Calculated field dependencies contain a cycle",
+                "Create a corrected dataset version",
+            )
+        for field_id in ready_ids:
+            field = fields_by_id[field_id]
+            compilation_source = replace(
+                source,
+                fields=resolved_fields,
+                calculated_field_ids=frozenset(resolved_calculated_ids),
+            )
+            try:
+                compiled = compiler.compile_calculated_expression(
+                    parsed_expressions[field_id],
+                    compilation_source,
+                    data_type=field.data_type,
+                )
+            except (QueryCompilationError, ValueError) as exc:
+                raise DatasetQueryValidationError(
+                    "calculated_field_configuration_invalid",
+                    "A calculated field expression cannot be compiled",
+                    "Create a corrected dataset version",
+                ) from exc
+            resolved_fields[field_id] = compiled
+            resolved_calculated_ids.add(field_id)
+            pending_ids.remove(field_id)
+    return replace(
+        source,
+        fields=resolved_fields,
+        calculated_field_ids=frozenset(resolved_calculated_ids),
     )
 
 

@@ -19,6 +19,7 @@ from sqlalchemy import (
     Text,
     and_,
     case,
+    cast,
     literal,
     not_,
     or_,
@@ -29,6 +30,13 @@ from sqlalchemy.sql.elements import ColumnElement
 from sqlalchemy.sql.schema import Column, Table
 from sqlalchemy.sql.selectable import FromClause
 
+from bi_system.modeling.calculated_field_contracts import (
+    CalculatedBinary,
+    CalculatedExpression,
+    CalculatedFieldReference,
+    CalculatedLiteral,
+    CalculatedSafeDivide,
+)
 from bi_system.modeling.contracts import (
     AggregateFunction,
     DatasetQueryRequest,
@@ -78,11 +86,12 @@ class QueryComplexityLimits:
 class ResolvedSource:
     source_id: UUID
     table: Table
-    fields: Mapping[UUID, Column[Any]]
+    fields: Mapping[UUID, ColumnElement[Any]]
     from_clause: FromClause | None = None
     tables: tuple[FromClause, ...] = ()
     mandatory_predicates: tuple[ColumnElement[bool], ...] = ()
     batch_columns: tuple[Column[Any], ...] = ()
+    calculated_field_ids: frozenset[UUID] = frozenset()
 
     @property
     def selectable(self) -> FromClause:
@@ -241,6 +250,33 @@ class QueryCompiler:
                         "Text filters require a string field",
                     )
         return self._filter_expression(expression, source)
+
+    def compile_calculated_expression(
+        self,
+        expression: CalculatedExpression,
+        source: ResolvedSource,
+        *,
+        data_type: str,
+    ) -> ColumnElement[Any]:
+        compiled = self._calculated_expression(
+            expression,
+            source,
+            expected_data_type=data_type,
+        )
+        sql_type = {
+            "string": String(),
+            "integer": Integer(),
+            "decimal": Numeric(38, 10),
+            "boolean": Boolean(),
+            "date": Date(),
+            "datetime": DateTime(),
+        }.get(data_type)
+        if sql_type is None:
+            raise QueryCompilationError(
+                "calculated_field_type_invalid",
+                "Calculated field has an unsupported data type",
+            )
+        return cast(compiled, sql_type)
 
     def _validate_request(self, request: QueryRequest, source: ResolvedSource) -> None:
         if request.source_id != source.source_id:
@@ -439,6 +475,53 @@ class QueryCompiler:
             else_=numerator / denominator,
         )
 
+    def _calculated_expression(
+        self,
+        expression: CalculatedExpression,
+        source: ResolvedSource,
+        *,
+        expected_data_type: str | None = None,
+    ) -> ColumnElement[Any]:
+        if isinstance(expression, CalculatedFieldReference):
+            return self._required_field(expression.field_id, source)
+        if isinstance(expression, CalculatedLiteral):
+            value = expression.value
+            if isinstance(value, str) and expected_data_type == "date":
+                value = date.fromisoformat(value)
+            elif isinstance(value, str) and expected_data_type == "datetime":
+                value = datetime.fromisoformat(value)
+            return literal(value)
+        if isinstance(expression, CalculatedBinary):
+            left = self._calculated_expression(expression.left, source)
+            right = self._calculated_expression(expression.right, source)
+            if expression.op == "add":
+                return left + right
+            if expression.op == "subtract":
+                return left - right
+            return left * right
+        if isinstance(expression, CalculatedSafeDivide):
+            numerator = self._calculated_expression(expression.numerator, source)
+            denominator = self._calculated_expression(expression.denominator, source)
+            return case(
+                (
+                    or_(denominator == 0, denominator.is_(None)),
+                    literal(expression.fallback),
+                ),
+                else_=numerator / denominator,
+            )
+        condition = self.compile_filter(expression.when, source)
+        then_expression = self._calculated_expression(
+            expression.then,
+            source,
+            expected_data_type=expected_data_type,
+        )
+        else_expression = self._calculated_expression(
+            expression.else_,
+            source,
+            expected_data_type=expected_data_type,
+        )
+        return case((condition, then_expression), else_=else_expression)
+
     def _sort_expression(
         self,
         sort: QuerySort,
@@ -500,7 +583,7 @@ class QueryCompiler:
         return column.like(patterns[expression.operator], escape="\\")
 
     @staticmethod
-    def _bind_value(column: Column[Any], value: object) -> object:
+    def _bind_value(column: ColumnElement[Any], value: object) -> object:
         column_type = column.type
         valid = False
         normalized = value
@@ -553,14 +636,17 @@ class QueryCompiler:
         return normalized
 
     @staticmethod
-    def _required_field(field_id: UUID, source: ResolvedSource) -> Column[Any]:
+    def _required_field(field_id: UUID, source: ResolvedSource) -> ColumnElement[Any]:
         column = source.fields.get(field_id)
         if column is None:
             raise QueryCompilationError(
                 "field_not_resolved",
                 f"Field {field_id} is not available in the resolved source",
             )
-        if not any(column.table is table for table in source.allowed_tables):
+        if field_id in source.calculated_field_ids:
+            return column
+        column_table = getattr(column, "table", None)
+        if not any(column_table is table for table in source.allowed_tables):
             raise QueryCompilationError(
                 "field_source_mismatch",
                 "Resolved field does not belong to the resolved source table",

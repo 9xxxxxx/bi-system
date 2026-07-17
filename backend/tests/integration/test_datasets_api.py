@@ -26,6 +26,7 @@ from bi_system.main import create_app
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 from httpx import Response
+from sqlalchemy import select
 from sqlalchemy.engine import Engine
 from sqlalchemy.orm import Session, sessionmaker
 
@@ -554,3 +555,150 @@ def test_dataset_write_requires_manage_permission(
 
     assert response.status_code == 403
     assert response.json()["detail"]["code"] == "dataset_manage_forbidden"
+
+
+def _calculated_field_payload(field_id: str) -> dict[str, object]:
+    return {
+        "name": "half_amount",
+        "label": "Half amount",
+        "role": "measure",
+        "data_type": "decimal",
+        "hidden": False,
+        "expression": {
+            "op": "safe_divide",
+            "numerator": {"op": "field", "field_id": field_id},
+            "denominator": {"op": "literal", "value": 2},
+            "fallback": 0,
+        },
+    }
+
+
+def test_calculated_field_api_creates_vnext_and_rewrites_all_version_dependencies(
+    dataset_api_context: DatasetApiContext,
+) -> None:
+    original = cast(
+        Response,
+        dataset_api_context.client.get(f"/api/v1/datasets/{dataset_api_context.active_dataset_id}"),
+    ).json()
+    original_field_id = original["fields"][0]["id"]
+    created = cast(
+        Response,
+        dataset_api_context.client.post(
+            f"/api/v1/datasets/{dataset_api_context.active_dataset_id}/calculated-fields",
+            json=_calculated_field_payload(original_field_id),
+        ),
+    )
+
+    assert created.status_code == 201
+    assert created.json()["version"] == 2
+    assert created.json()["series_id"] == original["series_id"]
+    assert created.json()["field_count"] == 2
+    copied_field_id = created.json()["fields"][0]["id"]
+    calculated_field_id = created.json()["fields"][1]["id"]
+    assert copied_field_id != original_field_id
+
+    copied_again = cast(
+        Response,
+        dataset_api_context.client.post(
+            f"/api/v1/datasets/{created.json()['id']}/versions",
+            json={},
+        ),
+    )
+    assert copied_again.status_code == 201
+    assert copied_again.json()["version"] == 3
+
+    session_factory = cast(
+        sessionmaker[Session], dataset_api_context.application.state.session_factory
+    )
+    with session_factory() as session:
+        calculated = session.get(DatasetField, UUID(calculated_field_id))
+        copied_v3_fields = session.scalars(
+            select(DatasetField)
+            .where(DatasetField.dataset_id == UUID(copied_again.json()["id"]))
+            .order_by(DatasetField.ordinal)
+        ).all()
+        assert calculated is not None
+        assert calculated.expression is not None
+        assert calculated.expression["numerator"]["field_id"] == copied_field_id
+        assert copied_v3_fields[0].id != UUID(copied_field_id)
+        assert copied_v3_fields[1].expression is not None
+        assert copied_v3_fields[1].expression["numerator"]["field_id"] == str(
+            copied_v3_fields[0].id
+        )
+
+    unchanged = cast(
+        Response,
+        dataset_api_context.client.get(f"/api/v1/datasets/{dataset_api_context.active_dataset_id}"),
+    )
+    assert unchanged.json() == original
+
+
+def test_calculated_field_api_rejects_cross_dataset_type_errors_and_cycles(
+    dataset_api_context: DatasetApiContext,
+) -> None:
+    original = cast(
+        Response,
+        dataset_api_context.client.get(f"/api/v1/datasets/{dataset_api_context.active_dataset_id}"),
+    ).json()
+    field_id = original["fields"][0]["id"]
+    cross_dataset = cast(
+        Response,
+        dataset_api_context.client.post(
+            f"/api/v1/datasets/{dataset_api_context.active_dataset_id}/calculated-fields",
+            json=_calculated_field_payload(str(uuid4())),
+        ),
+    )
+    invalid_type_payload = _calculated_field_payload(field_id)
+    invalid_type_payload["data_type"] = "string"
+    invalid_type_payload["role"] = "dimension"
+    invalid_type = cast(
+        Response,
+        dataset_api_context.client.post(
+            f"/api/v1/datasets/{dataset_api_context.active_dataset_id}/calculated-fields",
+            json=invalid_type_payload,
+        ),
+    )
+
+    assert cross_dataset.status_code == 422
+    assert cross_dataset.json()["detail"]["code"] == "invalid_calculated_field"
+    assert invalid_type.status_code == 422
+
+    session_factory = cast(
+        sessionmaker[Session], dataset_api_context.application.state.session_factory
+    )
+    with session_factory.begin() as session:
+        field = session.get(DatasetField, UUID(field_id))
+        assert field is not None
+        field.expression = {"op": "field", "field_id": field_id}
+    cyclic = cast(
+        Response,
+        dataset_api_context.client.post(
+            f"/api/v1/datasets/{dataset_api_context.active_dataset_id}/calculated-fields",
+            json=_calculated_field_payload(field_id),
+        ),
+    )
+    assert cyclic.status_code == 422
+    assert "cycle" in cyclic.json()["detail"]["message"]
+
+
+def test_calculated_field_write_requires_manage_permission(
+    dataset_api_context: DatasetApiContext,
+) -> None:
+    original = cast(
+        Response,
+        dataset_api_context.client.get(f"/api/v1/datasets/{dataset_api_context.active_dataset_id}"),
+    ).json()
+    viewer = QueryPrincipal(
+        user_id=dataset_api_context.owner_user_id,
+        workspace_id=dataset_api_context.workspace_id,
+    )
+    dataset_api_context.application.dependency_overrides[get_query_principal] = lambda: viewer
+
+    response = cast(
+        Response,
+        dataset_api_context.client.post(
+            f"/api/v1/datasets/{dataset_api_context.active_dataset_id}/calculated-fields",
+            json=_calculated_field_payload(original["fields"][0]["id"]),
+        ),
+    )
+    assert response.status_code == 403

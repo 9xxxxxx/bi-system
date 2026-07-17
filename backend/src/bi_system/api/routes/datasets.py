@@ -9,6 +9,7 @@ from sqlalchemy.orm import Session
 from bi_system.api.dependencies import CurrentActor, get_database_session
 from bi_system.core.config import Settings, get_settings
 from bi_system.identity import QueryPrincipal
+from bi_system.modeling.calculated_field_contracts import CreateCalculatedField
 from bi_system.modeling.dataset_contracts import CreateDataset, CreateDatasetVersion
 from bi_system.modeling.datasets import (
     DatasetConfigurationError,
@@ -16,6 +17,7 @@ from bi_system.modeling.datasets import (
     DatasetLifecycleConflictError,
     DatasetResourceNotFoundError,
     activate_dataset,
+    create_calculated_field_version,
     create_dataset,
     create_dataset_version,
     get_dataset_detail,
@@ -69,6 +71,44 @@ class DatasetDetailResponse(DatasetSummaryResponse):
     series_id: UUID
     version: int
     fields: list[DatasetFieldResponse]
+
+
+@router.post(
+    "/{dataset_id}/calculated-fields",
+    response_model=DatasetDetailResponse,
+    status_code=status.HTTP_201_CREATED,
+)
+def create_calculated_field_endpoint(
+    dataset_id: UUID,
+    request_body: CreateCalculatedField,
+    session: DatabaseSession,
+    settings: ApplicationSettings,
+    actor: CurrentActor,
+) -> DatasetDetailResponse:
+    _require_dataset_manager(actor, settings=settings)
+    try:
+        dataset = create_calculated_field_version(
+            session,
+            workspace_id=settings.workspace_id,
+            actor_user_id=actor.user_id,
+            dataset_id=dataset_id,
+            request=request_body,
+        )
+    except DatasetResourceNotFoundError as exc:
+        raise _dataset_http_error(
+            status.HTTP_404_NOT_FOUND,
+            "dataset_not_found",
+            str(exc),
+            "Refresh the dataset list",
+        ) from exc
+    except DatasetConfigurationError as exc:
+        raise _dataset_http_error(
+            status.HTTP_422_UNPROCESSABLE_CONTENT,
+            "invalid_calculated_field",
+            str(exc),
+            "Correct the calculated field expression and try again",
+        ) from exc
+    return _dataset_detail_response(dataset)
 
 
 @router.post("", response_model=DatasetDetailResponse, status_code=status.HTTP_201_CREATED)
