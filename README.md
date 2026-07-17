@@ -154,4 +154,4 @@ uv run pre-commit run --all-files
 
 不要删除或提交 `data/dashboard.db` 与 `data/legacy/dashboard.db`。本地数据库、上传文件、导出文件和备份默认都应保持在 Git 之外。危险迁移前先备份；备份应压缩、限速并按需求规格控制保留数量，避免持续占用磁盘和运行资源。
 
-需求范围见 [需求规格](docs/superpowers/specs/2026-07-14-bi-reporting-system-requirements.md)，技术选择见 [架构决策](docs/architecture/adr/0001-platform-stack.md)。
+需求范围见 [需求规格](docs/superpowers/specs/2026-07-14-bi-reporting-system-requirements.md)，技术选择见 [架构决策](docs/architecture/adr/0001-platform-stack.md)。迁移到新机器继续开发时，先阅读 [开发交接说明](docs/plans/2026-07-17-development-handoff.md)。
