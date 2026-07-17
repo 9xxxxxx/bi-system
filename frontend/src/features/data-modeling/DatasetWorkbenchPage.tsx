@@ -29,6 +29,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 
 import { ApiError } from "../../shared/api/client";
+import { CalculatedFieldEditor } from "./CalculatedFieldEditor";
 import {
   activateDataset,
   activateSemanticModel,
@@ -653,8 +654,8 @@ function DatasetPreview({ dataset }: { dataset: DatasetDetail }) {
         .filter(
           (field) =>
             !field.hidden &&
-            field.field_kind === "source" &&
-            field.source_column_id !== null,
+            (field.field_kind === "calculated" ||
+              field.source_column_id !== null),
         )
         .map((field) => field.id),
     );
@@ -739,11 +740,14 @@ function DatasetPreview({ dataset }: { dataset: DatasetDetail }) {
                   value={field.id}
                   disabled={
                     field.hidden ||
-                    field.field_kind !== "source" ||
-                    field.source_column_id === null
+                    (field.field_kind === "source" &&
+                      field.source_column_id === null)
                   }
                 >
                   {field.label}
+                  {field.field_kind === "calculated" && (
+                    <Tag color="processing">计算</Tag>
+                  )}
                 </Checkbox>
               ))}
             </Space>
@@ -807,6 +811,7 @@ function PreviewResult({
 }
 
 function ExistingDatasetWorkbench({ datasetId }: { datasetId: string }) {
+  const navigate = useNavigate();
   const isMobile = useMobileLayout();
   const datasetQuery = useQuery({
     queryKey: ["data-modeling", "dataset", datasetId],
@@ -874,6 +879,17 @@ function ExistingDatasetWorkbench({ datasetId }: { datasetId: string }) {
           <Tag color={dataset.status === "active" ? "success" : "default"}>
             {dataset.status === "active" ? "可用" : "草稿"}
           </Tag>
+          <CalculatedFieldEditor
+            dataset={dataset}
+            mobileReadonly={isMobile}
+            onCreated={(created) => {
+              if (created.id === dataset.id) {
+                void datasetQuery.refetch();
+              } else {
+                navigate(`/datasets/${created.id}`, { replace: true });
+              }
+            }}
+          />
           {dataset.status === "draft" && (
             <Button
               type="primary"

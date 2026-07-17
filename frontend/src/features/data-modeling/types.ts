@@ -142,3 +142,38 @@ export interface DatasetQueryResult {
   dataset_version: number;
   source_batch_ids: string[];
 }
+
+export type CalculatedExpression =
+  | { op: "field"; field_id: string }
+  | { op: "literal"; value: string | number | boolean | null }
+  | {
+      op: "add" | "subtract" | "multiply";
+      left: CalculatedExpression;
+      right: CalculatedExpression;
+    }
+  | {
+      op: "safe_divide";
+      numerator: CalculatedExpression;
+      denominator: CalculatedExpression;
+      fallback: number | null;
+    }
+  | {
+      op: "case";
+      when: {
+        kind: "comparison";
+        field_id: string;
+        operator: "eq" | "ne" | "gt" | "gte" | "lt" | "lte";
+        value: string | number | boolean | null;
+      };
+      then: { op: "literal"; value: string | number | boolean | null };
+      else: { op: "literal"; value: string | number | boolean | null };
+    };
+
+export interface CreateCalculatedFieldRequest {
+  name: string;
+  label: string;
+  role: DatasetFieldRole;
+  data_type: "string" | "integer" | "decimal" | "boolean" | "date" | "datetime";
+  hidden: false;
+  expression: CalculatedExpression;
+}

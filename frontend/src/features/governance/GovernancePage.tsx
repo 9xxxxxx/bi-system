@@ -562,7 +562,7 @@ function isNumeric(field: DatasetField) {
   return field.data_type === "integer" || field.data_type === "decimal";
 }
 function isQueryableSourceField(field: DatasetField) {
-  return field.field_kind === "source" && field.source_column_id !== null;
+  return field.field_kind === "calculated" || field.source_column_id !== null;
 }
 function statusTag(value: string) {
   const presentation: Record<string, { color: string; label: string }> = {

@@ -1,6 +1,7 @@
 import { requestJson } from "../../shared/api/client";
 import type {
   CreateDatasetRequest,
+  CreateCalculatedFieldRequest,
   CreateSemanticModelRequest,
   DataSource,
   DatasetDetail,
@@ -66,4 +67,17 @@ export function queryDataset(
     method: "POST",
     body: JSON.stringify(request),
   });
+}
+
+export function createCalculatedField(
+  datasetId: string,
+  request: CreateCalculatedFieldRequest,
+): Promise<DatasetDetail> {
+  return requestJson<DatasetDetail>(
+    `/datasets/${datasetId}/calculated-fields`,
+    {
+      method: "POST",
+      body: JSON.stringify(request),
+    },
+  );
 }

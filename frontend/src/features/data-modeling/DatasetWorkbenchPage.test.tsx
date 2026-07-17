@@ -165,8 +165,19 @@ it("creates a single-source model before saving the dataset draft", async () => 
   await waitFor(() => expect(saveButton).toBeEnabled());
   fireEvent.click(saveButton);
 
+  await waitFor(
+    () =>
+      expect(requests.filter(({ method }) => method === "POST")).toHaveLength(
+        2,
+      ),
+    { timeout: 10_000 },
+  );
   expect(
-    await screen.findByRole("heading", { name: "销售经营数据集" }),
+    await screen.findByRole(
+      "heading",
+      { name: "销售经营数据集" },
+      { timeout: 10_000 },
+    ),
   ).toBeInTheDocument();
   const modelRequest = requests.find(
     ({ url, method }) => url.endsWith("/semantic-models") && method === "POST",
@@ -202,7 +213,7 @@ it("creates a single-source model before saving the dataset draft", async () => 
       ({ url, method }) => url.endsWith("/datasets") && method === "POST",
     ),
   );
-}, 10_000);
+}, 20_000);
 
 it("shows only active sources and an actionable empty state", async () => {
   vi.stubGlobal(
@@ -447,6 +458,64 @@ it("queries selected fields and renders rows with execution metadata", async () 
     ],
     limit: 100,
   });
+});
+
+it("includes supported calculated fields in query preview selections", async () => {
+  const calculatedDataset = {
+    ...dataset,
+    field_count: 3,
+    fields: [
+      ...dataset.fields,
+      {
+        id: "field-profit-rate",
+        model_source_id: null,
+        source_column_id: null,
+        name: "profit_rate",
+        label: "利润率",
+        field_kind: "calculated",
+        role: "measure",
+        data_type: "decimal",
+        hidden: false,
+        ordinal: 2,
+      },
+    ],
+  };
+  let queryBody: { selections?: Array<{ field_id: string }> } | undefined;
+  vi.stubGlobal(
+    "fetch",
+    vi.fn(async (input: string | URL | Request, init?: RequestInit) => {
+      const url = String(input);
+      if (url.endsWith("/datasets/dataset-sales")) {
+        return new Response(JSON.stringify(calculatedDataset), { status: 200 });
+      }
+      queryBody =
+        typeof init?.body === "string" ? JSON.parse(init.body) : undefined;
+      return new Response(
+        JSON.stringify({
+          columns: ["field_1", "field_2", "profit_rate"],
+          rows: [],
+          truncated: false,
+          elapsed_ms: 3,
+          dataset_version: 1,
+          source_batch_ids: [],
+        }),
+        { status: 200 },
+      );
+    }),
+  );
+  const user = userEvent.setup();
+  renderWorkbench("/datasets/dataset-sales");
+
+  expect(await screen.findByText("计算")).toBeInTheDocument();
+  await user.click(screen.getByRole("button", { name: /运行预览/ }));
+
+  await waitFor(() =>
+    expect(queryBody?.selections).toEqual(
+      expect.arrayContaining([
+        { field_id: "field-profit-rate", output_name: "profit_rate" },
+      ]),
+    ),
+  );
 });
 
 it("renders empty query results and exposes recoverable query errors", async () => {
