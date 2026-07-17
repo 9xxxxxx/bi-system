@@ -5,6 +5,7 @@ from time import perf_counter
 from typing import Any
 from uuid import UUID
 
+from pydantic import ValidationError
 from sqlalchemy import Column, MetaData, Table, select
 from sqlalchemy.exc import NoSuchTableError
 from sqlalchemy.orm import Session
@@ -15,6 +16,8 @@ from bi_system.db.models import (
     DatasetField,
     ImportColumn,
     ImportTarget,
+    Metric,
+    MetricDimension,
     SemanticModel,
     SemanticModelSource,
 )
@@ -23,10 +26,12 @@ from bi_system.modeling.compiler import (
     CompiledQuery,
     QueryCompilationError,
     QueryCompiler,
+    ResolvedMetricSelection,
     ResolvedSource,
 )
 from bi_system.modeling.contracts import DatasetQueryRequest
 from bi_system.modeling.expression import LogicalPredicate
+from bi_system.modeling.metric_contracts import metric_field_ids, parse_metric_expression
 from bi_system.modeling.row_policies import (
     RowPolicyConfigurationError,
     resolve_row_policy_predicates,
@@ -59,6 +64,7 @@ class PreparedDatasetQuery:
     source: ResolvedSource
     compiled: CompiledQuery
     policy_predicates: tuple[ColumnElement[bool], ...]
+    metric_version_ids: tuple[UUID, ...]
 
 
 @dataclass(frozen=True, slots=True)
@@ -68,6 +74,7 @@ class DatasetQueryResult:
     truncated: bool
     elapsed_ms: float
     dataset_version: int
+    metric_version_ids: tuple[UUID, ...]
     source_batch_ids: tuple[UUID, ...]
 
 
@@ -133,7 +140,20 @@ def validate_dataset_query(
         select(DatasetField).where(DatasetField.dataset_id == dataset.id),
     ).all()
     fields_by_id = {field.id: field for field in dataset_fields}
+    resolved_metrics, metric_formula_field_ids = _resolve_metrics(
+        session,
+        request=request,
+        workspace_id=principal.workspace_id,
+        dataset_id=dataset.id,
+    )
     referenced_ids = _referenced_dataset_field_ids(request)
+    if not metric_formula_field_ids.issubset(fields_by_id):
+        raise DatasetQueryValidationError(
+            "metric_field_not_found",
+            "An active metric references a field outside its dataset version",
+            "Create a corrected metric version",
+        )
+    referenced_ids.update(metric_formula_field_ids)
     if not referenced_ids.issubset(fields_by_id):
         raise DatasetQueryNotFoundError(
             "dataset_field_not_found",
@@ -217,9 +237,10 @@ def validate_dataset_query(
                 source=source,
             ),
         )
-        compiled = compiler.compile(
-            request.for_source(model_source.id),
+        compiled = compiler.compile_dataset_query(
+            request,
             source,
+            metrics=resolved_metrics,
             policy_predicates=policy_predicates,
         )
     except QueryCompilationError as exc:
@@ -240,6 +261,7 @@ def validate_dataset_query(
         source=source,
         compiled=compiled,
         policy_predicates=policy_predicates,
+        metric_version_ids=tuple(metric.metric_version_id for metric in resolved_metrics),
     )
 
 
@@ -283,6 +305,7 @@ def execute_dataset_query(
         truncated=truncated,
         elapsed_ms=elapsed_ms,
         dataset_version=prepared.dataset.version,
+        metric_version_ids=prepared.metric_version_ids,
         source_batch_ids=tuple(
             batch_id if isinstance(batch_id, UUID) else UUID(str(batch_id))
             for batch_id in batch_rows
@@ -301,3 +324,70 @@ def _referenced_dataset_field_ids(request: DatasetQueryRequest) -> set[UUID]:
         )
         field_ids.update(predicate.field_id for predicate in predicates)
     return field_ids
+
+
+def _resolve_metrics(
+    session: Session,
+    *,
+    request: DatasetQueryRequest,
+    workspace_id: UUID,
+    dataset_id: UUID,
+) -> tuple[tuple[ResolvedMetricSelection, ...], set[UUID]]:
+    if not request.metrics:
+        return (), set()
+    requested_ids = [selection.metric_id for selection in request.metrics]
+    metrics = session.scalars(
+        select(Metric).where(
+            Metric.id.in_(requested_ids),
+            Metric.workspace_id == workspace_id,
+            Metric.dataset_id == dataset_id,
+            Metric.status == "active",
+            Metric.deleted_at.is_(None),
+        )
+    ).all()
+    metrics_by_id = {metric.id: metric for metric in metrics}
+    if len(metrics_by_id) != len(set(requested_ids)):
+        raise DatasetQueryNotFoundError(
+            "metric_not_found",
+            "One or more active metric versions were not found for the dataset",
+            "Choose active metrics from the selected dataset version",
+        )
+
+    dimension_rows = session.execute(
+        select(MetricDimension.metric_id, MetricDimension.dataset_field_id).where(
+            MetricDimension.metric_id.in_(requested_ids)
+        )
+    ).all()
+    dimensions_by_metric: dict[UUID, set[UUID]] = {metric_id: set() for metric_id in requested_ids}
+    for metric_id, field_id in dimension_rows:
+        dimensions_by_metric[metric_id].add(field_id)
+    group_fields = set(request.group_by)
+    for metric_id in requested_ids:
+        if not group_fields.issubset(dimensions_by_metric[metric_id]):
+            raise DatasetQueryValidationError(
+                "metric_group_by_not_allowed",
+                "Query group fields are not declared dimensions of every metric",
+                "Remove unsupported group fields or create a metric version with those dimensions",
+            )
+
+    resolved: list[ResolvedMetricSelection] = []
+    formula_field_ids: set[UUID] = set()
+    for selection in request.metrics:
+        metric = metrics_by_id[selection.metric_id]
+        try:
+            formula = parse_metric_expression(metric.formula)
+        except ValidationError as exc:
+            raise DatasetQueryValidationError(
+                "metric_formula_invalid",
+                "An active metric has an invalid formula",
+                "Create a corrected metric version",
+            ) from exc
+        formula_field_ids.update(metric_field_ids(formula))
+        resolved.append(
+            ResolvedMetricSelection(
+                metric_version_id=metric.id,
+                output_name=selection.output_name,
+                formula=formula,
+            )
+        )
+    return tuple(resolved), formula_field_ids

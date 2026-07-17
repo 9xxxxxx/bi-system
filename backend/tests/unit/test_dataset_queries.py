@@ -14,6 +14,8 @@ from bi_system.db.models import (
     DatasetField,
     ImportColumn,
     ImportTarget,
+    Metric,
+    MetricDimension,
     Role,
     RowPolicy,
     RowPolicyAssignment,
@@ -51,6 +53,7 @@ class QueryResources:
     amount_field_id: UUID
     department_field_id: UUID
     calculated_field_id: UUID
+    metric_id: UUID
     batch_ids: tuple[UUID, UUID]
 
 
@@ -216,6 +219,25 @@ def query_store(
         )
         session.add_all([*fields, calculated])
         session.flush()
+        metric = Metric(
+            workspace_id=workspace_id,
+            dataset_id=dataset.id,
+            code="total_amount",
+            name="Total amount",
+            version=1,
+            description="Governed sales amount",
+            formula={
+                "op": "aggregate",
+                "function": "sum",
+                "field_id": str(fields[1].id),
+            },
+            result_type="integer",
+            status="active",
+            owner_user_id=user.id,
+        )
+        session.add(metric)
+        session.flush()
+        session.add(MetricDimension(metric_id=metric.id, dataset_field_id=fields[0].id))
         resources = QueryResources(
             workspace_id=workspace_id,
             user_id=user.id,
@@ -228,6 +250,7 @@ def query_store(
             amount_field_id=fields[1].id,
             department_field_id=fields[2].id,
             calculated_field_id=calculated.id,
+            metric_id=metric.id,
             batch_ids=batch_ids,
         )
     try:
@@ -280,7 +303,194 @@ def test_query_is_bounded_and_returns_active_batch_context(
     assert result.truncated is True
     assert set(result.source_batch_ids) == set(resources.batch_ids)
     assert result.dataset_version == 1
+    assert result.metric_version_ids == ()
     assert result.elapsed_ms >= 0
+
+
+def test_metric_query_aggregates_after_active_filter_user_filter_and_rls(
+    query_store: tuple[sessionmaker[Session], QueryResources, Engine],
+) -> None:
+    session_factory, resources, _engine = query_store
+    with session_factory.begin() as session:
+        deny = RowPolicy(
+            workspace_id=resources.workspace_id,
+            dataset_id=resources.dataset_id,
+            name="Hide secret metric rows",
+            version=1,
+            effect="deny",
+            expression={
+                "kind": "comparison",
+                "field_id": str(resources.department_field_id),
+                "operator": "eq",
+                "value": "secret",
+            },
+            status="active",
+            created_by_user_id=resources.user_id,
+        )
+        session.add(deny)
+        session.flush()
+        session.add(RowPolicyAssignment(row_policy_id=deny.id, user_id=resources.user_id))
+
+    request = DatasetQueryRequest.model_validate(
+        {
+            "dataset_id": resources.dataset_id,
+            "selections": [{"field_id": resources.city_field_id, "output_name": "city"}],
+            "metrics": [{"metric_id": resources.metric_id, "output_name": "governed_amount"}],
+            "group_by": [resources.city_field_id],
+            "filter": {
+                "kind": "comparison",
+                "field_id": resources.amount_field_id,
+                "operator": "gte",
+                "value": 5,
+            },
+        }
+    )
+    with session_factory() as session:
+        result = execute_dataset_query(
+            session,
+            principal=principal(resources),
+            request=request,
+        )
+
+    rows_by_city = {row["city"]: row["governed_amount"] for row in result.rows}
+    assert rows_by_city == {"北京": 15, "上海": 30}
+    assert result.metric_version_ids == (resources.metric_id,)
+    assert set(result.source_batch_ids) == set(resources.batch_ids)
+
+
+def test_metric_query_rejects_undeclared_group_dimension(
+    query_store: tuple[sessionmaker[Session], QueryResources, Engine],
+) -> None:
+    session_factory, resources, _engine = query_store
+    request = DatasetQueryRequest.model_validate(
+        {
+            "dataset_id": resources.dataset_id,
+            "selections": [
+                {"field_id": resources.department_field_id, "output_name": "department"}
+            ],
+            "metrics": [{"metric_id": resources.metric_id, "output_name": "total_amount"}],
+            "group_by": [resources.department_field_id],
+        }
+    )
+    with session_factory() as session, pytest.raises(DatasetQueryValidationError) as error:
+        execute_dataset_query(
+            session,
+            principal=principal(resources),
+            request=request,
+        )
+    assert error.value.code == "metric_group_by_not_allowed"
+
+
+def test_metric_query_hides_inactive_and_other_dataset_metrics_and_rejects_bad_formula(
+    query_store: tuple[sessionmaker[Session], QueryResources, Engine],
+) -> None:
+    session_factory, resources, _engine = query_store
+    with session_factory.begin() as session:
+        dataset = session.get(Dataset, resources.dataset_id)
+        assert dataset is not None
+        other_dataset = Dataset(
+            workspace_id=resources.workspace_id,
+            semantic_model_id=dataset.semantic_model_id,
+            name="Other metric dataset",
+            version=1,
+            status="active",
+            created_by_user_id=resources.user_id,
+        )
+        session.add(other_dataset)
+        session.flush()
+        other_field = DatasetField(
+            dataset_id=other_dataset.id,
+            name="other_amount",
+            label="Other amount",
+            field_kind="calculated",
+            field_role="measure",
+            data_type="integer",
+            expression={"op": "literal", "value": 0},
+            hidden=False,
+            ordinal=0,
+        )
+        session.add(other_field)
+        session.flush()
+        draft_metric = Metric(
+            workspace_id=resources.workspace_id,
+            dataset_id=resources.dataset_id,
+            code="draft_amount",
+            name="Draft amount",
+            version=1,
+            description="Draft metric",
+            formula={
+                "op": "aggregate",
+                "function": "sum",
+                "field_id": str(resources.amount_field_id),
+            },
+            result_type="integer",
+            status="draft",
+            owner_user_id=resources.user_id,
+        )
+        other_metric = Metric(
+            workspace_id=resources.workspace_id,
+            dataset_id=other_dataset.id,
+            code="other_amount",
+            name="Other amount",
+            version=1,
+            description="Other dataset metric",
+            formula={
+                "op": "aggregate",
+                "function": "sum",
+                "field_id": str(other_field.id),
+            },
+            result_type="integer",
+            status="active",
+            owner_user_id=resources.user_id,
+        )
+        broken_metric = Metric(
+            workspace_id=resources.workspace_id,
+            dataset_id=resources.dataset_id,
+            code="broken_amount",
+            name="Broken amount",
+            version=1,
+            description="Broken metric field ownership",
+            formula={
+                "op": "aggregate",
+                "function": "sum",
+                "field_id": str(other_field.id),
+            },
+            result_type="integer",
+            status="active",
+            owner_user_id=resources.user_id,
+        )
+        session.add_all([draft_metric, other_metric, broken_metric])
+        session.flush()
+        metric_ids = (draft_metric.id, other_metric.id, broken_metric.id)
+
+    for metric_id in metric_ids[:2]:
+        request = DatasetQueryRequest.model_validate(
+            {
+                "dataset_id": resources.dataset_id,
+                "metrics": [{"metric_id": metric_id, "output_name": "amount"}],
+            }
+        )
+        with session_factory() as session, pytest.raises(DatasetQueryNotFoundError) as error:
+            execute_dataset_query(
+                session,
+                principal=principal(resources),
+                request=request,
+            )
+        assert error.value.code == "metric_not_found"
+
+    broken_request = DatasetQueryRequest.model_validate(
+        {
+            "dataset_id": resources.dataset_id,
+            "metrics": [{"metric_id": metric_ids[2], "output_name": "amount"}],
+        }
+    )
+    with session_factory() as session, pytest.raises(DatasetQueryValidationError) as error:
+        execute_dataset_query(
+            session,
+            principal=principal(resources),
+            request=broken_request,
+        )
+    assert error.value.code == "metric_field_not_found"
 
 
 def test_source_batch_context_includes_user_filter(
@@ -542,11 +752,26 @@ def test_dataset_query_api_validates_executes_and_returns_structured_errors(
         missing_payload = dict(payload)
         missing_payload["dataset_id"] = str(uuid4())
         missing = cast(Response, client.post("/dataset-queries", json=missing_payload))
+        metric_payload: dict[str, Any] = {
+            "dataset_id": str(resources.dataset_id),
+            "selections": [{"field_id": str(resources.city_field_id), "output_name": "city"}],
+            "metrics": [{"metric_id": str(resources.metric_id), "output_name": "total_amount"}],
+            "group_by": [str(resources.city_field_id)],
+        }
+        metric_validated = cast(
+            Response,
+            client.post("/dataset-queries/validate", json=metric_payload),
+        )
+        metric_executed = cast(
+            Response,
+            client.post("/dataset-queries", json=metric_payload),
+        )
 
     assert validated.status_code == 200
     assert validated.json()["columns"] == ["city", "amount"]
     assert executed.status_code == 200
     assert executed.json()["truncated"] is True
+    assert executed.json()["metric_version_ids"] == []
     assert len(executed.json()["source_batch_ids"]) == 2
     assert forbidden.status_code == 403
     assert forbidden.json()["detail"]["code"] == "dataset_query_forbidden"
@@ -554,3 +779,7 @@ def test_dataset_query_api_validates_executes_and_returns_structured_errors(
     assert invalid.json()["detail"]["code"] == "calculated_field_query_unsupported"
     assert missing.status_code == 404
     assert missing.json()["detail"]["code"] == "dataset_not_found"
+    assert metric_validated.status_code == 200
+    assert metric_validated.json()["metric_version_ids"] == [str(resources.metric_id)]
+    assert metric_executed.status_code == 200
+    assert metric_executed.json()["metric_version_ids"] == [str(resources.metric_id)]

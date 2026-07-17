@@ -23,6 +23,7 @@ class DatasetQueryValidationResponse(BaseModel):
     valid: bool
     columns: list[str]
     dataset_version: int
+    metric_version_ids: list[UUID]
 
 
 class DatasetQueryResponse(BaseModel):
@@ -31,6 +32,7 @@ class DatasetQueryResponse(BaseModel):
     truncated: bool
     elapsed_ms: float
     dataset_version: int
+    metric_version_ids: list[UUID]
     source_batch_ids: list[UUID]
 
 
@@ -48,6 +50,7 @@ def validate_dataset_query_endpoint(
         valid=True,
         columns=list(prepared.compiled.output_names),
         dataset_version=prepared.dataset.version,
+        metric_version_ids=list(prepared.metric_version_ids),
     )
 
 
@@ -67,6 +70,7 @@ def execute_dataset_query_endpoint(
         truncated=result.truncated,
         elapsed_ms=result.elapsed_ms,
         dataset_version=result.dataset_version,
+        metric_version_ids=list(result.metric_version_ids),
         source_batch_ids=list(result.source_batch_ids),
     )
 

@@ -6,10 +6,12 @@ from bi_system.modeling.compiler import (
     QueryCompilationError,
     QueryCompiler,
     QueryComplexityLimits,
+    ResolvedMetricSelection,
     ResolvedSource,
 )
-from bi_system.modeling.contracts import QueryRequest
+from bi_system.modeling.contracts import DatasetQueryRequest, QueryRequest
 from bi_system.modeling.dialect import UnsupportedQueryDialectError
+from bi_system.modeling.metric_contracts import parse_metric_expression
 from sqlalchemy import Boolean, Column, Integer, MetaData, Numeric, String, Table
 
 
@@ -110,6 +112,84 @@ def test_compiler_executes_grouped_aggregate_and_policy_predicate(
         {"city": "上海", "total_amount": 30},
         {"city": "北京", "total_amount": 10},
     ]
+
+
+def test_compiler_executes_bound_metric_formula_after_governance_filters(
+    source: tuple[ResolvedSource, dict[str, UUID]],
+) -> None:
+    resolved, ids = source
+    engine = create_database_engine("sqlite+pysqlite:///:memory:")
+    resolved.table.create(engine)
+    metric_id = uuid4()
+    formula = parse_metric_expression(
+        {
+            "op": "safe_divide",
+            "numerator": {
+                "op": "multiply",
+                "left": {
+                    "op": "subtract",
+                    "left": {
+                        "op": "add",
+                        "left": {
+                            "op": "aggregate",
+                            "function": "sum",
+                            "field_id": ids["amount"],
+                        },
+                        "right": {"op": "literal", "value": 10},
+                    },
+                    "right": {"op": "literal", "value": 5},
+                },
+                "right": {"op": "literal", "value": 2},
+            },
+            "denominator": {
+                "op": "aggregate",
+                "function": "count",
+                "field_id": ids["amount"],
+            },
+            "fallback": 0,
+        }
+    )
+    request = DatasetQueryRequest.model_validate(
+        {
+            "dataset_id": uuid4(),
+            "selections": [{"field_id": ids["city"], "output_name": "city"}],
+            "metrics": [{"metric_id": metric_id, "output_name": "adjusted_average"}],
+            "group_by": [ids["city"]],
+            "order_by": [{"field_id": ids["city"], "direction": "asc"}],
+        }
+    )
+    with engine.begin() as connection:
+        connection.execute(
+            resolved.table.insert(),
+            [
+                {"_active": True, "city": "北京", "amount": 10, "department": "销售"},
+                {"_active": True, "city": "北京", "amount": 20, "department": "研发"},
+                {"_active": False, "city": "北京", "amount": 999, "department": "销售"},
+                {"_active": True, "city": "上海", "amount": 30, "department": "销售"},
+            ],
+        )
+        compiled = QueryCompiler(dialect_name="sqlite").compile_dataset_query(
+            request,
+            resolved,
+            metrics=(
+                ResolvedMetricSelection(
+                    metric_version_id=metric_id,
+                    output_name="adjusted_average",
+                    formula=formula,
+                ),
+            ),
+            policy_predicates=(resolved.table.c.department == "销售",),
+        )
+        statement = compiled.statement
+        rows = connection.execute(statement).mappings().all()
+        parameters = statement.compile().params.values()
+
+    engine.dispose()
+    assert rows == [
+        {"city": "上海", "adjusted_average": 70},
+        {"city": "北京", "adjusted_average": 30},
+    ]
+    assert {str(value) for value in parameters}.issuperset({"10", "5", "2", "0"})
 
 
 def test_compiler_rejects_unknown_fields_and_non_numeric_sum(

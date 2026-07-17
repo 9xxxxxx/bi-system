@@ -18,6 +18,8 @@ from sqlalchemy import (
     String,
     Text,
     and_,
+    case,
+    literal,
     not_,
     or_,
     select,
@@ -28,6 +30,7 @@ from sqlalchemy.sql.schema import Column, Table
 
 from bi_system.modeling.contracts import (
     AggregateFunction,
+    DatasetQueryRequest,
     QueryRequest,
     QuerySelection,
     QuerySort,
@@ -46,6 +49,12 @@ from bi_system.modeling.expression import (
     TextOperator,
     TextPredicate,
     predicate_count,
+)
+from bi_system.modeling.metric_contracts import (
+    MetricAggregate,
+    MetricBinary,
+    MetricExpression,
+    MetricLiteral,
 )
 
 
@@ -75,6 +84,13 @@ class ResolvedSource:
 class CompiledQuery:
     statement: Select[Any]
     output_names: tuple[str, ...]
+
+
+@dataclass(frozen=True, slots=True)
+class ResolvedMetricSelection:
+    metric_version_id: UUID
+    output_name: str
+    formula: MetricExpression
 
 
 class QueryCompiler:
@@ -124,6 +140,70 @@ class QueryCompiler:
         return CompiledQuery(
             statement=statement,
             output_names=tuple(selection.output_name for selection in request.selections),
+        )
+
+    def compile_dataset_query(
+        self,
+        request: DatasetQueryRequest,
+        source: ResolvedSource,
+        *,
+        metrics: Sequence[ResolvedMetricSelection],
+        policy_predicates: Sequence[ColumnElement[bool]] = (),
+    ) -> CompiledQuery:
+        if not request.metrics:
+            return self.compile(
+                request.for_source(source.source_id),
+                source,
+                policy_predicates=policy_predicates,
+            )
+        expected_metrics = [
+            (selection.metric_id, selection.output_name) for selection in request.metrics
+        ]
+        resolved_metrics = [
+            (selection.metric_version_id, selection.output_name) for selection in metrics
+        ]
+        if expected_metrics != resolved_metrics:
+            raise QueryCompilationError(
+                "metric_not_resolved",
+                "Resolved metrics do not match the dataset query",
+            )
+        self._validate_dataset_metric_request(request, source, metrics)
+        active_column = source.table.c.get("_active")
+        if active_column is None:
+            raise QueryCompilationError(
+                "source_missing_active_marker",
+                "Resolved source does not expose the required _active column",
+            )
+
+        selected_expressions = [
+            self._selection_expression(selection, source).label(selection.output_name)
+            for selection in request.selections
+        ]
+        selected_expressions.extend(
+            self._metric_expression(metric.formula, source).label(metric.output_name)
+            for metric in metrics
+        )
+        conditions: list[ColumnElement[bool]] = [active_column.is_(True)]
+        conditions.extend(policy_predicates)
+        if request.filter is not None:
+            conditions.append(self._filter_expression(request.filter, source))
+
+        statement = select(*selected_expressions).select_from(source.table).where(and_(*conditions))
+        if request.group_by:
+            statement = statement.group_by(
+                *[self._required_field(field_id, source) for field_id in request.group_by]
+            )
+        if request.order_by:
+            statement = statement.order_by(
+                *[self._sort_expression(sort, source) for sort in request.order_by]
+            )
+        statement = statement.limit(request.limit)
+        return CompiledQuery(
+            statement=statement,
+            output_names=tuple(
+                [selection.output_name for selection in request.selections]
+                + [metric.output_name for metric in metrics]
+            ),
         )
 
     def compile_filter(
@@ -197,7 +277,104 @@ class QueryCompiler:
                         "Text filters require a string field",
                     )
 
+    def _validate_dataset_metric_request(
+        self,
+        request: DatasetQueryRequest,
+        source: ResolvedSource,
+        metrics: Sequence[ResolvedMetricSelection],
+    ) -> None:
+        checks = (
+            (
+                len(request.selections) + len(request.metrics),
+                self._limits.max_selections,
+                "too_many_selections",
+            ),
+            (len(request.group_by), self._limits.max_group_fields, "too_many_group_fields"),
+            (len(request.order_by), self._limits.max_sorts, "too_many_sorts"),
+            (
+                predicate_count(request.filter),
+                self._limits.max_filter_predicates,
+                "too_many_filter_predicates",
+            ),
+            (request.limit, self._limits.max_result_rows, "result_limit_exceeded"),
+        )
+        for actual, maximum, code in checks:
+            if actual > maximum:
+                raise QueryCompilationError(code, f"Query complexity exceeds the {maximum} limit")
+
+        for field_id in self._referenced_dataset_field_ids(request):
+            self._required_field(field_id, source)
+        for selection in request.selections:
+            self._validate_aggregate_field(selection.aggregate, selection.field_id, source)
+        for metric in metrics:
+            self._validate_metric_expression(metric.formula, source)
+
+        expression = request.filter
+        predicates = (
+            expression.predicates
+            if isinstance(expression, LogicalPredicate)
+            else (() if expression is None else (expression,))
+        )
+        for predicate in predicates:
+            if isinstance(predicate, TextPredicate):
+                column = self._required_field(predicate.field_id, source)
+                if not isinstance(column.type, (String, Text)):
+                    raise QueryCompilationError(
+                        "invalid_text_filter_type",
+                        "Text filters require a string field",
+                    )
+
+    def _validate_aggregate_field(
+        self,
+        aggregate: AggregateFunction | None,
+        field_id: UUID,
+        source: ResolvedSource,
+    ) -> None:
+        if aggregate is None:
+            return
+        if aggregate in {
+            AggregateFunction.SUM,
+            AggregateFunction.AVERAGE,
+            AggregateFunction.MINIMUM,
+            AggregateFunction.MAXIMUM,
+        }:
+            column = self._required_field(field_id, source)
+            if not isinstance(column.type, (Integer, Numeric, Float)):
+                raise QueryCompilationError(
+                    "invalid_aggregate_type",
+                    f"Aggregate {aggregate.value} requires a numeric field",
+                )
+
+    def _validate_metric_expression(
+        self,
+        expression: MetricExpression,
+        source: ResolvedSource,
+    ) -> None:
+        if isinstance(expression, MetricAggregate):
+            self._validate_aggregate_field(expression.function, expression.field_id, source)
+            return
+        if isinstance(expression, MetricLiteral):
+            return
+        children = (
+            (expression.left, expression.right)
+            if isinstance(expression, MetricBinary)
+            else (expression.numerator, expression.denominator)
+        )
+        for child in children:
+            self._validate_metric_expression(child, source)
+
     def _referenced_field_ids(self, request: QueryRequest) -> set[UUID]:
+        field_ids = {selection.field_id for selection in request.selections}
+        field_ids.update(request.group_by)
+        field_ids.update(sort.field_id for sort in request.order_by)
+        if request.filter is not None:
+            if isinstance(request.filter, LogicalPredicate):
+                field_ids.update(predicate.field_id for predicate in request.filter.predicates)
+            else:
+                field_ids.add(request.filter.field_id)
+        return field_ids
+
+    def _referenced_dataset_field_ids(self, request: DatasetQueryRequest) -> set[UUID]:
         field_ids = {selection.field_id for selection in request.selections}
         field_ids.update(request.group_by)
         field_ids.update(sort.field_id for sort in request.order_by)
@@ -217,6 +394,33 @@ class QueryCompiler:
         if selection.aggregate is None:
             return column
         return compile_aggregate(selection.aggregate, column)
+
+    def _metric_expression(
+        self,
+        expression: MetricExpression,
+        source: ResolvedSource,
+    ) -> ColumnElement[Any]:
+        if isinstance(expression, MetricAggregate):
+            column = self._required_field(expression.field_id, source)
+            return compile_aggregate(expression.function, column)
+        if isinstance(expression, MetricLiteral):
+            return literal(expression.value)
+        if isinstance(expression, MetricBinary):
+            left = self._metric_expression(expression.left, source)
+            right = self._metric_expression(expression.right, source)
+            if expression.op == "add":
+                return left + right
+            if expression.op == "subtract":
+                return left - right
+            return left * right
+
+        numerator = self._metric_expression(expression.numerator, source)
+        denominator = self._metric_expression(expression.denominator, source)
+        fallback = literal(expression.fallback)
+        return case(
+            (or_(denominator == 0, denominator.is_(None)), fallback),
+            else_=numerator / denominator,
+        )
 
     def _sort_expression(
         self,
