@@ -1,5 +1,7 @@
 import {
   ArrowLeftOutlined,
+  ApartmentOutlined,
+  CheckCircleOutlined,
   DatabaseOutlined,
   FieldNumberOutlined,
   PlayCircleOutlined,
@@ -11,6 +13,7 @@ import {
   Button,
   Checkbox,
   Descriptions,
+  Divider,
   Empty,
   Input,
   Result,
@@ -27,6 +30,8 @@ import { Link, useNavigate, useParams } from "react-router-dom";
 
 import { ApiError } from "../../shared/api/client";
 import {
+  activateDataset,
+  activateSemanticModel,
   createDataset,
   createSemanticModel,
   getDataset,
@@ -75,14 +80,25 @@ function useMobileLayout(): boolean {
   return isMobile;
 }
 
+interface JoinConfiguration {
+  joinType: "inner" | "left";
+  cardinality: "one_to_one" | "many_to_one";
+  factColumnId?: string;
+  dimensionColumnId?: string;
+}
+
 function DataSourceList({
   sources,
-  selectedId,
-  onSelect,
+  factSourceId,
+  dimensionSourceIds,
+  onSelectFact,
+  onSelectDimensions,
 }: {
   sources: DataSource[];
-  selectedId?: string;
-  onSelect: (sourceId: string) => void;
+  factSourceId?: string;
+  dimensionSourceIds: string[];
+  onSelectFact: (sourceId: string) => void;
+  onSelectDimensions: (sourceIds: string[]) => void;
 }) {
   const [search, setSearch] = useState("");
   const visibleSources = useMemo(() => {
@@ -98,7 +114,7 @@ function DataSourceList({
     <aside className="modeling-pane source-pane" aria-label="可用数据源">
       <div className="modeling-pane-heading">
         <div>
-          <Typography.Text strong>数据源</Typography.Text>
+          <Typography.Text strong>事实表</Typography.Text>
           <Typography.Text type="secondary">
             {sources.length} 个可用资源
           </Typography.Text>
@@ -118,8 +134,8 @@ function DataSourceList({
               <li key={source.id}>
                 <button
                   type="button"
-                  className={`source-list-button${selectedId === source.id ? " is-selected" : ""}`}
-                  onClick={() => onSelect(source.id)}
+                  className={`source-list-button${factSourceId === source.id ? " is-selected" : ""}`}
+                  onClick={() => onSelectFact(source.id)}
                 >
                   <span>{source.name}</span>
                   <small>
@@ -136,6 +152,33 @@ function DataSourceList({
           />
         )}
       </div>
+      <Divider />
+      <Typography.Text strong>维度表</Typography.Text>
+      <Typography.Paragraph type="secondary">
+        可选 0–7 个来源，总来源不超过 8 个
+      </Typography.Paragraph>
+      <Checkbox.Group
+        aria-label="维度表"
+        value={dimensionSourceIds}
+        onChange={(values) => onSelectDimensions(values.map(String))}
+      >
+        <Space orientation="vertical">
+          {sources
+            .filter((source) => source.id !== factSourceId)
+            .map((source) => (
+              <Checkbox
+                key={source.id}
+                value={source.id}
+                disabled={
+                  dimensionSourceIds.length >= 7 &&
+                  !dimensionSourceIds.includes(source.id)
+                }
+              >
+                {source.name}
+              </Checkbox>
+            ))}
+        </Space>
+      </Checkbox.Group>
     </aside>
   );
 }
@@ -154,62 +197,142 @@ function NewDatasetWorkbench() {
   );
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
-  const [selectedSourceId, setSelectedSourceId] = useState<string>();
+  const [factSourceId, setFactSourceId] = useState<string>();
+  const [dimensionSourceIds, setDimensionSourceIds] = useState<string[]>([]);
+  const [joinConfigurations, setJoinConfigurations] = useState<
+    Record<string, JoinConfiguration>
+  >({});
   const [selectedFieldIds, setSelectedFieldIds] = useState<string[]>([]);
   const [fieldRoles, setFieldRoles] = useState<
     Record<string, DatasetFieldRole>
   >({});
-  const selectedSource =
-    activeSources.find((source) => source.id === selectedSourceId) ??
+  const factSource =
+    activeSources.find((source) => source.id === factSourceId) ??
     activeSources[0];
+  const dimensionSources = useMemo(
+    () =>
+      dimensionSourceIds
+        .map((sourceId) =>
+          activeSources.find((source) => source.id === sourceId),
+        )
+        .filter((source): source is DataSource => source !== undefined),
+    [activeSources, dimensionSourceIds],
+  );
+  const selectedSources = useMemo(
+    () => (factSource ? [factSource, ...dimensionSources] : dimensionSources),
+    [dimensionSources, factSource],
+  );
 
   useEffect(() => {
-    if (!selectedSource) {
+    if (!factSource) {
       setSelectedFieldIds([]);
       setFieldRoles({});
       return;
     }
-    setSelectedFieldIds(selectedSource.fields.map((field) => field.id));
+    const fields = selectedSources.flatMap((source) => source.fields);
+    setSelectedFieldIds(fields.map((field) => field.id));
     setFieldRoles(
+      Object.fromEntries(fields.map((field) => [field.id, defaultRole(field)])),
+    );
+  }, [factSource, selectedSources]);
+
+  useEffect(() => {
+    setDimensionSourceIds((current) =>
+      current.filter((sourceId) => sourceId !== factSource?.id).slice(0, 7),
+    );
+  }, [factSource?.id]);
+
+  useEffect(() => {
+    setJoinConfigurations((current) =>
       Object.fromEntries(
-        selectedSource.fields.map((field) => [field.id, defaultRole(field)]),
+        dimensionSourceIds.map((sourceId) => [
+          sourceId,
+          current[sourceId] ?? {
+            joinType: "left",
+            cardinality: "many_to_one",
+          },
+        ]),
       ),
     );
-  }, [selectedSource]);
+  }, [dimensionSourceIds]);
 
   const saveMutation = useMutation({
-    mutationFn: async () => {
-      if (!selectedSource) throw new Error("请选择可用数据源");
+    mutationFn: async (activateAfterSave: boolean) => {
+      if (!factSource) throw new Error("请选择事实表");
       const trimmedName = name.trim();
       if (!trimmedName) throw new Error("请输入数据集名称");
-      const fields = selectedSource.fields.filter((field) =>
-        selectedFieldIds.includes(field.id),
+      const fields = selectedSources.flatMap((source) =>
+        source.fields
+          .filter((field) => selectedFieldIds.includes(field.id))
+          .map((field) => ({ source, field })),
       );
       if (fields.length === 0) throw new Error("至少选择一个字段");
+      const incompleteRelation = dimensionSources.find((source) => {
+        const configuration = joinConfigurations[source.id];
+        return !configuration?.factColumnId || !configuration.dimensionColumnId;
+      });
+      if (incompleteRelation) {
+        throw new Error(`请完整配置“${incompleteRelation.name}”的连接字段`);
+      }
       const normalizedDescription = description.trim() || null;
       const model = await createSemanticModel({
         name: semanticModelName(trimmedName),
         description: normalizedDescription,
         sources: [
-          { target_id: selectedSource.id, alias: "fact", role: "fact" },
+          { target_id: factSource.id, alias: "fact", role: "fact" },
+          ...dimensionSources.map((source, index) => ({
+            target_id: source.id,
+            alias: `dim_${index + 1}`,
+            role: "dimension" as const,
+          })),
         ],
-        joins: [],
+        joins: dimensionSources.map((source, index) => {
+          const configuration = joinConfigurations[source.id];
+          if (
+            !configuration?.factColumnId ||
+            !configuration.dimensionColumnId
+          ) {
+            throw new Error(`请完整配置“${source.name}”的连接字段`);
+          }
+          return {
+            left_source: "fact",
+            right_source: `dim_${index + 1}`,
+            join_type: configuration.joinType,
+            cardinality: configuration.cardinality,
+            keys: [
+              {
+                left_column_id: configuration.factColumnId,
+                right_column_id: configuration.dimensionColumnId,
+              },
+            ],
+          };
+        }),
       });
-      const modelSource = model.sources[0];
-      if (!modelSource) throw new Error("语义模型未返回事实表来源");
-      return createDataset({
+      if (activateAfterSave) await activateSemanticModel(model.id);
+      const modelSourceByTarget = new Map(
+        model.sources.map((source) => [source.target_id, source]),
+      );
+      const createdDataset = await createDataset({
         semantic_model_id: model.id,
         name: trimmedName,
         description: normalizedDescription,
-        fields: fields.map((field, index) => ({
-          model_source_id: modelSource.id,
-          source_column_id: field.id,
-          name: `field_${index + 1}`,
-          label: field.display_name,
-          role: fieldRoles[field.id] ?? defaultRole(field),
-          hidden: false,
-        })),
+        fields: fields.map(({ source, field }, index) => {
+          const modelSource = modelSourceByTarget.get(source.id);
+          if (!modelSource)
+            throw new Error(`语义模型未返回“${source.name}”来源`);
+          return {
+            model_source_id: modelSource.id,
+            source_column_id: field.id,
+            name: `field_${index + 1}`,
+            label: field.display_name,
+            role: fieldRoles[field.id] ?? defaultRole(field),
+            hidden: false,
+          };
+        }),
       });
+      return activateAfterSave
+        ? activateDataset(createdDataset.id)
+        : createdDataset;
     },
     onSuccess: (dataset) =>
       navigate(`/datasets/${dataset.id}`, { replace: true }),
@@ -238,10 +361,17 @@ function NewDatasetWorkbench() {
   }
 
   const selectedCount = selectedFieldIds.length;
+  const relationsReady = dimensionSources.every((source) => {
+    const configuration = joinConfigurations[source.id];
+    return Boolean(
+      configuration?.factColumnId && configuration.dimensionColumnId,
+    );
+  });
   const canSave =
     Boolean(name.trim()) &&
-    Boolean(selectedSource) &&
+    Boolean(factSource) &&
     selectedCount > 0 &&
+    relationsReady &&
     !isMobile;
 
   return (
@@ -255,18 +385,28 @@ function NewDatasetWorkbench() {
             新建数据集
           </Typography.Title>
           <Typography.Text type="secondary">
-            选择一个事实表并定义首版字段语义
+            配置事实表、维度关系与首版字段语义
           </Typography.Text>
         </div>
-        <Button
-          type="primary"
-          icon={<SaveOutlined />}
-          loading={saveMutation.isPending}
-          disabled={!canSave}
-          onClick={() => saveMutation.mutate()}
-        >
-          保存草稿
-        </Button>
+        <Space wrap>
+          <Button
+            icon={<SaveOutlined />}
+            loading={saveMutation.isPending}
+            disabled={!canSave}
+            onClick={() => saveMutation.mutate(false)}
+          >
+            保存草稿
+          </Button>
+          <Button
+            type="primary"
+            icon={<CheckCircleOutlined />}
+            loading={saveMutation.isPending}
+            disabled={!canSave}
+            onClick={() => saveMutation.mutate(true)}
+          >
+            保存并激活
+          </Button>
+        </Space>
       </header>
 
       <Alert
@@ -289,8 +429,8 @@ function NewDatasetWorkbench() {
       <div className="model-health-bar" aria-label="数据集配置状态">
         <div>
           <DatabaseOutlined />
-          <span>可用数据源</span>
-          <strong>{activeSources.length}</strong>
+          <span>已选来源</span>
+          <strong>{selectedSources.length}/8</strong>
         </div>
         <div>
           <FieldNumberOutlined />
@@ -307,8 +447,12 @@ function NewDatasetWorkbench() {
       <div className="modeling-grid">
         <DataSourceList
           sources={activeSources}
-          selectedId={selectedSource?.id}
-          onSelect={setSelectedSourceId}
+          factSourceId={factSource?.id}
+          dimensionSourceIds={dimensionSourceIds}
+          onSelectFact={setFactSourceId}
+          onSelectDimensions={(values) =>
+            setDimensionSourceIds(values.slice(0, 7))
+          }
         />
         <main className="modeling-pane relation-pane" aria-label="数据集属性">
           <div className="modeling-pane-heading">
@@ -341,20 +485,109 @@ function NewDatasetWorkbench() {
                 onChange={(event) => setDescription(event.target.value)}
               />
             </label>
-            {selectedSource ? (
+            {factSource ? (
               <Descriptions size="small" column={1} colon={false}>
                 <Descriptions.Item label="事实表">
-                  {selectedSource.name}
+                  {factSource.name}
                 </Descriptions.Item>
-                <Descriptions.Item label="有效数据">
-                  {selectedSource.active_row_count} 行
-                </Descriptions.Item>
-                <Descriptions.Item label="活动批次">
-                  {selectedSource.latest_active_batch_id ?? "暂无"}
+                <Descriptions.Item label="维度表">
+                  {dimensionSources.length > 0
+                    ? dimensionSources.map((source) => source.name).join("、")
+                    : "未配置"}
                 </Descriptions.Item>
               </Descriptions>
             ) : (
               <Empty description="导入数据后即可开始建模" />
+            )}
+            <Divider />
+            <Typography.Text strong>星型关系</Typography.Text>
+            {dimensionSources.length > 0 ? (
+              dimensionSources.map((source) => {
+                const configuration = joinConfigurations[source.id] ?? {
+                  joinType: "left" as const,
+                  cardinality: "many_to_one" as const,
+                };
+                return (
+                  <Space
+                    key={source.id}
+                    orientation="vertical"
+                    size="small"
+                    style={{ width: "100%" }}
+                  >
+                    <Typography.Text strong>
+                      <ApartmentOutlined /> {factSource?.name} → {source.name}
+                    </Typography.Text>
+                    <Space wrap>
+                      <Select
+                        aria-label={`${source.name}连接类型`}
+                        value={configuration.joinType}
+                        style={{ width: 110 }}
+                        options={[
+                          { value: "inner", label: "INNER" },
+                          { value: "left", label: "LEFT" },
+                        ]}
+                        onChange={(joinType: JoinConfiguration["joinType"]) =>
+                          setJoinConfigurations((current) => ({
+                            ...current,
+                            [source.id]: { ...configuration, joinType },
+                          }))
+                        }
+                      />
+                      <Select
+                        aria-label={`${source.name}连接基数`}
+                        value={configuration.cardinality}
+                        style={{ width: 120 }}
+                        options={[
+                          { value: "one_to_one", label: "1:1" },
+                          { value: "many_to_one", label: "N:1" },
+                        ]}
+                        onChange={(
+                          cardinality: JoinConfiguration["cardinality"],
+                        ) =>
+                          setJoinConfigurations((current) => ({
+                            ...current,
+                            [source.id]: { ...configuration, cardinality },
+                          }))
+                        }
+                      />
+                    </Space>
+                    <Select
+                      aria-label={`${source.name}事实键`}
+                      placeholder="选择事实表连接字段"
+                      value={configuration.factColumnId}
+                      options={(factSource?.fields ?? []).map((field) => ({
+                        value: field.id,
+                        label: `${field.display_name} · ${field.data_type}`,
+                      }))}
+                      onChange={(factColumnId: string) =>
+                        setJoinConfigurations((current) => ({
+                          ...current,
+                          [source.id]: { ...configuration, factColumnId },
+                        }))
+                      }
+                    />
+                    <Select
+                      aria-label={`${source.name}维度键`}
+                      placeholder="选择维度表连接字段"
+                      value={configuration.dimensionColumnId}
+                      options={source.fields.map((field) => ({
+                        value: field.id,
+                        label: `${field.display_name} · ${field.data_type}`,
+                      }))}
+                      onChange={(dimensionColumnId: string) =>
+                        setJoinConfigurations((current) => ({
+                          ...current,
+                          [source.id]: { ...configuration, dimensionColumnId },
+                        }))
+                      }
+                    />
+                  </Space>
+                );
+              })
+            ) : (
+              <Typography.Text type="secondary">
+                单来源模型无需配置连接
+              </Typography.Text>
             )}
           </Space>
         </main>
@@ -367,35 +600,40 @@ function NewDatasetWorkbench() {
               </Typography.Text>
             </div>
           </div>
-          {selectedSource?.fields.length ? (
+          {selectedSources.some((source) => source.fields.length > 0) ? (
             <Checkbox.Group
               value={selectedFieldIds}
               onChange={(values) => setSelectedFieldIds(values.map(String))}
               style={{ width: "100%" }}
             >
               <ul className="field-list">
-                {selectedSource.fields.map((field) => (
-                  <li key={field.id}>
-                    <Checkbox value={field.id}>{field.display_name}</Checkbox>
-                    <Select
-                      aria-label={`${field.display_name}字段角色`}
-                      size="small"
-                      value={fieldRoles[field.id] ?? defaultRole(field)}
-                      disabled={!selectedFieldIds.includes(field.id)}
-                      style={{ width: 88 }}
-                      options={[
-                        { value: "dimension", label: "维度" },
-                        { value: "measure", label: "度量" },
-                      ]}
-                      onChange={(role: DatasetFieldRole) =>
-                        setFieldRoles((current) => ({
-                          ...current,
-                          [field.id]: role,
-                        }))
-                      }
-                    />
-                  </li>
-                ))}
+                {selectedSources.flatMap((source) =>
+                  source.fields.map((field) => (
+                    <li key={`${source.id}:${field.id}`}>
+                      <Checkbox value={field.id}>{field.display_name}</Checkbox>
+                      <Select
+                        aria-label={`${field.display_name}字段角色`}
+                        size="small"
+                        value={fieldRoles[field.id] ?? defaultRole(field)}
+                        disabled={!selectedFieldIds.includes(field.id)}
+                        style={{ width: 88 }}
+                        options={[
+                          { value: "dimension", label: "维度" },
+                          { value: "measure", label: "度量" },
+                        ]}
+                        onChange={(role: DatasetFieldRole) =>
+                          setFieldRoles((current) => ({
+                            ...current,
+                            [field.id]: role,
+                          }))
+                        }
+                      />
+                      <Typography.Text type="secondary">
+                        {source.id === factSource?.id ? "事实" : "维度"}
+                      </Typography.Text>
+                    </li>
+                  )),
+                )}
               </ul>
             </Checkbox.Group>
           ) : (
@@ -569,9 +807,18 @@ function PreviewResult({
 }
 
 function ExistingDatasetWorkbench({ datasetId }: { datasetId: string }) {
+  const isMobile = useMobileLayout();
   const datasetQuery = useQuery({
     queryKey: ["data-modeling", "dataset", datasetId],
     queryFn: () => getDataset(datasetId),
+  });
+  const activateMutation = useMutation({
+    mutationFn: async () => {
+      const dataset = datasetQuery.data;
+      if (!dataset) throw new Error("数据集尚未加载完成");
+      await activateSemanticModel(dataset.semantic_model_id);
+      return activateDataset(dataset.id);
+    },
   });
   if (datasetQuery.isLoading) {
     return (
@@ -607,7 +854,7 @@ function ExistingDatasetWorkbench({ datasetId }: { datasetId: string }) {
       />
     );
   }
-  const dataset = datasetQuery.data;
+  const dataset = activateMutation.data ?? datasetQuery.data;
   if (!dataset) return null;
   return (
     <section className="modeling-workbench" aria-labelledby="workbench-title">
@@ -623,10 +870,38 @@ function ExistingDatasetWorkbench({ datasetId }: { datasetId: string }) {
             {dataset.description || "数据模型工作区"}
           </Typography.Text>
         </div>
-        <Tag color={dataset.status === "active" ? "success" : "default"}>
-          {dataset.status === "active" ? "可用" : "草稿"}
-        </Tag>
+        <Space wrap>
+          <Tag color={dataset.status === "active" ? "success" : "default"}>
+            {dataset.status === "active" ? "可用" : "草稿"}
+          </Tag>
+          {dataset.status === "draft" && (
+            <Button
+              type="primary"
+              icon={<CheckCircleOutlined />}
+              loading={activateMutation.isPending}
+              disabled={isMobile}
+              onClick={() => activateMutation.mutate()}
+            >
+              激活数据集
+            </Button>
+          )}
+        </Space>
       </header>
+      <Alert
+        className="mobile-readonly-alert"
+        type="info"
+        showIcon
+        title="移动端为只读模式"
+        description="请在桌面端激活或修改数据集。"
+      />
+      {activateMutation.isError && (
+        <Alert
+          type="error"
+          showIcon
+          title="数据集激活失败"
+          description={errorDescription(activateMutation.error)}
+        />
+      )}
       <DatasetPreview dataset={dataset} />
     </section>
   );

@@ -47,6 +47,18 @@ export function createDataset(
   });
 }
 
+export function activateSemanticModel(modelId: string): Promise<SemanticModel> {
+  return requestJson<SemanticModel>(`/semantic-models/${modelId}/activate`, {
+    method: "POST",
+  });
+}
+
+export function activateDataset(datasetId: string): Promise<DatasetDetail> {
+  return requestJson<DatasetDetail>(`/datasets/${datasetId}/activate`, {
+    method: "POST",
+  });
+}
+
 export function queryDataset(
   request: DatasetQueryRequest,
 ): Promise<DatasetQueryResult> {

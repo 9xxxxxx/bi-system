@@ -52,7 +52,21 @@ export interface SemanticModel {
   description: string | null;
   status: string;
   sources: SemanticModelSource[];
-  joins: unknown[];
+  joins: SemanticModelJoin[];
+}
+
+export interface SemanticModelJoin {
+  id: string;
+  left_source_id: string;
+  right_source_id: string;
+  join_type: "inner" | "left";
+  cardinality: "one_to_one" | "many_to_one";
+  ordinal: number;
+  keys: Array<{
+    left_column_id: string;
+    right_column_id: string;
+    ordinal: number;
+  }>;
 }
 
 export interface CreateSemanticModelRequest {
@@ -61,9 +75,18 @@ export interface CreateSemanticModelRequest {
   sources: Array<{
     target_id: string;
     alias: string;
-    role: "fact";
+    role: "fact" | "dimension";
   }>;
-  joins: [];
+  joins: Array<{
+    left_source: string;
+    right_source: string;
+    join_type: "inner" | "left";
+    cardinality: "one_to_one" | "many_to_one";
+    keys: Array<{
+      left_column_id: string;
+      right_column_id: string;
+    }>;
+  }>;
 }
 
 export interface DatasetFieldInput {
