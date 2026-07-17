@@ -9,10 +9,13 @@ from sqlalchemy.orm import Session
 from bi_system.api.dependencies import CurrentActor, get_database_session
 from bi_system.modeling.model_contracts import CreateSemanticModel
 from bi_system.modeling.semantic_models import (
+    SemanticModelConflictError,
     SemanticModelNotFoundError,
     SemanticModelServiceError,
     StoredSemanticModel,
+    activate_semantic_model,
     create_semantic_model,
+    create_semantic_model_version,
     get_semantic_model,
     list_semantic_models,
     validate_semantic_model,
@@ -78,6 +81,7 @@ def validate_semantic_model_endpoint(
     session: DatabaseSession,
     actor: CurrentActor,
 ) -> SemanticModelValidationResponse:
+    _require_semantic_model_manager(actor)
     try:
         validated = validate_semantic_model(
             session,
@@ -103,12 +107,56 @@ def create_semantic_model_endpoint(
     session: DatabaseSession,
     actor: CurrentActor,
 ) -> SemanticModelResponse:
+    _require_semantic_model_manager(actor)
     try:
         stored = create_semantic_model(
             session,
             workspace_id=actor.workspace_id,
             actor_user_id=actor.user_id,
             request=request_body,
+        )
+    except SemanticModelServiceError as exc:
+        raise _semantic_model_http_error(exc) from exc
+    return _model_response(stored)
+
+
+@router.post(
+    "/{model_id}/versions",
+    response_model=SemanticModelResponse,
+    status_code=status.HTTP_201_CREATED,
+)
+def create_semantic_model_version_endpoint(
+    model_id: UUID,
+    request_body: CreateSemanticModel,
+    session: DatabaseSession,
+    actor: CurrentActor,
+) -> SemanticModelResponse:
+    _require_semantic_model_manager(actor)
+    try:
+        stored = create_semantic_model_version(
+            session,
+            workspace_id=actor.workspace_id,
+            actor_user_id=actor.user_id,
+            model_id=model_id,
+            request=request_body,
+        )
+    except SemanticModelServiceError as exc:
+        raise _semantic_model_http_error(exc) from exc
+    return _model_response(stored)
+
+
+@router.post("/{model_id}/activate", response_model=SemanticModelResponse)
+def activate_semantic_model_endpoint(
+    model_id: UUID,
+    session: DatabaseSession,
+    actor: CurrentActor,
+) -> SemanticModelResponse:
+    _require_semantic_model_manager(actor)
+    try:
+        stored = activate_semantic_model(
+            session,
+            workspace_id=actor.workspace_id,
+            model_id=model_id,
         )
     except SemanticModelServiceError as exc:
         raise _semantic_model_http_error(exc) from exc
@@ -191,8 +239,25 @@ def _model_response(stored: StoredSemanticModel) -> SemanticModelResponse:
 
 
 def _semantic_model_http_error(exc: SemanticModelServiceError) -> HTTPException:
-    status_code = 404 if isinstance(exc, SemanticModelNotFoundError) else 422
+    if isinstance(exc, SemanticModelNotFoundError):
+        status_code = status.HTTP_404_NOT_FOUND
+    elif isinstance(exc, SemanticModelConflictError):
+        status_code = status.HTTP_409_CONFLICT
+    else:
+        status_code = status.HTTP_422_UNPROCESSABLE_CONTENT
     return HTTPException(
         status_code=status_code,
         detail={"code": exc.code, "message": str(exc), "action": exc.action},
     )
+
+
+def _require_semantic_model_manager(actor: CurrentActor) -> None:
+    if not actor.has_permission("datasets:manage"):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail={
+                "code": "semantic_model_manage_forbidden",
+                "message": "Dataset management permission is required",
+                "action": "Ask a workspace administrator for dataset management access",
+            },
+        )

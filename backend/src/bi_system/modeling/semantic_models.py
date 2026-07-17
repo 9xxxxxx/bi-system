@@ -3,8 +3,10 @@ from __future__ import annotations
 from dataclasses import dataclass
 from uuid import UUID, uuid4
 
+from pydantic import ValidationError
 from sqlalchemy import select
 from sqlalchemy.orm import Session
+from sqlalchemy.sql import Select
 
 from bi_system.db.models import (
     ImportColumn,
@@ -30,6 +32,10 @@ class SemanticModelNotFoundError(SemanticModelServiceError):
 
 
 class SemanticModelValidationError(SemanticModelServiceError):
+    pass
+
+
+class SemanticModelConflictError(SemanticModelServiceError):
     pass
 
 
@@ -69,6 +75,44 @@ def validate_semantic_model(
             "Use an active workspace member",
         )
 
+    targets_by_alias, columns_by_id = _validate_model_resources(
+        session,
+        workspace_id=workspace_id,
+        request=request,
+    )
+
+    series_id, version = _next_version(
+        session,
+        workspace_id=workspace_id,
+        requested_series_id=request.series_id,
+    )
+    conflict = session.scalar(
+        select(SemanticModel.id).where(
+            SemanticModel.workspace_id == workspace_id,
+            SemanticModel.name == request.name,
+            SemanticModel.version == version,
+        ),
+    )
+    if conflict is not None:
+        raise SemanticModelValidationError(
+            "semantic_model_name_conflict",
+            "A semantic model with this name and version already exists",
+            "Choose another name or create a version in its series",
+        )
+    return ValidatedSemanticModel(
+        targets_by_alias=targets_by_alias,
+        columns_by_id=columns_by_id,
+        series_id=series_id,
+        version=version,
+    )
+
+
+def _validate_model_resources(
+    session: Session,
+    *,
+    workspace_id: UUID,
+    request: CreateSemanticModel,
+) -> tuple[dict[str, ImportTarget], dict[UUID, ImportColumn]]:
     target_ids = {source.target_id for source in request.sources}
     targets = session.scalars(
         select(ImportTarget).where(
@@ -125,30 +169,7 @@ def validate_semantic_model(
                     "Choose compatible fields or normalize them during import",
                 )
 
-    series_id, version = _next_version(
-        session,
-        workspace_id=workspace_id,
-        requested_series_id=request.series_id,
-    )
-    conflict = session.scalar(
-        select(SemanticModel.id).where(
-            SemanticModel.workspace_id == workspace_id,
-            SemanticModel.name == request.name,
-            SemanticModel.version == version,
-        ),
-    )
-    if conflict is not None:
-        raise SemanticModelValidationError(
-            "semantic_model_name_conflict",
-            "A semantic model with this name and version already exists",
-            "Choose another name or create a version in its series",
-        )
-    return ValidatedSemanticModel(
-        targets_by_alias=targets_by_alias,
-        columns_by_id=columns_by_id,
-        series_id=series_id,
-        version=version,
-    )
+    return targets_by_alias, columns_by_id
 
 
 def create_semantic_model(
@@ -165,59 +186,246 @@ def create_semantic_model(
             actor_user_id=actor_user_id,
             request=request,
         )
-        model = SemanticModel(
+        stored = _store_semantic_model(
+            session,
             workspace_id=workspace_id,
-            series_id=validated.series_id,
-            name=request.name,
-            version=validated.version,
-            description=request.description,
-            status="draft",
-            created_by_user_id=actor_user_id,
+            actor_user_id=actor_user_id,
+            request=request,
+            validated=validated,
         )
-        session.add(model)
-        session.flush()
+    return stored
 
-        sources: list[SemanticModelSource] = []
-        for ordinal, source_input in enumerate(request.sources):
-            source = SemanticModelSource(
-                semantic_model_id=model.id,
-                target_id=source_input.target_id,
-                alias=source_input.alias,
-                source_role=source_input.role.value,
-                ordinal=ordinal,
-            )
-            session.add(source)
-            sources.append(source)
-        session.flush()
-        sources_by_alias = {source.alias: source for source in sources}
 
-        stored_joins: list[StoredSemanticModelJoin] = []
-        for ordinal, join_input in enumerate(request.joins):
-            model_join = SemanticModelJoin(
-                semantic_model_id=model.id,
-                left_source_id=sources_by_alias[join_input.left_source].id,
-                right_source_id=sources_by_alias[join_input.right_source].id,
-                join_type=join_input.join_type.value,
-                cardinality=join_input.cardinality.value,
-                risk_acknowledged=False,
-                ordinal=ordinal,
+def create_semantic_model_version(
+    session: Session,
+    *,
+    workspace_id: UUID,
+    actor_user_id: UUID,
+    model_id: UUID,
+    request: CreateSemanticModel,
+) -> StoredSemanticModel:
+    with session.begin():
+        series_id = session.scalar(
+            select(SemanticModel.series_id).where(
+                SemanticModel.id == model_id,
+                SemanticModel.workspace_id == workspace_id,
+                SemanticModel.status != "deleted",
+            ),
+        )
+        if series_id is None:
+            raise SemanticModelNotFoundError(
+                "semantic_model_not_found",
+                "Semantic model was not found",
+                "Choose a model from the current workspace",
             )
-            session.add(model_join)
-            session.flush()
-            keys = tuple(
-                SemanticModelJoinKey(
-                    semantic_model_join_id=model_join.id,
-                    left_column_id=key.left_column_id,
-                    right_column_id=key.right_column_id,
-                    ordinal=key_ordinal,
-                )
-                for key_ordinal, key in enumerate(join_input.keys)
+        locked_versions = session.scalars(
+            _semantic_model_series_lock_statement(
+                workspace_id=workspace_id,
+                series_id=series_id,
+            ),
+        ).all()
+        if not any(model.id == model_id and model.status != "deleted" for model in locked_versions):
+            raise SemanticModelNotFoundError(
+                "semantic_model_not_found",
+                "Semantic model was not found",
+                "Choose a model from the current workspace",
             )
-            session.add_all(keys)
-            stored_joins.append(StoredSemanticModelJoin(join=model_join, keys=keys))
-        session.flush()
+        version_request = request.model_copy(update={"series_id": series_id})
+        validated = validate_semantic_model(
+            session,
+            workspace_id=workspace_id,
+            actor_user_id=actor_user_id,
+            request=version_request,
+        )
+        stored = _store_semantic_model(
+            session,
+            workspace_id=workspace_id,
+            actor_user_id=actor_user_id,
+            request=version_request,
+            validated=validated,
+        )
+    return stored
 
+
+def _store_semantic_model(
+    session: Session,
+    *,
+    workspace_id: UUID,
+    actor_user_id: UUID,
+    request: CreateSemanticModel,
+    validated: ValidatedSemanticModel,
+) -> StoredSemanticModel:
+    model = SemanticModel(
+        workspace_id=workspace_id,
+        series_id=validated.series_id,
+        name=request.name,
+        version=validated.version,
+        description=request.description,
+        status="draft",
+        created_by_user_id=actor_user_id,
+    )
+    session.add(model)
+    session.flush()
+
+    sources: list[SemanticModelSource] = []
+    for ordinal, source_input in enumerate(request.sources):
+        source = SemanticModelSource(
+            semantic_model_id=model.id,
+            target_id=source_input.target_id,
+            alias=source_input.alias,
+            source_role=source_input.role.value,
+            ordinal=ordinal,
+        )
+        session.add(source)
+        sources.append(source)
+    session.flush()
+    sources_by_alias = {source.alias: source for source in sources}
+
+    stored_joins: list[StoredSemanticModelJoin] = []
+    for ordinal, join_input in enumerate(request.joins):
+        model_join = SemanticModelJoin(
+            semantic_model_id=model.id,
+            left_source_id=sources_by_alias[join_input.left_source].id,
+            right_source_id=sources_by_alias[join_input.right_source].id,
+            join_type=join_input.join_type.value,
+            cardinality=join_input.cardinality.value,
+            risk_acknowledged=False,
+            ordinal=ordinal,
+        )
+        session.add(model_join)
+        session.flush()
+        keys = tuple(
+            SemanticModelJoinKey(
+                semantic_model_join_id=model_join.id,
+                left_column_id=key.left_column_id,
+                right_column_id=key.right_column_id,
+                ordinal=key_ordinal,
+            )
+            for key_ordinal, key in enumerate(join_input.keys)
+        )
+        session.add_all(keys)
+        stored_joins.append(StoredSemanticModelJoin(join=model_join, keys=keys))
+    session.flush()
     return StoredSemanticModel(model=model, sources=tuple(sources), joins=tuple(stored_joins))
+
+
+def activate_semantic_model(
+    session: Session,
+    *,
+    workspace_id: UUID,
+    model_id: UUID,
+) -> StoredSemanticModel:
+    with session.begin():
+        series_id = session.scalar(
+            select(SemanticModel.series_id).where(
+                SemanticModel.id == model_id,
+                SemanticModel.workspace_id == workspace_id,
+                SemanticModel.status != "deleted",
+            ),
+        )
+        if series_id is None:
+            raise SemanticModelNotFoundError(
+                "semantic_model_not_found",
+                "Semantic model was not found",
+                "Choose a model from the current workspace",
+            )
+        locked_versions = session.scalars(
+            _semantic_model_series_lock_statement(
+                workspace_id=workspace_id,
+                series_id=series_id,
+            ),
+        ).all()
+        target = next((model for model in locked_versions if model.id == model_id), None)
+        if target is None or target.status == "deleted":
+            raise SemanticModelNotFoundError(
+                "semantic_model_not_found",
+                "Semantic model was not found",
+                "Choose a model from the current workspace",
+            )
+        if target.status not in {"draft", "active"}:
+            raise SemanticModelConflictError(
+                "semantic_model_activation_conflict",
+                "Only draft or active semantic models can be activated",
+                "Create a new version before activating",
+            )
+
+        stored = _load_stored_semantic_model(session, model=target)
+        request = _request_from_stored_model(stored)
+        _validate_model_resources(
+            session,
+            workspace_id=workspace_id,
+            request=request,
+        )
+        for version in locked_versions:
+            if version.status == "active" and version.id != target.id:
+                version.status = "archived"
+        target.status = "active"
+        session.flush()
+    return stored
+
+
+def _semantic_model_series_lock_statement(
+    *,
+    workspace_id: UUID,
+    series_id: UUID,
+) -> Select[tuple[SemanticModel]]:
+    return (
+        select(SemanticModel)
+        .where(
+            SemanticModel.workspace_id == workspace_id,
+            SemanticModel.series_id == series_id,
+        )
+        .order_by(SemanticModel.version, SemanticModel.id)
+        .with_for_update()
+    )
+
+
+def _request_from_stored_model(stored: StoredSemanticModel) -> CreateSemanticModel:
+    aliases_by_source_id = {source.id: source.alias for source in stored.sources}
+    try:
+        payload = {
+            "name": stored.model.name,
+            "description": stored.model.description,
+            "series_id": str(stored.model.series_id),
+            "sources": [
+                {
+                    "target_id": str(source.target_id),
+                    "alias": source.alias,
+                    "role": source.source_role,
+                }
+                for source in stored.sources
+            ],
+            "joins": [
+                {
+                    "left_source": aliases_by_source_id[item.join.left_source_id],
+                    "right_source": aliases_by_source_id[item.join.right_source_id],
+                    "join_type": item.join.join_type,
+                    "cardinality": item.join.cardinality,
+                    "keys": [
+                        {
+                            "left_column_id": str(key.left_column_id),
+                            "right_column_id": str(key.right_column_id),
+                        }
+                        for key in item.keys
+                    ],
+                }
+                for item in stored.joins
+            ],
+        }
+    except KeyError as exc:
+        raise SemanticModelValidationError(
+            "semantic_model_topology_invalid",
+            "Stored joins reference sources outside the semantic model",
+            "Repair the model topology before activating",
+        ) from exc
+    try:
+        return CreateSemanticModel.model_validate(payload)
+    except ValidationError as exc:
+        raise SemanticModelValidationError(
+            "semantic_model_topology_invalid",
+            "Stored semantic model topology is invalid",
+            "Repair the model topology before activating",
+        ) from exc
 
 
 def list_semantic_models(
@@ -248,6 +456,14 @@ def get_semantic_model(
     model = session.get(SemanticModel, model_id)
     if model is None or model.workspace_id != workspace_id or model.status == "deleted":
         return None
+    return _load_stored_semantic_model(session, model=model)
+
+
+def _load_stored_semantic_model(
+    session: Session,
+    *,
+    model: SemanticModel,
+) -> StoredSemanticModel:
     sources = tuple(
         session.scalars(
             select(SemanticModelSource)

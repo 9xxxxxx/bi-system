@@ -1,3 +1,4 @@
+# pyright: reportPrivateUsage=false
 from collections.abc import Iterator
 from dataclasses import dataclass
 from pathlib import Path
@@ -5,17 +6,23 @@ from uuid import UUID, uuid4
 
 import pytest
 from bi_system.db.base import Base
-from bi_system.db.models import ImportColumn, ImportTarget, User
+from bi_system.db.models import ImportColumn, ImportTarget, SemanticModel, User
 from bi_system.db.session import create_database_engine, create_session_factory
 from bi_system.modeling.model_contracts import CreateSemanticModel
 from bi_system.modeling.semantic_models import (
+    SemanticModelConflictError,
     SemanticModelNotFoundError,
     SemanticModelValidationError,
+    _semantic_model_series_lock_statement,
+    activate_semantic_model,
     create_semantic_model,
+    create_semantic_model_version,
     get_semantic_model,
     list_semantic_models,
     validate_semantic_model,
 )
+from sqlalchemy import select
+from sqlalchemy.dialects import postgresql
 from sqlalchemy.engine import Engine
 from sqlalchemy.orm import Session, sessionmaker
 
@@ -153,11 +160,12 @@ def test_service_creates_reads_lists_and_versions_model(
             actor_user_id=resources.user_id,
             request=model_request(resources),
         )
-        second = create_semantic_model(
+        second = create_semantic_model_version(
             session,
             workspace_id=resources.workspace_id,
             actor_user_id=resources.user_id,
-            request=model_request(resources, series_id=first.model.series_id),
+            model_id=first.model.id,
+            request=model_request(resources),
         )
         stored = get_semantic_model(
             session,
@@ -247,3 +255,141 @@ def test_service_get_returns_none_across_workspaces(
             model_id=stored.model.id,
         )
     assert hidden is None
+
+
+def test_activation_archives_the_previous_active_series_version(
+    model_store: tuple[sessionmaker[Session], ModelResources, Engine],
+) -> None:
+    session_factory, resources, _engine = model_store
+    with session_factory() as session:
+        first = create_semantic_model(
+            session,
+            workspace_id=resources.workspace_id,
+            actor_user_id=resources.user_id,
+            request=model_request(resources),
+        )
+        activated_first = activate_semantic_model(
+            session,
+            workspace_id=resources.workspace_id,
+            model_id=first.model.id,
+        )
+        second = create_semantic_model(
+            session,
+            workspace_id=resources.workspace_id,
+            actor_user_id=resources.user_id,
+            request=model_request(resources, series_id=first.model.series_id),
+        )
+        activated_second = activate_semantic_model(
+            session,
+            workspace_id=resources.workspace_id,
+            model_id=second.model.id,
+        )
+        first_status = session.get(SemanticModel, first.model.id)
+
+        assert activated_first.model.version == 1
+        assert activated_second.model.status == "active"
+        assert first_status is not None
+        assert first_status.status == "archived"
+        with pytest.raises(SemanticModelConflictError) as error:
+            activate_semantic_model(
+                session,
+                workspace_id=resources.workspace_id,
+                model_id=first.model.id,
+            )
+    assert error.value.code == "semantic_model_activation_conflict"
+
+
+def test_activation_revalidates_source_status(
+    model_store: tuple[sessionmaker[Session], ModelResources, Engine],
+) -> None:
+    session_factory, resources, _engine = model_store
+    with session_factory() as session:
+        stored = create_semantic_model(
+            session,
+            workspace_id=resources.workspace_id,
+            actor_user_id=resources.user_id,
+            request=model_request(resources),
+        )
+    with session_factory.begin() as session:
+        target = session.get(ImportTarget, resources.dimension_target_id)
+        assert target is not None
+        target.status = "archived"
+
+    with session_factory() as session, pytest.raises(SemanticModelValidationError) as error:
+        activate_semantic_model(
+            session,
+            workspace_id=resources.workspace_id,
+            model_id=stored.model.id,
+        )
+    assert error.value.code == "semantic_model_source_inactive"
+
+
+def test_activation_hides_cross_workspace_models(
+    model_store: tuple[sessionmaker[Session], ModelResources, Engine],
+) -> None:
+    session_factory, resources, _engine = model_store
+    with session_factory() as session:
+        stored = create_semantic_model(
+            session,
+            workspace_id=resources.workspace_id,
+            actor_user_id=resources.user_id,
+            request=model_request(resources),
+        )
+        with pytest.raises(SemanticModelNotFoundError) as error:
+            activate_semantic_model(
+                session,
+                workspace_id=uuid4(),
+                model_id=stored.model.id,
+            )
+    assert error.value.code == "semantic_model_not_found"
+
+
+def test_series_lock_uses_stable_postgres_for_update_order() -> None:
+    workspace_id = uuid4()
+    series_id = uuid4()
+    statement = _semantic_model_series_lock_statement(
+        workspace_id=workspace_id,
+        series_id=series_id,
+    )
+    compiled = str(statement.compile(dialect=postgresql.dialect())).upper()
+
+    assert "ORDER BY SEMANTIC_MODELS.VERSION, SEMANTIC_MODELS.ID" in compiled
+    assert compiled.endswith("FOR UPDATE")
+
+
+def test_activation_leaves_exactly_one_active_version(
+    model_store: tuple[sessionmaker[Session], ModelResources, Engine],
+) -> None:
+    session_factory, resources, _engine = model_store
+    with session_factory() as session:
+        first = create_semantic_model(
+            session,
+            workspace_id=resources.workspace_id,
+            actor_user_id=resources.user_id,
+            request=model_request(resources),
+        )
+        second = create_semantic_model_version(
+            session,
+            workspace_id=resources.workspace_id,
+            actor_user_id=resources.user_id,
+            model_id=first.model.id,
+            request=model_request(resources),
+        )
+        activate_semantic_model(
+            session,
+            workspace_id=resources.workspace_id,
+            model_id=first.model.id,
+        )
+        activate_semantic_model(
+            session,
+            workspace_id=resources.workspace_id,
+            model_id=second.model.id,
+        )
+        active_ids = session.scalars(
+            select(SemanticModel.id).where(
+                SemanticModel.series_id == first.model.series_id,
+                SemanticModel.status == "active",
+            ),
+        ).all()
+
+    assert active_ids == [second.model.id]
