@@ -444,6 +444,29 @@ def test_multi_source_query_preserves_left_and_enforces_inner_compound_and_activ
     }
 
 
+def test_multi_source_query_executes_one_to_one_cardinality(
+    multi_source_store: tuple[sessionmaker[Session], MultiSourceResources, Engine],
+) -> None:
+    session_factory, resources, _engine = multi_source_store
+    with session_factory.begin() as session:
+        product_join = session.get(SemanticModelJoin, resources.product_join_id)
+        assert product_join is not None
+        product_join.cardinality = "one_to_one"
+
+    with session_factory() as session:
+        result = execute_dataset_query(
+            session,
+            principal=principal(resources),
+            request=detail_request(resources),
+        )
+
+    assert result.rows == (
+        {"city": "Beijing", "product": "Widget", "amount": 10},
+        {"city": None, "product": "Widget", "amount": 20},
+        {"city": None, "product": "Widget", "amount": 30},
+    )
+
+
 def test_multi_source_metric_aggregates_after_rls_and_reports_actual_batches(
     multi_source_store: tuple[sessionmaker[Session], MultiSourceResources, Engine],
 ) -> None:

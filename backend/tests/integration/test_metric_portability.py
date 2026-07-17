@@ -1,13 +1,17 @@
 import os
+from datetime import date
 from decimal import Decimal
+from pathlib import Path
 from uuid import uuid4
 
-import pytest
+from bi_system.db.base import Base
 from bi_system.db.models import (
     Dataset,
     DatasetField,
     ImportColumn,
     ImportTarget,
+    RowPolicy,
+    RowPolicyAssignment,
     SemanticModel,
     SemanticModelJoin,
     SemanticModelJoinKey,
@@ -22,15 +26,18 @@ from bi_system.modeling.datasets import create_calculated_field_version
 from bi_system.modeling.metric_contracts import CreateMetric, CreateMetricVersion
 from bi_system.modeling.metrics import create_metric, create_metric_version
 from bi_system.modeling.query_service import execute_dataset_query
-from sqlalchemy import Boolean, Column, MetaData, Numeric, String, Table, Uuid
+from sqlalchemy import Boolean, Column, Date, MetaData, Numeric, String, Table, Uuid
 
 
-def test_metric_versions_run_on_configured_database() -> None:
-    database_url = os.environ.get("BI_DATABASE_URL")
-    if database_url is None:
-        pytest.skip("BI_DATABASE_URL is required for metric portability checks")
+def test_governed_queries_run_on_configured_database(tmp_path: Path) -> None:
+    database_url = os.environ.get(
+        "BI_DATABASE_URL",
+        f"sqlite+pysqlite:///{(tmp_path / 'metric-portability.db').as_posix()}",
+    )
 
     engine = create_database_engine(database_url)
+    if engine.dialect.name == "sqlite":
+        Base.metadata.create_all(engine)
     session_factory = create_session_factory(engine)
     workspace_id = uuid4()
     batch_id = uuid4()
@@ -44,6 +51,8 @@ def test_metric_versions_run_on_configured_database() -> None:
         Column("_active", Boolean, nullable=False),
         Column("city", String),
         Column("amount", Numeric(38, 10)),
+        Column("event_date", Date),
+        Column("enabled", Boolean),
     )
     dimension_table = Table(
         dimension_table_name,
@@ -65,24 +74,32 @@ def test_metric_versions_run_on_configured_database() -> None:
                         "_active": True,
                         "city": "Beijing",
                         "amount": Decimal("10"),
+                        "event_date": date(2026, 1, 2),
+                        "enabled": True,
                     },
                     {
                         "_batch_id": batch_id,
                         "_active": True,
                         "city": "Beijing",
                         "amount": Decimal("20"),
+                        "event_date": date(2026, 1, 1),
+                        "enabled": False,
                     },
                     {
                         "_batch_id": batch_id,
                         "_active": False,
                         "city": "Beijing",
                         "amount": Decimal("999"),
+                        "event_date": date(2025, 12, 31),
+                        "enabled": True,
                     },
                     {
                         "_batch_id": batch_id,
                         "_active": True,
                         "city": "Shanghai",
                         "amount": Decimal("30"),
+                        "event_date": date(2026, 1, 3),
+                        "enabled": True,
                     },
                 ],
             )
@@ -143,6 +160,22 @@ def test_metric_versions_run_on_configured_database() -> None:
                     nullable=True,
                     ordinal=1,
                 )
+                event_date_column = ImportColumn(
+                    target_id=target.id,
+                    source_name="Event date",
+                    physical_name="event_date",
+                    data_type="date",
+                    nullable=True,
+                    ordinal=2,
+                )
+                enabled_column = ImportColumn(
+                    target_id=target.id,
+                    source_name="Enabled",
+                    physical_name="enabled",
+                    data_type="boolean",
+                    nullable=True,
+                    ordinal=3,
+                )
                 dimension_city_column = ImportColumn(
                     target_id=dimension_target.id,
                     source_name="City",
@@ -160,7 +193,14 @@ def test_metric_versions_run_on_configured_database() -> None:
                     ordinal=1,
                 )
                 session.add_all(
-                    [city_column, amount_column, dimension_city_column, city_name_column]
+                    [
+                        city_column,
+                        amount_column,
+                        event_date_column,
+                        enabled_column,
+                        dimension_city_column,
+                        city_name_column,
+                    ]
                 )
                 session.flush()
                 model = SemanticModel(
@@ -238,12 +278,54 @@ def test_metric_versions_run_on_configured_database() -> None:
                     data_type="string",
                     ordinal=1,
                 )
-                session.add_all([amount, city])
+                event_date_field = DatasetField(
+                    dataset_id=dataset.id,
+                    model_source_id=source.id,
+                    source_column_id=event_date_column.id,
+                    name="event_date",
+                    label="Event date",
+                    field_kind="source",
+                    field_role="dimension",
+                    data_type="date",
+                    ordinal=2,
+                )
+                enabled_field = DatasetField(
+                    dataset_id=dataset.id,
+                    model_source_id=source.id,
+                    source_column_id=enabled_column.id,
+                    name="enabled",
+                    label="Enabled",
+                    field_kind="source",
+                    field_role="dimension",
+                    data_type="boolean",
+                    ordinal=3,
+                )
+                session.add_all([amount, city, event_date_field, enabled_field])
                 session.flush()
+                deny_ten = RowPolicy(
+                    workspace_id=workspace_id,
+                    dataset_id=dataset.id,
+                    name="Exclude ten",
+                    version=1,
+                    effect="deny",
+                    expression={
+                        "kind": "comparison",
+                        "field_id": str(amount.id),
+                        "operator": "eq",
+                        "value": 10,
+                    },
+                    status="active",
+                    created_by_user_id=owner.id,
+                )
+                session.add(deny_ten)
+                session.flush()
+                session.add(RowPolicyAssignment(row_policy_id=deny_ten.id, user_id=owner.id))
                 owner_id = owner.id
                 dataset_id = dataset.id
                 amount_id = amount.id
                 city_id = city.id
+                event_date_id = event_date_field.id
+                enabled_id = enabled_field.id
 
             created = create_metric(
                 session,
@@ -287,6 +369,42 @@ def test_metric_versions_run_on_configured_database() -> None:
             assert version.series_id == created.series_id
             assert version.formula == created.formula
             assert version.dimension_field_ids == [city_id]
+
+            portability_result = execute_dataset_query(
+                session,
+                principal=QueryPrincipal(
+                    user_id=owner_id,
+                    workspace_id=workspace_id,
+                    permissions=frozenset({"datasets:query"}),
+                ),
+                request=DatasetQueryRequest.model_validate(
+                    {
+                        "dataset_id": dataset_id,
+                        "selections": [
+                            {"field_id": event_date_id, "output_name": "event_date"},
+                            {"field_id": enabled_id, "output_name": "enabled"},
+                            {"field_id": city_id, "output_name": "city"},
+                            {"field_id": amount_id, "output_name": "amount"},
+                        ],
+                        "order_by": [{"field_id": event_date_id, "direction": "asc"}],
+                    }
+                ),
+            )
+            assert portability_result.rows == (
+                {
+                    "event_date": date(2026, 1, 1),
+                    "enabled": False,
+                    "city": "Beijing",
+                    "amount": Decimal("20"),
+                },
+                {
+                    "event_date": date(2026, 1, 3),
+                    "enabled": True,
+                    "city": None,
+                    "amount": Decimal("30"),
+                },
+            )
+            session.rollback()
 
             half_dataset = create_calculated_field_version(
                 session,
@@ -361,7 +479,7 @@ def test_metric_versions_run_on_configured_database() -> None:
             )
             rows_by_city = {row["city"]: row["average_amount"] for row in result.rows}
             assert rows_by_city == {
-                "Beijing": Decimal("15"),
+                "Beijing": Decimal("20"),
                 None: Decimal("30"),
             }
             assert result.metric_version_ids == (created.id,)
