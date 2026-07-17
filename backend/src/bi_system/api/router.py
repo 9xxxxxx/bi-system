@@ -6,6 +6,7 @@ from bi_system.api.routes import (
     dataset_queries,
     datasets,
     health,
+    identity,
     import_batches,
     import_templates,
     metrics,
@@ -17,6 +18,7 @@ from bi_system.api.routes import (
 api_router = APIRouter()
 api_router.include_router(health.router, prefix="/health", tags=["health"])
 api_router.include_router(auth.router, prefix="/auth", tags=["auth"])
+api_router.include_router(identity.router, prefix="/identity", tags=["identity"])
 api_router.include_router(source_files.router, prefix="/source-files", tags=["source-files"])
 api_router.include_router(data_sources.router, prefix="/data-sources", tags=["data-sources"])
 api_router.include_router(datasets.router, prefix="/datasets", tags=["datasets"])

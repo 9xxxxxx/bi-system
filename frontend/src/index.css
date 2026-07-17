@@ -298,11 +298,120 @@ body {
 }
 
 .modeling-page,
-.modeling-workbench {
+.modeling-workbench,
+.governance-page {
   background: #ffffff;
   border: 1px solid #e5e7eb;
   border-radius: 8px;
   overflow: hidden;
+}
+
+.governance-page {
+  min-height: calc(100vh - 64px);
+}
+
+.governance-header {
+  align-items: center;
+  border-bottom: 1px solid #eef0f4;
+  display: flex;
+  gap: 24px;
+  justify-content: space-between;
+  padding: 24px 28px 20px;
+}
+
+.governance-header .ant-typography,
+.governance-toolbar .ant-typography {
+  margin-bottom: 2px;
+  margin-top: 0;
+}
+
+.governance-state-chain {
+  align-items: center;
+  background: #f5f7fb;
+  border: 1px solid #dfe4eb;
+  border-radius: 6px;
+  color: #6b7280;
+  display: flex;
+  flex: 0 0 auto;
+  font-size: 12px;
+  gap: 8px;
+  padding: 8px 12px;
+}
+
+.governance-state-chain i {
+  border-top: 1px solid #9ca3af;
+  width: 18px;
+}
+
+.governance-state-chain strong {
+  color: #237804;
+}
+
+.governance-tabs > .ant-tabs-nav {
+  background: #fafbfc;
+  margin: 0;
+  padding: 0 28px;
+}
+
+.governance-panel {
+  padding: 20px 28px 28px;
+}
+
+.governance-toolbar {
+  align-items: center;
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 18px;
+}
+
+.governance-panel > .ant-alert {
+  margin-bottom: 16px;
+}
+
+.governance-name {
+  display: grid;
+  gap: 3px;
+}
+
+.governance-name span {
+  color: #6b7280;
+  font-size: 12px;
+}
+
+.governance-form-grid {
+  display: grid;
+  gap: 16px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.policy-expression-grid {
+  display: grid;
+  gap: 12px;
+  grid-template-columns: minmax(0, 1.3fr) minmax(110px, 0.7fr) minmax(0, 1fr);
+}
+
+.policy-flow {
+  background: #f5f7fb;
+  border-left: 3px solid #1677ff;
+  display: grid;
+  font-size: 12px;
+  gap: 6px;
+  grid-template-columns: repeat(3, 1fr);
+  margin-bottom: 22px;
+  padding: 10px 12px;
+}
+
+.policy-flow span {
+  color: #6b7280;
+}
+
+.policy-flow .is-current {
+  color: #0958d9;
+  font-weight: 600;
+}
+
+.governance-form-alert {
+  margin-bottom: 18px;
 }
 
 .modeling-page {
@@ -675,10 +784,26 @@ body {
   }
 
   .modeling-page-header,
-  .workbench-header {
+  .workbench-header,
+  .governance-header {
     align-items: stretch;
     flex-direction: column;
     padding: 20px 16px 16px;
+  }
+
+  .governance-state-chain {
+    align-self: flex-start;
+  }
+
+  .governance-tabs > .ant-tabs-nav,
+  .governance-panel {
+    padding-left: 16px;
+    padding-right: 16px;
+  }
+
+  .governance-form-grid,
+  .policy-expression-grid {
+    grid-template-columns: 1fr;
   }
 
   .modeling-page-header .ant-btn {

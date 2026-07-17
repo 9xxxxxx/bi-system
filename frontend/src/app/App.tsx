@@ -3,6 +3,7 @@ import {
   DashboardOutlined,
   ImportOutlined,
   LogoutOutlined,
+  SafetyCertificateOutlined,
   UserOutlined,
 } from "@ant-design/icons";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -51,10 +52,15 @@ const SystemStatusPage = lazy(async () => {
   const module = await import("../features/system-status/SystemStatusPage");
   return { default: module.SystemStatusPage };
 });
+const GovernancePage = lazy(async () => {
+  const module = await import("../features/governance/GovernancePage");
+  return { default: module.GovernancePage };
+});
 
 function routeKey(pathname: string): string {
   if (pathname.startsWith("/datasets")) return "datasets";
   if (pathname.startsWith("/data-ingestion")) return "ingestion";
+  if (pathname.startsWith("/governance")) return "governance";
   return "status";
 }
 
@@ -180,6 +186,11 @@ function AuthenticatedShell({
               icon: <ApartmentOutlined />,
               label: <NavLink to="/datasets">数据集</NavLink>,
             },
+            {
+              key: "governance",
+              icon: <SafetyCertificateOutlined />,
+              label: <NavLink to="/governance">数据治理</NavLink>,
+            },
           ]}
         />
       </Sider>
@@ -227,6 +238,7 @@ function AuthenticatedShell({
               <Route path="/system-status" element={<SystemStatusPage />} />
               <Route path="/data-ingestion" element={<DataIngestionPage />} />
               <Route path="/datasets" element={<DatasetListPage />} />
+              <Route path="/governance" element={<GovernancePage />} />
               <Route
                 path="/datasets/:datasetId"
                 element={<DatasetWorkbenchPage />}
