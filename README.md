@@ -122,7 +122,7 @@ uv run python scripts/cleanup_ingestion_files.py --older-hours 24 --dry-run
 uv run python scripts/benchmark_m1_ingestion.py --rows 1000000 --chunk-rows 2000
 ```
 
-最新验收结果、跨数据库矩阵和浏览器截图见 [M1 验收记录](docs/verification/m1-verification.md)。
+最新验收结果、跨数据库矩阵和浏览器截图见 [M1 验收记录](docs/verification/m1-verification.md) 与 [M2 验收记录](docs/verification/m2-verification.md)。
 
 支持 UTF-8、UTF-8 BOM 和显式 GB18030 CSV。旧版 `.xls`、宏工作簿、加密或损坏 XLSX 会返回可执行的转换建议。上传内容保存在 `BI_STORAGE_ROOT`，不得手工改名或移动哈希对象。
 
