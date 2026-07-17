@@ -9,6 +9,7 @@ from bi_system.api.routes import (
     import_batches,
     import_templates,
     metrics,
+    row_policies,
     semantic_models,
     source_files,
 )
@@ -20,6 +21,11 @@ api_router.include_router(source_files.router, prefix="/source-files", tags=["so
 api_router.include_router(data_sources.router, prefix="/data-sources", tags=["data-sources"])
 api_router.include_router(datasets.router, prefix="/datasets", tags=["datasets"])
 api_router.include_router(metrics.router, prefix="/metrics", tags=["metrics"])
+api_router.include_router(
+    row_policies.router,
+    prefix="/row-policies",
+    tags=["row-policies"],
+)
 api_router.include_router(
     dataset_queries.router,
     prefix="/dataset-queries",
