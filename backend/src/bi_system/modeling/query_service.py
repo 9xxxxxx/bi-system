@@ -1,15 +1,18 @@
 from __future__ import annotations
 
+import re
+from collections.abc import Sequence
 from dataclasses import dataclass
 from time import perf_counter
-from typing import Any
+from typing import Any, cast
 from uuid import UUID
 
 from pydantic import ValidationError
-from sqlalchemy import Column, MetaData, Table, select
+from sqlalchemy import Column, MetaData, Table, and_, select, union_all
 from sqlalchemy.exc import NoSuchTableError
 from sqlalchemy.orm import Session
 from sqlalchemy.sql.elements import ColumnElement
+from sqlalchemy.sql.selectable import FromClause
 
 from bi_system.db.models import (
     Dataset,
@@ -19,6 +22,8 @@ from bi_system.db.models import (
     Metric,
     MetricDimension,
     SemanticModel,
+    SemanticModelJoin,
+    SemanticModelJoinKey,
     SemanticModelSource,
 )
 from bi_system.identity import QueryPrincipal
@@ -60,7 +65,6 @@ class DatasetQueryValidationError(DatasetQueryError):
 @dataclass(frozen=True, slots=True)
 class PreparedDatasetQuery:
     dataset: Dataset
-    table: Table
     source: ResolvedSource
     compiled: CompiledQuery
     policy_predicates: tuple[ColumnElement[bool], ...]
@@ -116,26 +120,6 @@ def validate_dataset_query(
             "Repair the dataset model configuration",
         )
 
-    model_sources = session.scalars(
-        select(SemanticModelSource)
-        .where(SemanticModelSource.semantic_model_id == dataset.semantic_model_id)
-        .order_by(SemanticModelSource.ordinal),
-    ).all()
-    if len(model_sources) != 1:
-        raise DatasetQueryValidationError(
-            "dataset_query_multiple_sources_unsupported",
-            "This query endpoint currently supports datasets with one source",
-            "Use a single-source dataset until joined query execution is available",
-        )
-    model_source = model_sources[0]
-    target = session.get(ImportTarget, model_source.target_id)
-    if target is None or target.workspace_id != principal.workspace_id or target.status != "active":
-        raise DatasetQueryNotFoundError(
-            "dataset_source_not_found",
-            "Dataset source was not found",
-            "Repair the dataset source configuration",
-        )
-
     dataset_fields = session.scalars(
         select(DatasetField).where(DatasetField.dataset_id == dataset.id),
     ).all()
@@ -168,63 +152,13 @@ def validate_dataset_query(
             "Use source fields until calculated field compilation is available",
         )
 
-    source_fields = [
-        field
-        for field in dataset_fields
-        if field.field_kind == "source"
-        and field.model_source_id == model_source.id
-        and field.source_column_id is not None
-    ]
-    import_column_ids = {field.source_column_id for field in source_fields}
-    import_columns = session.scalars(
-        select(ImportColumn).where(ImportColumn.id.in_(import_column_ids)),
-    ).all()
-    import_columns_by_id = {column.id: column for column in import_columns}
-    for field in referenced_fields:
-        source_column_id = field.source_column_id
-        if field.model_source_id != model_source.id or source_column_id is None:
-            raise DatasetQueryValidationError(
-                "dataset_field_source_mismatch",
-                "Dataset field does not belong to the query source",
-                "Repair the dataset field mapping",
-            )
-        column = import_columns_by_id.get(source_column_id)
-        if column is None or column.target_id != target.id:
-            raise DatasetQueryValidationError(
-                "dataset_field_source_mismatch",
-                "Dataset field does not belong to the query source",
-                "Repair the dataset field mapping",
-            )
-
-    try:
-        table = Table(
-            target.physical_table_name,
-            MetaData(),
-            autoload_with=session.get_bind(),
-        )
-    except NoSuchTableError as exc:
-        raise DatasetQueryValidationError(
-            "dataset_source_table_missing",
-            "Dataset source table is unavailable",
-            "Restore or re-import the dataset source",
-        ) from exc
-    if "_active" not in table.c or "_batch_id" not in table.c:
-        raise DatasetQueryValidationError(
-            "dataset_source_table_invalid",
-            "Dataset source table is missing required system columns",
-            "Re-import the dataset source",
-        )
-
-    resolved_fields: dict[UUID, Column[Any]] = {}
-    for field in source_fields:
-        source_column_id = field.source_column_id
-        if source_column_id is None:
-            continue
-        import_column = import_columns_by_id.get(source_column_id)
-        if import_column is None or import_column.physical_name not in table.c:
-            continue
-        resolved_fields[field.id] = table.c[import_column.physical_name]
-    source = ResolvedSource(source_id=model_source.id, table=table, fields=resolved_fields)
+    source = _resolve_joined_source(
+        session,
+        semantic_model_id=dataset.semantic_model_id,
+        workspace_id=principal.workspace_id,
+        dataset_fields=dataset_fields,
+        referenced_fields=referenced_fields,
+    )
     compiler = QueryCompiler(dialect_name=session.get_bind().dialect.name)
     try:
         policy_predicates = tuple(
@@ -257,7 +191,6 @@ def validate_dataset_query(
         ) from exc
     return PreparedDatasetQuery(
         dataset=dataset,
-        table=table,
         source=source,
         compiled=compiled,
         policy_predicates=policy_predicates,
@@ -285,12 +218,21 @@ def execute_dataset_query(
             "Compiled query is missing its mandatory source filter",
             "Validate the dataset query configuration",
         )
+    batch_selects = [
+        select(batch_column.label("batch_id"))
+        .select_from(prepared.source.selectable)
+        .where(batch_filter, batch_column.is_not(None))
+        for batch_column in prepared.source.batch_columns
+    ]
+    if not batch_selects:
+        raise DatasetQueryValidationError(
+            "compiled_query_batch_context_missing",
+            "Compiled query does not expose source batch context",
+            "Repair the dataset source configuration",
+        )
+    batch_union = union_all(*batch_selects).subquery()
     batch_rows = session.scalars(
-        select(prepared.table.c._batch_id)
-        .where(batch_filter)
-        .distinct()
-        .order_by(prepared.table.c._batch_id)
-        .limit(1_001),
+        select(batch_union.c.batch_id).distinct().order_by(batch_union.c.batch_id).limit(1_001)
     ).all()
     if len(batch_rows) > 1_000:
         raise DatasetQueryValidationError(
@@ -310,6 +252,248 @@ def execute_dataset_query(
             batch_id if isinstance(batch_id, UUID) else UUID(str(batch_id))
             for batch_id in batch_rows
         ),
+    )
+
+
+def _resolve_joined_source(
+    session: Session,
+    *,
+    semantic_model_id: UUID,
+    workspace_id: UUID,
+    dataset_fields: Sequence[DatasetField],
+    referenced_fields: list[DatasetField],
+) -> ResolvedSource:
+    model_sources = session.scalars(
+        select(SemanticModelSource)
+        .where(SemanticModelSource.semantic_model_id == semantic_model_id)
+        .order_by(SemanticModelSource.ordinal, SemanticModelSource.id)
+    ).all()
+    source_ids = {source.id for source in model_sources}
+    if not 1 <= len(model_sources) <= 8 or len(source_ids) != len(model_sources):
+        raise _topology_error("Semantic model must contain between one and eight unique sources")
+    if len({source.ordinal for source in model_sources}) != len(model_sources):
+        raise _topology_error("Semantic model source ordinals must be unique")
+    if any(re.fullmatch(r"[a-z][a-z0-9_]{0,62}", source.alias) is None for source in model_sources):
+        raise _topology_error("Semantic model source aliases are invalid")
+    if len({source.alias for source in model_sources}) != len(model_sources):
+        raise _topology_error("Semantic model source aliases must be unique")
+    fact_sources = [source for source in model_sources if source.source_role == "fact"]
+    if len(fact_sources) != 1 or any(
+        source.source_role not in {"fact", "dimension"} for source in model_sources
+    ):
+        raise _topology_error("Semantic model must contain exactly one fact source")
+    fact_source = fact_sources[0]
+
+    target_ids = {source.target_id for source in model_sources}
+    targets = session.scalars(
+        select(ImportTarget).where(
+            ImportTarget.id.in_(target_ids),
+            ImportTarget.workspace_id == workspace_id,
+            ImportTarget.status == "active",
+        )
+    ).all()
+    targets_by_id = {target.id: target for target in targets}
+    if len(targets_by_id) != len(target_ids):
+        raise DatasetQueryNotFoundError(
+            "dataset_source_not_found",
+            "One or more active dataset sources were not found",
+            "Repair the dataset source configuration",
+        )
+
+    import_columns = session.scalars(
+        select(ImportColumn).where(ImportColumn.target_id.in_(target_ids))
+    ).all()
+    columns_by_id = {column.id: column for column in import_columns}
+    tables_by_source_id: dict[UUID, FromClause] = {}
+    physical_tables_by_source_id: dict[UUID, Table] = {}
+    for source in model_sources:
+        target = targets_by_id[source.target_id]
+        try:
+            physical_table = Table(
+                target.physical_table_name,
+                MetaData(),
+                autoload_with=session.get_bind(),
+            )
+        except NoSuchTableError as exc:
+            raise DatasetQueryValidationError(
+                "dataset_source_table_missing",
+                "A dataset source table is unavailable",
+                "Restore or re-import the dataset source",
+            ) from exc
+        table = physical_table.alias(source.alias)
+        if "_active" not in table.c or "_batch_id" not in table.c:
+            raise DatasetQueryValidationError(
+                "dataset_source_table_invalid",
+                "A dataset source table is missing required system columns",
+                "Re-import the dataset source",
+            )
+        tables_by_source_id[source.id] = table
+        physical_tables_by_source_id[source.id] = physical_table
+
+    source_by_id = {source.id: source for source in model_sources}
+    joins = session.scalars(
+        select(SemanticModelJoin)
+        .where(SemanticModelJoin.semantic_model_id == semantic_model_id)
+        .order_by(SemanticModelJoin.ordinal, SemanticModelJoin.id)
+    ).all()
+    if len(joins) != len(model_sources) - 1:
+        raise _topology_error("Semantic model joins must form one connected acyclic graph")
+    if len({join.ordinal for join in joins}) != len(joins):
+        raise _topology_error("Semantic model join ordinals must be unique")
+
+    join_ids = [join.id for join in joins]
+    join_keys: list[SemanticModelJoinKey] = []
+    if join_ids:
+        join_keys = list(
+            session.scalars(
+                select(SemanticModelJoinKey)
+                .where(SemanticModelJoinKey.semantic_model_join_id.in_(join_ids))
+                .order_by(
+                    SemanticModelJoinKey.semantic_model_join_id,
+                    SemanticModelJoinKey.ordinal,
+                )
+            ).all()
+        )
+    keys_by_join: dict[UUID, list[SemanticModelJoinKey]] = {join_id: [] for join_id in join_ids}
+    for key in join_keys:
+        keys_by_join.setdefault(key.semantic_model_join_id, []).append(key)
+
+    source_pairs: set[frozenset[UUID]] = set()
+    pending: list[tuple[SemanticModelJoin, ColumnElement[bool]]] = []
+    for join in joins:
+        if (
+            join.left_source_id not in source_ids
+            or join.right_source_id not in source_ids
+            or join.left_source_id == join.right_source_id
+            or join.join_type not in {"inner", "left"}
+            or join.cardinality not in {"one_to_one", "many_to_one"}
+        ):
+            raise _topology_error("Stored semantic model join topology is invalid")
+        source_pair = frozenset((join.left_source_id, join.right_source_id))
+        if source_pair in source_pairs:
+            raise _topology_error("A semantic model source pair may be joined only once")
+        source_pairs.add(source_pair)
+
+        keys = keys_by_join.get(join.id, [])
+        if not 1 <= len(keys) <= 8 or len({key.ordinal for key in keys}) != len(keys):
+            raise _join_key_error("Every semantic model join requires ordered join keys")
+        key_pairs = {(key.left_column_id, key.right_column_id) for key in keys}
+        if len(key_pairs) != len(keys):
+            raise _join_key_error("Semantic model join key pairs must be unique")
+        left_source = source_by_id[join.left_source_id]
+        right_source = source_by_id[join.right_source_id]
+        left_table = tables_by_source_id[left_source.id]
+        right_table = tables_by_source_id[right_source.id]
+        predicates: list[ColumnElement[bool]] = []
+        for key in keys:
+            left_column = columns_by_id.get(key.left_column_id)
+            right_column = columns_by_id.get(key.right_column_id)
+            if (
+                left_column is None
+                or right_column is None
+                or left_column.target_id != left_source.target_id
+                or right_column.target_id != right_source.target_id
+                or left_column.data_type != right_column.data_type
+                or left_column.physical_name not in left_table.c
+                or right_column.physical_name not in right_table.c
+            ):
+                raise _join_key_error(
+                    "Join keys must belong to their declared sources and use compatible types"
+                )
+            predicates.append(
+                left_table.c[left_column.physical_name] == right_table.c[right_column.physical_name]
+            )
+        pending.append((join, and_(*predicates)))
+
+    fact_table = tables_by_source_id[fact_source.id]
+    from_clause = fact_table
+    joined_source_ids = {fact_source.id}
+    while pending:
+        progressed = False
+        for index, (join, join_predicate) in enumerate(pending):
+            left_joined = join.left_source_id in joined_source_ids
+            right_joined = join.right_source_id in joined_source_ids
+            if left_joined and right_joined:
+                raise _topology_error("Semantic model joins contain a cycle")
+            if not left_joined and not right_joined:
+                continue
+            if not left_joined:
+                raise _topology_error(
+                    "Joins must point from the fact-connected graph to a dimension"
+                )
+            new_source_id = join.right_source_id
+            new_source = source_by_id[new_source_id]
+            if new_source.source_role != "dimension":
+                raise _topology_error("Only dimension sources may be attached to the fact source")
+            new_table = tables_by_source_id[new_source_id]
+            on_clause = and_(join_predicate, new_table.c._active.is_(True))
+            from_clause = from_clause.join(
+                new_table,
+                on_clause,
+                isouter=join.join_type == "left",
+            )
+            joined_source_ids.add(new_source_id)
+            pending.pop(index)
+            progressed = True
+            break
+        if not progressed:
+            raise _topology_error("Semantic model joins are disconnected")
+    if joined_source_ids != source_ids:
+        raise _topology_error("Semantic model joins do not connect every source")
+
+    resolved_fields: dict[UUID, Column[Any]] = {}
+    for field in dataset_fields:
+        if field.field_kind != "source":
+            continue
+        model_source = (
+            source_by_id.get(field.model_source_id) if field.model_source_id is not None else None
+        )
+        import_column = (
+            columns_by_id.get(field.source_column_id)
+            if field.source_column_id is not None
+            else None
+        )
+        if (
+            model_source is None
+            or import_column is None
+            or import_column.target_id != model_source.target_id
+        ):
+            continue
+        table = tables_by_source_id[model_source.id]
+        if import_column.physical_name in table.c:
+            resolved_fields[field.id] = cast(Column[Any], table.c[import_column.physical_name])
+    if any(field.id not in resolved_fields for field in referenced_fields):
+        raise DatasetQueryValidationError(
+            "dataset_field_source_mismatch",
+            "A dataset field does not belong to its declared model source",
+            "Repair the dataset field mapping",
+        )
+
+    ordered_tables = tuple(tables_by_source_id[source.id] for source in model_sources)
+    return ResolvedSource(
+        source_id=fact_source.id,
+        table=physical_tables_by_source_id[fact_source.id],
+        fields=resolved_fields,
+        from_clause=from_clause,
+        tables=ordered_tables,
+        mandatory_predicates=(fact_table.c._active.is_(True),),
+        batch_columns=tuple(cast(Column[Any], table.c._batch_id) for table in ordered_tables),
+    )
+
+
+def _topology_error(message: str) -> DatasetQueryValidationError:
+    return DatasetQueryValidationError(
+        "semantic_model_topology_invalid",
+        message,
+        "Repair and reactivate the semantic model",
+    )
+
+
+def _join_key_error(message: str) -> DatasetQueryValidationError:
+    return DatasetQueryValidationError(
+        "semantic_model_join_key_invalid",
+        message,
+        "Repair the semantic model join keys",
     )
 
 

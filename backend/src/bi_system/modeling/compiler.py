@@ -27,6 +27,7 @@ from sqlalchemy import (
 from sqlalchemy.sql import Select
 from sqlalchemy.sql.elements import ColumnElement
 from sqlalchemy.sql.schema import Column, Table
+from sqlalchemy.sql.selectable import FromClause
 
 from bi_system.modeling.contracts import (
     AggregateFunction,
@@ -78,6 +79,18 @@ class ResolvedSource:
     source_id: UUID
     table: Table
     fields: Mapping[UUID, Column[Any]]
+    from_clause: FromClause | None = None
+    tables: tuple[FromClause, ...] = ()
+    mandatory_predicates: tuple[ColumnElement[bool], ...] = ()
+    batch_columns: tuple[Column[Any], ...] = ()
+
+    @property
+    def selectable(self) -> FromClause:
+        return self.from_clause if self.from_clause is not None else self.table
+
+    @property
+    def allowed_tables(self) -> tuple[FromClause, ...]:
+        return self.tables if self.tables else (self.table,)
 
 
 @dataclass(frozen=True, slots=True)
@@ -111,8 +124,8 @@ class QueryCompiler:
         policy_predicates: Sequence[ColumnElement[bool]] = (),
     ) -> CompiledQuery:
         self._validate_request(request, source)
-        active_column = source.table.c.get("_active")
-        if active_column is None:
+        mandatory_predicates = self._mandatory_predicates(source)
+        if not mandatory_predicates:
             raise QueryCompilationError(
                 "source_missing_active_marker",
                 "Resolved source does not expose the required _active column",
@@ -122,12 +135,14 @@ class QueryCompiler:
             self._selection_expression(selection, source).label(selection.output_name)
             for selection in request.selections
         ]
-        conditions: list[ColumnElement[bool]] = [active_column.is_(True)]
+        conditions: list[ColumnElement[bool]] = list(mandatory_predicates)
         conditions.extend(policy_predicates)
         if request.filter is not None:
             conditions.append(self._filter_expression(request.filter, source))
 
-        statement = select(*selected_expressions).select_from(source.table).where(and_(*conditions))
+        statement = (
+            select(*selected_expressions).select_from(source.selectable).where(and_(*conditions))
+        )
         if request.group_by:
             statement = statement.group_by(
                 *[self._required_field(field_id, source) for field_id in request.group_by],
@@ -168,8 +183,8 @@ class QueryCompiler:
                 "Resolved metrics do not match the dataset query",
             )
         self._validate_dataset_metric_request(request, source, metrics)
-        active_column = source.table.c.get("_active")
-        if active_column is None:
+        mandatory_predicates = self._mandatory_predicates(source)
+        if not mandatory_predicates:
             raise QueryCompilationError(
                 "source_missing_active_marker",
                 "Resolved source does not expose the required _active column",
@@ -183,12 +198,14 @@ class QueryCompiler:
             self._metric_expression(metric.formula, source).label(metric.output_name)
             for metric in metrics
         )
-        conditions: list[ColumnElement[bool]] = [active_column.is_(True)]
+        conditions: list[ColumnElement[bool]] = list(mandatory_predicates)
         conditions.extend(policy_predicates)
         if request.filter is not None:
             conditions.append(self._filter_expression(request.filter, source))
 
-        statement = select(*selected_expressions).select_from(source.table).where(and_(*conditions))
+        statement = (
+            select(*selected_expressions).select_from(source.selectable).where(and_(*conditions))
+        )
         if request.group_by:
             statement = statement.group_by(
                 *[self._required_field(field_id, source) for field_id in request.group_by]
@@ -543,12 +560,19 @@ class QueryCompiler:
                 "field_not_resolved",
                 f"Field {field_id} is not available in the resolved source",
             )
-        if column.table is not source.table:
+        if not any(column.table is table for table in source.allowed_tables):
             raise QueryCompilationError(
                 "field_source_mismatch",
                 "Resolved field does not belong to the resolved source table",
             )
         return column
+
+    @staticmethod
+    def _mandatory_predicates(source: ResolvedSource) -> tuple[ColumnElement[bool], ...]:
+        if source.mandatory_predicates:
+            return source.mandatory_predicates
+        active_column = source.table.c.get("_active")
+        return () if active_column is None else (active_column.is_(True),)
 
 
 def _escape_like(value: str) -> str:

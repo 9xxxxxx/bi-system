@@ -9,6 +9,8 @@ from bi_system.db.models import (
     ImportColumn,
     ImportTarget,
     SemanticModel,
+    SemanticModelJoin,
+    SemanticModelJoinKey,
     SemanticModelSource,
     User,
 )
@@ -30,7 +32,9 @@ def test_metric_versions_run_on_configured_database() -> None:
     session_factory = create_session_factory(engine)
     workspace_id = uuid4()
     batch_id = uuid4()
+    dimension_batch_id = uuid4()
     table_name = f"data_{uuid4().hex}"
+    dimension_table_name = f"data_{uuid4().hex}"
     table = Table(
         table_name,
         MetaData(),
@@ -39,8 +43,17 @@ def test_metric_versions_run_on_configured_database() -> None:
         Column("city", String),
         Column("amount", Numeric(38, 10)),
     )
+    dimension_table = Table(
+        dimension_table_name,
+        MetaData(),
+        Column("_batch_id", Uuid(as_uuid=True), nullable=False),
+        Column("_active", Boolean, nullable=False),
+        Column("city", String),
+        Column("city_name", String),
+    )
     try:
         table.create(engine)
+        dimension_table.create(engine)
         with engine.begin() as connection:
             connection.execute(
                 table.insert(),
@@ -71,6 +84,23 @@ def test_metric_versions_run_on_configured_database() -> None:
                     },
                 ],
             )
+            connection.execute(
+                dimension_table.insert(),
+                [
+                    {
+                        "_batch_id": dimension_batch_id,
+                        "_active": True,
+                        "city": "Beijing",
+                        "city_name": "Beijing",
+                    },
+                    {
+                        "_batch_id": uuid4(),
+                        "_active": False,
+                        "city": "Shanghai",
+                        "city_name": "Shanghai",
+                    },
+                ],
+            )
         with session_factory() as session:
             with session.begin():
                 owner = User(
@@ -87,7 +117,13 @@ def test_metric_versions_run_on_configured_database() -> None:
                     physical_table_name=table_name,
                     status="active",
                 )
-                session.add(target)
+                dimension_target = ImportTarget(
+                    workspace_id=workspace_id,
+                    name=f"Metric dimension {uuid4().hex}",
+                    physical_table_name=dimension_table_name,
+                    status="active",
+                )
+                session.add_all([target, dimension_target])
                 session.flush()
                 city_column = ImportColumn(
                     target_id=target.id,
@@ -105,7 +141,25 @@ def test_metric_versions_run_on_configured_database() -> None:
                     nullable=True,
                     ordinal=1,
                 )
-                session.add_all([city_column, amount_column])
+                dimension_city_column = ImportColumn(
+                    target_id=dimension_target.id,
+                    source_name="City",
+                    physical_name="city",
+                    data_type="string",
+                    nullable=True,
+                    ordinal=0,
+                )
+                city_name_column = ImportColumn(
+                    target_id=dimension_target.id,
+                    source_name="City name",
+                    physical_name="city_name",
+                    data_type="string",
+                    nullable=True,
+                    ordinal=1,
+                )
+                session.add_all(
+                    [city_column, amount_column, dimension_city_column, city_name_column]
+                )
                 session.flush()
                 model = SemanticModel(
                     workspace_id=workspace_id,
@@ -123,8 +177,33 @@ def test_metric_versions_run_on_configured_database() -> None:
                     source_role="fact",
                     ordinal=0,
                 )
-                session.add(source)
+                dimension_source = SemanticModelSource(
+                    semantic_model_id=model.id,
+                    target_id=dimension_target.id,
+                    alias="city",
+                    source_role="dimension",
+                    ordinal=1,
+                )
+                session.add_all([source, dimension_source])
                 session.flush()
+                model_join = SemanticModelJoin(
+                    semantic_model_id=model.id,
+                    left_source_id=source.id,
+                    right_source_id=dimension_source.id,
+                    join_type="left",
+                    cardinality="many_to_one",
+                    ordinal=0,
+                )
+                session.add(model_join)
+                session.flush()
+                session.add(
+                    SemanticModelJoinKey(
+                        semantic_model_join_id=model_join.id,
+                        left_column_id=city_column.id,
+                        right_column_id=dimension_city_column.id,
+                        ordinal=0,
+                    )
+                )
                 dataset = Dataset(
                     workspace_id=workspace_id,
                     semantic_model_id=model.id,
@@ -148,10 +227,10 @@ def test_metric_versions_run_on_configured_database() -> None:
                 )
                 city = DatasetField(
                     dataset_id=dataset.id,
-                    model_source_id=source.id,
-                    source_column_id=city_column.id,
-                    name="city",
-                    label="City",
+                    model_source_id=dimension_source.id,
+                    source_column_id=city_name_column.id,
+                    name="city_name",
+                    label="City name",
                     field_kind="source",
                     field_role="dimension",
                     data_type="string",
@@ -231,9 +310,9 @@ def test_metric_versions_run_on_configured_database() -> None:
             rows_by_city = {row["city"]: row["average_amount"] for row in result.rows}
             assert rows_by_city == {
                 "Beijing": Decimal("15"),
-                "Shanghai": Decimal("30"),
+                None: Decimal("30"),
             }
             assert result.metric_version_ids == (created.id,)
-            assert result.source_batch_ids == (batch_id,)
+            assert set(result.source_batch_ids) == {batch_id, dimension_batch_id}
     finally:
         engine.dispose()
