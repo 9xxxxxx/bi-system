@@ -103,7 +103,7 @@ def test_dataset_query_requires_output_and_global_unique_names() -> None:
         )
 
 
-def test_dataset_query_rejects_duplicate_metrics_and_metric_sort_shape() -> None:
+def test_dataset_query_rejects_duplicate_and_unselected_metric_sorts() -> None:
     metric_id = uuid4()
     with pytest.raises(ValidationError, match="metrics must be unique"):
         DatasetQueryRequest.model_validate(
@@ -116,12 +116,67 @@ def test_dataset_query_rejects_duplicate_metrics_and_metric_sort_shape() -> None
             }
         )
 
-    with pytest.raises(ValidationError):
+    accepted = DatasetQueryRequest.model_validate(
+        {
+            "dataset_id": uuid4(),
+            "metrics": [{"metric_id": metric_id, "output_name": "metric_one"}],
+            "order_by": [{"kind": "metric", "metric_id": metric_id, "direction": "desc"}],
+        }
+    )
+    assert accepted.order_by[0].kind == "metric"
+
+    with pytest.raises(ValidationError, match="Sort expressions must also be selected"):
         DatasetQueryRequest.model_validate(
             {
                 "dataset_id": uuid4(),
                 "metrics": [{"metric_id": metric_id, "output_name": "metric_one"}],
-                "order_by": [{"metric_id": metric_id, "direction": "desc"}],
+                "order_by": [{"kind": "metric", "metric_id": uuid4(), "direction": "desc"}],
+            }
+        )
+
+
+def test_time_grain_requires_matching_non_aggregate_selection() -> None:
+    field_id = uuid4()
+    measure_id = uuid4()
+    request = DatasetQueryRequest.model_validate(
+        {
+            "dataset_id": uuid4(),
+            "selections": [
+                {
+                    "field_id": field_id,
+                    "output_name": "month",
+                    "time_grain": "month",
+                },
+                {
+                    "field_id": measure_id,
+                    "output_name": "revenue",
+                    "aggregate": "sum",
+                },
+            ],
+            "group_by": [field_id],
+            "order_by": [
+                {
+                    "field_id": field_id,
+                    "time_grain": "month",
+                    "direction": "asc",
+                }
+            ],
+        }
+    )
+    assert request.selections[0].time_grain == "month"
+
+    with pytest.raises(ValidationError, match="Aggregate selections"):
+        DatasetQueryRequest.model_validate(
+            {
+                "dataset_id": uuid4(),
+                "selections": [
+                    {
+                        "field_id": field_id,
+                        "output_name": "invalid",
+                        "aggregate": "count",
+                        "time_grain": "month",
+                    }
+                ],
             }
         )
 

@@ -26,6 +26,12 @@ from bi_system.db.models import (
 from bi_system.db.session import create_database_engine, create_session_factory
 from bi_system.identity import QueryPrincipal
 from bi_system.modeling.contracts import DatasetQueryRequest
+from bi_system.modeling.expression import (
+    ComparisonOperator,
+    ComparisonPredicate,
+    SetOperator,
+    SetPredicate,
+)
 from bi_system.modeling.query_service import (
     DatasetQueryForbiddenError,
     DatasetQueryNotFoundError,
@@ -354,6 +360,64 @@ def test_query_is_bounded_and_returns_active_batch_context(
     assert result.dataset_version == 1
     assert result.metric_version_ids == ()
     assert result.elapsed_ms >= 0
+
+
+def test_server_scoped_filters_are_anded_after_rls(
+    query_store: tuple[sessionmaker[Session], QueryResources, Engine],
+) -> None:
+    session_factory, resources, _engine = query_store
+    with session_factory.begin() as session:
+        policy = RowPolicy(
+            workspace_id=resources.workspace_id,
+            dataset_id=resources.dataset_id,
+            name="Hide secret rows for scoped chart query",
+            version=1,
+            effect="deny",
+            expression={
+                "kind": "comparison",
+                "field_id": str(resources.department_field_id),
+                "operator": "eq",
+                "value": "secret",
+            },
+            status="active",
+            created_by_user_id=resources.user_id,
+        )
+        session.add(policy)
+        session.flush()
+        session.add(RowPolicyAssignment(row_policy_id=policy.id, user_id=resources.user_id))
+
+    scoped_filters = (
+        SetPredicate(
+            kind="set",
+            field_id=resources.city_field_id,
+            operator=SetOperator.IN,
+            values=["北京", "上海"],
+        ),
+        ComparisonPredicate(
+            kind="comparison",
+            field_id=resources.department_field_id,
+            operator=ComparisonOperator.EQUAL,
+            value="sales",
+        ),
+        ComparisonPredicate(
+            kind="comparison",
+            field_id=resources.amount_field_id,
+            operator=ComparisonOperator.GREATER_THAN_OR_EQUAL,
+            value=10,
+        ),
+    )
+    with session_factory() as session:
+        result = execute_dataset_query(
+            session,
+            principal=principal(resources),
+            request=detail_request(resources),
+            scoped_filters=scoped_filters,
+        )
+
+    assert result.rows == (
+        {"city": "北京", "amount": 10},
+        {"city": "上海", "amount": 30},
+    )
 
 
 def test_calculated_fields_support_dependencies_safe_divide_case_filter_and_grouping(

@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from enum import StrEnum
-from typing import Annotated
+from typing import Annotated, Literal
 from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
@@ -27,16 +27,48 @@ class SortDirection(StrEnum):
     DESCENDING = "desc"
 
 
+class TimeGrain(StrEnum):
+    DAY = "day"
+    WEEK = "week"
+    MONTH = "month"
+    QUARTER = "quarter"
+    YEAR = "year"
+
+
 class QuerySelection(StrictQueryModel):
     field_id: UUID
     output_name: str = Field(pattern=r"^[a-z][a-z0-9_]{0,62}$")
     aggregate: AggregateFunction | None = None
+    time_grain: TimeGrain | None = None
+
+    @model_validator(mode="after")
+    def validate_expression(self) -> QuerySelection:
+        if self.aggregate is not None and self.time_grain is not None:
+            raise ValueError("Aggregate selections cannot also use a time grain")
+        return self
 
 
 class QuerySort(StrictQueryModel):
+    kind: Literal["field"] = "field"
     field_id: UUID
     aggregate: AggregateFunction | None = None
+    time_grain: TimeGrain | None = None
     direction: SortDirection = SortDirection.ASCENDING
+
+    @model_validator(mode="after")
+    def validate_expression(self) -> QuerySort:
+        if self.aggregate is not None and self.time_grain is not None:
+            raise ValueError("Aggregate sorts cannot also use a time grain")
+        return self
+
+
+class MetricQuerySort(StrictQueryModel):
+    kind: Literal["metric"] = "metric"
+    metric_id: UUID
+    direction: SortDirection = SortDirection.ASCENDING
+
+
+DatasetQuerySort = QuerySort | MetricQuerySort
 
 
 class DatasetMetricSelection(StrictQueryModel):
@@ -65,7 +97,10 @@ class QueryRequest(StrictQueryModel):
         if len(set(output_names)) != len(output_names):
             raise ValueError("Selection output names must be unique")
 
-        signatures = [(selection.field_id, selection.aggregate) for selection in self.selections]
+        signatures = [
+            (selection.field_id, selection.aggregate, selection.time_grain)
+            for selection in self.selections
+        ]
         if len(set(signatures)) != len(signatures):
             raise ValueError("Selection field and aggregate pairs must be unique")
 
@@ -73,7 +108,7 @@ class QueryRequest(StrictQueryModel):
         missing_sorts = [
             sort
             for sort in self.order_by
-            if (sort.field_id, sort.aggregate) not in selected_signatures
+            if (sort.field_id, sort.aggregate, sort.time_grain) not in selected_signatures
         ]
         if missing_sorts:
             raise ValueError("Sort expressions must also be selected")
@@ -97,7 +132,7 @@ class DatasetQueryRequest(StrictQueryModel):
     metrics: list[DatasetMetricSelection] = Field(default_factory=list, max_length=50)
     filter: FilterExpression | None = None
     group_by: list[UUID] = Field(default_factory=list, max_length=20)
-    order_by: list[QuerySort] = Field(default_factory=list, max_length=10)
+    order_by: list[DatasetQuerySort] = Field(default_factory=list, max_length=10)
     limit: Annotated[int, Field(ge=1, le=10_000)] = 500
 
     @field_validator("group_by")
@@ -112,12 +147,15 @@ class DatasetQueryRequest(StrictQueryModel):
         if not self.selections and not self.metrics:
             raise ValueError("Dataset query must select at least one field or metric")
         if not self.metrics:
+            field_sorts = [sort for sort in self.order_by if isinstance(sort, QuerySort)]
+            if len(field_sorts) != len(self.order_by):
+                raise ValueError("Metric sorts require selected metrics")
             QueryRequest(
                 source_id=self.dataset_id,
                 selections=self.selections,
                 filter=self.filter,
                 group_by=self.group_by,
-                order_by=self.order_by,
+                order_by=field_sorts,
                 limit=self.limit,
             )
             return self
@@ -133,12 +171,21 @@ class DatasetQueryRequest(StrictQueryModel):
         if len(set(metric_ids)) != len(metric_ids):
             raise ValueError("Dataset query metrics must be unique")
 
-        signatures = [(selection.field_id, selection.aggregate) for selection in self.selections]
+        signatures = [
+            (selection.field_id, selection.aggregate, selection.time_grain)
+            for selection in self.selections
+        ]
         if len(set(signatures)) != len(signatures):
             raise ValueError("Selection field and aggregate pairs must be unique")
         selected_signatures = set(signatures)
+        selected_metric_ids = set(metric_ids)
         if any(
-            (sort.field_id, sort.aggregate) not in selected_signatures for sort in self.order_by
+            (
+                isinstance(sort, QuerySort)
+                and (sort.field_id, sort.aggregate, sort.time_grain) not in selected_signatures
+            )
+            or (isinstance(sort, MetricQuerySort) and sort.metric_id not in selected_metric_ids)
+            for sort in self.order_by
         ):
             raise ValueError("Sort expressions must also be selected")
 
@@ -152,11 +199,14 @@ class DatasetQueryRequest(StrictQueryModel):
         return self
 
     def for_source(self, source_id: UUID) -> QueryRequest:
+        field_sorts = [sort for sort in self.order_by if isinstance(sort, QuerySort)]
+        if len(field_sorts) != len(self.order_by):
+            raise ValueError("Metric sorts require selected metrics")
         return QueryRequest(
             source_id=source_id,
             selections=self.selections,
             filter=self.filter,
             group_by=self.group_by,
-            order_by=self.order_by,
+            order_by=field_sorts,
             limit=self.limit,
         )

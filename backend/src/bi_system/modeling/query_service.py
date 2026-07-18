@@ -35,9 +35,9 @@ from bi_system.modeling.compiler import (
     ResolvedMetricSelection,
     ResolvedSource,
 )
-from bi_system.modeling.contracts import DatasetQueryRequest
+from bi_system.modeling.contracts import DatasetQueryRequest, QuerySort
 from bi_system.modeling.datasets import validate_calculated_field_graph
-from bi_system.modeling.expression import LogicalPredicate
+from bi_system.modeling.expression import FilterExpression, LogicalPredicate
 from bi_system.modeling.metric_contracts import metric_field_ids, parse_metric_expression
 from bi_system.modeling.query_timeout import dataset_query_deadline, is_query_timeout_error
 from bi_system.modeling.row_policies import (
@@ -94,6 +94,7 @@ def validate_dataset_query(
     *,
     principal: QueryPrincipal,
     request: DatasetQueryRequest,
+    scoped_filters: Sequence[FilterExpression] = (),
 ) -> PreparedDatasetQuery:
     dataset = session.get(Dataset, request.dataset_id)
     if (
@@ -137,7 +138,7 @@ def validate_dataset_query(
         workspace_id=principal.workspace_id,
         dataset_id=dataset.id,
     )
-    referenced_ids = _referenced_dataset_field_ids(request)
+    referenced_ids = _referenced_dataset_field_ids(request, scoped_filters=scoped_filters)
     if not metric_formula_field_ids.issubset(fields_by_id):
         raise DatasetQueryValidationError(
             "metric_field_not_found",
@@ -182,6 +183,7 @@ def validate_dataset_query(
             source,
             metrics=resolved_metrics,
             policy_predicates=policy_predicates,
+            scoped_filters=scoped_filters,
         )
     except QueryCompilationError as exc:
         raise DatasetQueryValidationError(
@@ -210,9 +212,15 @@ def execute_dataset_query(
     principal: QueryPrincipal,
     request: DatasetQueryRequest,
     timeout_seconds: float = 10,
+    scoped_filters: Sequence[FilterExpression] = (),
 ) -> DatasetQueryResult:
     started = perf_counter()
-    prepared = validate_dataset_query(session, principal=principal, request=request)
+    prepared = validate_dataset_query(
+        session,
+        principal=principal,
+        request=request,
+        scoped_filters=scoped_filters,
+    )
     bounded_statement = prepared.compiled.statement.limit(request.limit + 1)
     batch_filter = prepared.compiled.statement.whereclause
     if batch_filter is None:
@@ -590,14 +598,25 @@ def _join_key_error(message: str) -> DatasetQueryValidationError:
     )
 
 
-def _referenced_dataset_field_ids(request: DatasetQueryRequest) -> set[UUID]:
+def _referenced_dataset_field_ids(
+    request: DatasetQueryRequest,
+    *,
+    scoped_filters: Sequence[FilterExpression] = (),
+) -> set[UUID]:
     field_ids = {selection.field_id for selection in request.selections}
     field_ids.update(request.group_by)
-    field_ids.update(sort.field_id for sort in request.order_by)
+    field_ids.update(sort.field_id for sort in request.order_by if isinstance(sort, QuerySort))
     expression = request.filter
     if expression is not None:
         predicates = (
             expression.predicates if isinstance(expression, LogicalPredicate) else (expression,)
+        )
+        field_ids.update(predicate.field_id for predicate in predicates)
+    for scoped_filter in scoped_filters:
+        predicates = (
+            scoped_filter.predicates
+            if isinstance(scoped_filter, LogicalPredicate)
+            else (scoped_filter,)
         )
         field_ids.update(predicate.field_id for predicate in predicates)
     return field_ids

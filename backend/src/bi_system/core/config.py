@@ -2,6 +2,7 @@ from functools import lru_cache
 from pathlib import Path
 from typing import Annotated, Literal
 from uuid import UUID
+from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
 from pydantic import Field, field_validator, model_validator
 from pydantic_settings import BaseSettings, NoDecode, SettingsConfigDict
@@ -34,6 +35,7 @@ class Settings(BaseSettings):
     import_issue_sample_limit: Annotated[int, Field(gt=0)] = 1_000
     import_worker_lease_seconds: Annotated[int, Field(gt=0)] = 120
     query_timeout_seconds: Annotated[int, Field(ge=1, le=60)] = 10
+    workspace_timezone: str = "Asia/Hong_Kong"
     cors_origins: Annotated[list[str], NoDecode] = Field(
         default_factory=lambda: DEFAULT_CORS_ORIGINS.copy(),
     )
@@ -70,6 +72,16 @@ class Settings(BaseSettings):
             raise ValueError(msg)
 
         return self
+
+    @field_validator("workspace_timezone")
+    @classmethod
+    def validate_workspace_timezone(cls, value: str) -> str:
+        normalized = value.strip()
+        try:
+            ZoneInfo(normalized)
+        except (ValueError, ZoneInfoNotFoundError) as exc:
+            raise ValueError("BI_WORKSPACE_TIMEZONE must be a valid IANA timezone") from exc
+        return normalized
 
 
 @lru_cache

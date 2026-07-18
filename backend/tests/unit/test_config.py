@@ -17,6 +17,7 @@ def test_settings_default_to_sqlite(monkeypatch: pytest.MonkeyPatch) -> None:
     assert settings.import_chunk_rows == 2_000
     assert settings.preview_max_rows == 100
     assert settings.query_timeout_seconds == 10
+    assert settings.workspace_timezone == "Asia/Hong_Kong"
 
 
 def test_settings_reject_invalid_ingestion_limits(monkeypatch: pytest.MonkeyPatch) -> None:
@@ -35,4 +36,13 @@ def test_settings_reject_invalid_query_timeout(
     monkeypatch.setenv("BI_QUERY_TIMEOUT_SECONDS", value)
 
     with pytest.raises(ValueError):
+        Settings()
+
+
+def test_settings_validates_workspace_timezone(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("BI_WORKSPACE_TIMEZONE", "America/New_York")
+    assert Settings().workspace_timezone == "America/New_York"
+
+    monkeypatch.setenv("BI_WORKSPACE_TIMEZONE", "Mars/Olympus_Mons")
+    with pytest.raises(ValueError, match="IANA timezone"):
         Settings()

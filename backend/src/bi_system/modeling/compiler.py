@@ -40,12 +40,17 @@ from bi_system.modeling.calculated_field_contracts import (
 from bi_system.modeling.contracts import (
     AggregateFunction,
     DatasetQueryRequest,
+    MetricQuerySort,
     QueryRequest,
     QuerySelection,
     QuerySort,
-    SortDirection,
 )
-from bi_system.modeling.dialect import compile_aggregate, ensure_supported_query_dialect
+from bi_system.modeling.dialect import (
+    compile_aggregate,
+    compile_sort_terms,
+    compile_time_grain,
+    ensure_supported_query_dialect,
+)
 from bi_system.modeling.expression import (
     ComparisonOperator,
     ComparisonPredicate,
@@ -123,6 +128,7 @@ class QueryCompiler:
         limits: QueryComplexityLimits | None = None,
     ) -> None:
         ensure_supported_query_dialect(dialect_name)
+        self._dialect_name = dialect_name
         self._limits = limits or QueryComplexityLimits()
 
     def compile(
@@ -131,8 +137,9 @@ class QueryCompiler:
         source: ResolvedSource,
         *,
         policy_predicates: Sequence[ColumnElement[bool]] = (),
+        scoped_filters: Sequence[FilterExpression] = (),
     ) -> CompiledQuery:
-        self._validate_request(request, source)
+        self._validate_request(request, source, scoped_filters=scoped_filters)
         mandatory_predicates = self._mandatory_predicates(source)
         if not mandatory_predicates:
             raise QueryCompilationError(
@@ -148,17 +155,30 @@ class QueryCompiler:
         conditions.extend(policy_predicates)
         if request.filter is not None:
             conditions.append(self._filter_expression(request.filter, source))
+        conditions.extend(self._filter_expression(item, source) for item in scoped_filters)
 
         statement = (
             select(*selected_expressions).select_from(source.selectable).where(and_(*conditions))
         )
         if request.group_by:
+            selections_by_field = {
+                selection.field_id: selection
+                for selection in request.selections
+                if selection.aggregate is None
+            }
             statement = statement.group_by(
-                *[self._required_field(field_id, source) for field_id in request.group_by],
+                *[
+                    self._selection_expression(selections_by_field[field_id], source)
+                    for field_id in request.group_by
+                ],
             )
         if request.order_by:
             statement = statement.order_by(
-                *[self._sort_expression(sort, source) for sort in request.order_by],
+                *[
+                    term
+                    for sort in request.order_by
+                    for term in self._field_sort_expressions(sort, source)
+                ],
             )
         statement = statement.limit(request.limit)
         return CompiledQuery(
@@ -173,12 +193,14 @@ class QueryCompiler:
         *,
         metrics: Sequence[ResolvedMetricSelection],
         policy_predicates: Sequence[ColumnElement[bool]] = (),
+        scoped_filters: Sequence[FilterExpression] = (),
     ) -> CompiledQuery:
         if not request.metrics:
             return self.compile(
                 request.for_source(source.source_id),
                 source,
                 policy_predicates=policy_predicates,
+                scoped_filters=scoped_filters,
             )
         expected_metrics = [
             (selection.metric_id, selection.output_name) for selection in request.metrics
@@ -191,7 +213,12 @@ class QueryCompiler:
                 "metric_not_resolved",
                 "Resolved metrics do not match the dataset query",
             )
-        self._validate_dataset_metric_request(request, source, metrics)
+        self._validate_dataset_metric_request(
+            request,
+            source,
+            metrics,
+            scoped_filters=scoped_filters,
+        )
         mandatory_predicates = self._mandatory_predicates(source)
         if not mandatory_predicates:
             raise QueryCompilationError(
@@ -211,17 +238,30 @@ class QueryCompiler:
         conditions.extend(policy_predicates)
         if request.filter is not None:
             conditions.append(self._filter_expression(request.filter, source))
+        conditions.extend(self._filter_expression(item, source) for item in scoped_filters)
 
         statement = (
             select(*selected_expressions).select_from(source.selectable).where(and_(*conditions))
         )
         if request.group_by:
+            selections_by_field = {
+                selection.field_id: selection
+                for selection in request.selections
+                if selection.aggregate is None
+            }
             statement = statement.group_by(
-                *[self._required_field(field_id, source) for field_id in request.group_by]
+                *[
+                    self._selection_expression(selections_by_field[field_id], source)
+                    for field_id in request.group_by
+                ]
             )
         if request.order_by:
             statement = statement.order_by(
-                *[self._sort_expression(sort, source) for sort in request.order_by]
+                *[
+                    term
+                    for sort in request.order_by
+                    for term in self._dataset_sort_expressions(sort, source, metrics)
+                ]
             )
         statement = statement.limit(request.limit)
         return CompiledQuery(
@@ -278,7 +318,13 @@ class QueryCompiler:
             )
         return cast(compiled, sql_type)
 
-    def _validate_request(self, request: QueryRequest, source: ResolvedSource) -> None:
+    def _validate_request(
+        self,
+        request: QueryRequest,
+        source: ResolvedSource,
+        *,
+        scoped_filters: Sequence[FilterExpression] = (),
+    ) -> None:
         if request.source_id != source.source_id:
             raise QueryCompilationError(
                 "source_not_resolved",
@@ -289,7 +335,8 @@ class QueryCompiler:
             (len(request.group_by), self._limits.max_group_fields, "too_many_group_fields"),
             (len(request.order_by), self._limits.max_sorts, "too_many_sorts"),
             (
-                predicate_count(request.filter),
+                predicate_count(request.filter)
+                + sum(predicate_count(item) for item in scoped_filters),
                 self._limits.max_filter_predicates,
                 "too_many_filter_predicates",
             ),
@@ -301,6 +348,8 @@ class QueryCompiler:
 
         for field_id in self._referenced_field_ids(request):
             self._required_field(field_id, source)
+        for expression in scoped_filters:
+            self.compile_filter(expression, source)
 
         for selection in request.selections:
             aggregate = selection.aggregate
@@ -335,6 +384,8 @@ class QueryCompiler:
         request: DatasetQueryRequest,
         source: ResolvedSource,
         metrics: Sequence[ResolvedMetricSelection],
+        *,
+        scoped_filters: Sequence[FilterExpression] = (),
     ) -> None:
         checks = (
             (
@@ -345,7 +396,8 @@ class QueryCompiler:
             (len(request.group_by), self._limits.max_group_fields, "too_many_group_fields"),
             (len(request.order_by), self._limits.max_sorts, "too_many_sorts"),
             (
-                predicate_count(request.filter),
+                predicate_count(request.filter)
+                + sum(predicate_count(item) for item in scoped_filters),
                 self._limits.max_filter_predicates,
                 "too_many_filter_predicates",
             ),
@@ -357,6 +409,8 @@ class QueryCompiler:
 
         for field_id in self._referenced_dataset_field_ids(request):
             self._required_field(field_id, source)
+        for expression in scoped_filters:
+            self.compile_filter(expression, source)
         for selection in request.selections:
             self._validate_aggregate_field(selection.aggregate, selection.field_id, source)
         for metric in metrics:
@@ -430,7 +484,7 @@ class QueryCompiler:
     def _referenced_dataset_field_ids(self, request: DatasetQueryRequest) -> set[UUID]:
         field_ids = {selection.field_id for selection in request.selections}
         field_ids.update(request.group_by)
-        field_ids.update(sort.field_id for sort in request.order_by)
+        field_ids.update(sort.field_id for sort in request.order_by if isinstance(sort, QuerySort))
         if request.filter is not None:
             if isinstance(request.filter, LogicalPredicate):
                 field_ids.update(predicate.field_id for predicate in request.filter.predicates)
@@ -444,6 +498,17 @@ class QueryCompiler:
         source: ResolvedSource,
     ) -> ColumnElement[Any]:
         column = self._required_field(selection.field_id, source)
+        if selection.time_grain is not None:
+            if not isinstance(column.type, (Date, DateTime)):
+                raise QueryCompilationError(
+                    "invalid_time_grain_type",
+                    "Time grains require a date or datetime field",
+                )
+            return compile_time_grain(
+                selection.time_grain,
+                column,
+                dialect_name=self._dialect_name,
+            )
         if selection.aggregate is None:
             return column
         return compile_aggregate(selection.aggregate, column)
@@ -522,17 +587,46 @@ class QueryCompiler:
         )
         return case((condition, then_expression), else_=else_expression)
 
-    def _sort_expression(
+    def _field_sort_expressions(
         self,
         sort: QuerySort,
         source: ResolvedSource,
-    ) -> ColumnElement[Any]:
+    ) -> tuple[ColumnElement[Any], ColumnElement[Any]]:
         column: ColumnElement[Any] = self._required_field(sort.field_id, source)
-        if sort.aggregate is not None:
+        if sort.time_grain is not None:
+            if not isinstance(column.type, (Date, DateTime)):
+                raise QueryCompilationError(
+                    "invalid_time_grain_type",
+                    "Time grains require a date or datetime field",
+                )
+            column = compile_time_grain(
+                sort.time_grain,
+                column,
+                dialect_name=self._dialect_name,
+            )
+        elif sort.aggregate is not None:
             column = compile_aggregate(sort.aggregate, column)
-        if sort.direction is SortDirection.DESCENDING:
-            return column.desc()
-        return column.asc()
+        return compile_sort_terms(column, sort.direction)
+
+    def _dataset_sort_expressions(
+        self,
+        sort: QuerySort | MetricQuerySort,
+        source: ResolvedSource,
+        metrics: Sequence[ResolvedMetricSelection],
+    ) -> tuple[ColumnElement[Any], ColumnElement[Any]]:
+        if isinstance(sort, QuerySort):
+            return self._field_sort_expressions(sort, source)
+        metric = next(
+            (item for item in metrics if item.metric_version_id == sort.metric_id),
+            None,
+        )
+        if metric is None:
+            raise QueryCompilationError(
+                "metric_sort_not_resolved",
+                "Metric sort target was not resolved",
+            )
+        expression = self._metric_expression(metric.formula, source)
+        return compile_sort_terms(expression, sort.direction)
 
     def _filter_expression(
         self,

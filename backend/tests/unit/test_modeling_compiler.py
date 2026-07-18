@@ -1,3 +1,4 @@
+from datetime import UTC, datetime
 from uuid import UUID, uuid4
 
 import pytest
@@ -11,13 +12,19 @@ from bi_system.modeling.compiler import (
 )
 from bi_system.modeling.contracts import DatasetQueryRequest, QueryRequest
 from bi_system.modeling.dialect import UnsupportedQueryDialectError
+from bi_system.modeling.expression import ComparisonOperator, ComparisonPredicate
 from bi_system.modeling.metric_contracts import parse_metric_expression
-from sqlalchemy import Boolean, Column, Integer, MetaData, Numeric, String, Table
+from sqlalchemy import Boolean, Column, DateTime, Integer, MetaData, Numeric, String, Table
 
 
 @pytest.fixture
 def source() -> tuple[ResolvedSource, dict[str, UUID]]:
-    ids = {"city": uuid4(), "amount": uuid4(), "department": uuid4()}
+    ids = {
+        "city": uuid4(),
+        "amount": uuid4(),
+        "department": uuid4(),
+        "sold_at": uuid4(),
+    }
     table = Table(
         f"data_{uuid4().hex}",
         MetaData(),
@@ -25,6 +32,7 @@ def source() -> tuple[ResolvedSource, dict[str, UUID]]:
         Column("city", String),
         Column("amount", Integer),
         Column("department", String),
+        Column("sold_at", DateTime(timezone=True)),
     )
     return (
         ResolvedSource(
@@ -34,6 +42,7 @@ def source() -> tuple[ResolvedSource, dict[str, UUID]]:
                 ids["city"]: table.c.city,
                 ids["amount"]: table.c.amount,
                 ids["department"]: table.c.department,
+                ids["sold_at"]: table.c.sold_at,
             },
         ),
         ids,
@@ -190,6 +199,157 @@ def test_compiler_executes_bound_metric_formula_after_governance_filters(
         {"city": "北京", "adjusted_average": 30},
     ]
     assert {str(value) for value in parameters}.issuperset({"10", "5", "2", "0"})
+
+
+def test_compiler_executes_portable_time_grain_and_metric_sort(
+    source: tuple[ResolvedSource, dict[str, UUID]],
+) -> None:
+    resolved, ids = source
+    engine = create_database_engine("sqlite+pysqlite:///:memory:")
+    resolved.table.create(engine)
+    metric_id = uuid4()
+    formula = parse_metric_expression(
+        {
+            "op": "aggregate",
+            "function": "sum",
+            "field_id": ids["amount"],
+        }
+    )
+    request = DatasetQueryRequest.model_validate(
+        {
+            "dataset_id": uuid4(),
+            "selections": [
+                {
+                    "field_id": ids["sold_at"],
+                    "output_name": "month",
+                    "time_grain": "month",
+                }
+            ],
+            "metrics": [{"metric_id": metric_id, "output_name": "revenue"}],
+            "group_by": [ids["sold_at"]],
+            "order_by": [
+                {
+                    "kind": "metric",
+                    "metric_id": metric_id,
+                    "direction": "desc",
+                }
+            ],
+        }
+    )
+    with engine.begin() as connection:
+        connection.execute(
+            resolved.table.insert(),
+            [
+                {
+                    "_active": True,
+                    "city": "上海",
+                    "amount": 10,
+                    "department": "销售",
+                    "sold_at": datetime(2026, 1, 2, tzinfo=UTC),
+                },
+                {
+                    "_active": True,
+                    "city": "北京",
+                    "amount": 20,
+                    "department": "销售",
+                    "sold_at": datetime(2026, 1, 18, tzinfo=UTC),
+                },
+                {
+                    "_active": True,
+                    "city": "深圳",
+                    "amount": 40,
+                    "department": "销售",
+                    "sold_at": datetime(2026, 2, 1, tzinfo=UTC),
+                },
+            ],
+        )
+        compiled = QueryCompiler(dialect_name="sqlite").compile_dataset_query(
+            request,
+            resolved,
+            metrics=(
+                ResolvedMetricSelection(
+                    metric_version_id=metric_id,
+                    output_name="revenue",
+                    formula=formula,
+                ),
+            ),
+        )
+        rows = connection.execute(compiled.statement).mappings().all()
+
+    engine.dispose()
+    assert rows == [
+        {"month": "2026-02-01", "revenue": 40},
+        {"month": "2026-01-01", "revenue": 30},
+    ]
+
+
+def test_compiler_sorts_nulls_last_portably(
+    source: tuple[ResolvedSource, dict[str, UUID]],
+) -> None:
+    resolved, ids = source
+    engine = create_database_engine("sqlite+pysqlite:///:memory:")
+    resolved.table.create(engine)
+    request = QueryRequest.model_validate(
+        {
+            "source_id": resolved.source_id,
+            "selections": [
+                {"field_id": ids["city"], "output_name": "city"},
+                {"field_id": ids["amount"], "output_name": "amount"},
+            ],
+            "order_by": [
+                {"field_id": ids["amount"], "direction": "desc"},
+            ],
+        }
+    )
+    with engine.begin() as connection:
+        connection.execute(
+            resolved.table.insert(),
+            [
+                {"_active": True, "city": "空值", "amount": None},
+                {"_active": True, "city": "低", "amount": 1},
+                {"_active": True, "city": "高", "amount": 2},
+            ],
+        )
+        rows = (
+            connection.execute(
+                QueryCompiler(dialect_name="sqlite").compile(request, resolved).statement
+            )
+            .mappings()
+            .all()
+        )
+
+    engine.dispose()
+    assert [row["city"] for row in rows] == ["高", "低", "空值"]
+
+
+def test_compiler_enforces_shared_scoped_filter_budget(
+    source: tuple[ResolvedSource, dict[str, UUID]],
+) -> None:
+    resolved, ids = source
+    request = QueryRequest.model_validate(
+        {
+            "source_id": resolved.source_id,
+            "selections": [{"field_id": ids["city"], "output_name": "city"}],
+        }
+    )
+    filters = tuple(
+        ComparisonPredicate(
+            kind="comparison",
+            field_id=ids["amount"],
+            operator=ComparisonOperator.GREATER_THAN_OR_EQUAL,
+            value=index,
+        )
+        for index in range(51)
+    )
+
+    with pytest.raises(QueryCompilationError) as error:
+        QueryCompiler(dialect_name="sqlite").compile(
+            request,
+            resolved,
+            scoped_filters=filters,
+        )
+
+    assert error.value.code == "too_many_filter_predicates"
 
 
 def test_compiler_rejects_unknown_fields_and_non_numeric_sum(
