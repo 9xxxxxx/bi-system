@@ -395,6 +395,12 @@ def compile_dashboard_chart_query(
             resource = _required_field(
                 fields, measure.field_id, path=f"query.measures.{index - 1}.field_id"
             )
+            if resource.role != "measure":
+                raise _chart_configuration_error(
+                    "chart_slot_invalid",
+                    "Field measure slots require measure fields",
+                    f"query.measures.{index - 1}.field_id",
+                )
             selections.append(
                 QuerySelection(
                     field_id=measure.field_id,

@@ -175,6 +175,55 @@ def test_compile_top_n_adds_stable_dimension_tie_breaker() -> None:
     ]
 
 
+def test_compile_rejects_dimension_field_in_measure_slot() -> None:
+    dimension_id = uuid4()
+    measure_id = uuid4()
+    config = ChartComponentConfig.model_validate(
+        {
+            "schema_version": 1,
+            "title": "Invalid measure role",
+            "query": {
+                "dataset_id": uuid4(),
+                "dimensions": [{"field_id": dimension_id, "slot_key": "category"}],
+                "measures": [
+                    {
+                        "kind": "field",
+                        "field_id": measure_id,
+                        "aggregate": "sum",
+                        "slot_key": "value",
+                    }
+                ],
+            },
+        }
+    )
+
+    with pytest.raises(DashboardChartQueryError) as captured:
+        compile_dashboard_chart_query(
+            component_id=uuid4(),
+            component_type="bar",
+            config=config,
+            fields={
+                dimension_id: _field(
+                    dimension_id,
+                    role="dimension",
+                    data_type="string",
+                    label="Category",
+                ),
+                measure_id: _field(
+                    measure_id,
+                    role="dimension",
+                    data_type="decimal",
+                    label="Misclassified value",
+                ),
+            },
+            metrics={},
+            scoped_filters=ResolvedScopedFilters(filters=(), evidence=()),
+        )
+
+    assert captured.value.code == "chart_slot_invalid"
+    assert captured.value.config_path == "query.measures.0.field_id"
+
+
 def test_top_n_rejects_dimension_sort_and_series_adds_stable_group_sorts() -> None:
     dimension_id = uuid4()
     series_id = uuid4()
