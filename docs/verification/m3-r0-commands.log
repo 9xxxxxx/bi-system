@@ -1,0 +1,47 @@
+M3-R0 reproducible command log
+date=2026-07-18
+base_git_sha=cb7a9451d86ae337bf402166df4af38df93ccba4
+
+# Isolated baseline runtime
+npm install --prefix .tmp/m3-node24-npm11 --no-package-lock --no-save node@24.18.0 npm@11.18.0
+$node='C:\Dev\bi-system\.tmp\m3-node24-npm11\node_modules\node\bin\node.exe'
+$npmCli='C:\Dev\bi-system\.tmp\m3-node24-npm11\node_modules\npm\bin\npm-cli.js'
+$env:PATH=(Split-Path $node)+';'+$env:PATH
+
+# Backend and fixture
+uv run pytest spikes/m3/backend -q
+uv run pytest backend/tests/unit/test_modeling_contracts.py backend/tests/unit/test_modeling_compiler.py spikes/m3/backend -q
+uv run pytest spikes/m3/quality/tests -q
+uv run pytest spikes/m3/backend spikes/m3/quality/tests -q
+uv run python spikes/m3/quality/fixture_tool.py check
+uv run ruff check spikes/m3/backend spikes/m3/quality
+uv run ruff format --check spikes/m3/backend spikes/m3/quality
+uv run basedpyright spikes/m3/backend spikes/m3/quality
+
+# Frontend spike and evidence (run from spikes/m3/frontend)
+& $node $npmCli test
+& $node $npmCli run build:baseline
+& $node $npmCli run build
+& $node $npmCli run evidence
+
+# Node 24 development server
+& $node $npmCli run dev -- --port 4176 --strictPort --force
+
+# Browser sessions
+playwright-cli -s=m3-r0-node24 open http://127.0.0.1:4176/ --browser chrome
+playwright-cli -s=m3-r0-edge2 open http://127.0.0.1:4176/ --browser msedge
+playwright-cli -s=m3-r0-node24 console error
+playwright-cli -s=m3-r0-edge2 console error
+
+# Browser stress URLs
+http://127.0.0.1:4176/?stress=1
+http://127.0.0.1:4176/?stress=20
+http://127.0.0.1:4176/?stress=50
+
+# Root gates
+uv run pytest backend/tests -q --cov=bi_system
+uv run ruff check backend scripts
+uv run ruff format --check backend scripts
+uv run basedpyright backend/src backend/tests scripts
+& $node $npmCli --prefix frontend run check
+& $node $npmCli --prefix frontend run build

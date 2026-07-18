@@ -1,0 +1,28 @@
+{
+  "schema_version": 1,
+  "base_git_sha": "cb7a9451d86ae337bf402166df4af38df93ccba4",
+  "runs": [
+    {
+      "browser": "chrome",
+      "version": "149.0.0.0",
+      "session": "m3-r0-node24",
+      "started_at": "2026-07-18T15:40:06Z",
+      "final_check": "after lazy loading, default desktop/mobile and 1/20/50 stress",
+      "total_messages": 3,
+      "errors": 0,
+      "warnings": 0,
+      "status": "pass"
+    },
+    {
+      "browser": "edge",
+      "version": "150.0.0.0",
+      "session": "m3-r0-edge2",
+      "started_at": "2026-07-18T15:52:06Z",
+      "final_check": "after lazy loading, default desktop/mobile and 1/20/50 stress",
+      "total_messages": 3,
+      "errors": 0,
+      "warnings": 0,
+      "status": "pass"
+    }
+  ]
+}

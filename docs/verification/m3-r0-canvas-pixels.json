@@ -1,0 +1,55 @@
+{
+  "schema_version": 1,
+  "base_git_sha": "cb7a9451d86ae337bf402166df4af38df93ccba4",
+  "method": "sample Canvas RGBA buffers after the third lazy ECharts Canvas is mounted",
+  "runs": [
+    {
+      "browser": "chrome",
+      "version": "149.0.0.0",
+      "viewport": [1440, 900],
+      "duration_ms": 1724,
+      "canvases": [
+        { "width": 578, "height": 181, "nontransparent": true, "nonuniform": true },
+        { "width": 578, "height": 181, "nontransparent": true, "nonuniform": true },
+        { "width": 381, "height": 181, "nontransparent": true, "nonuniform": true }
+      ],
+      "status": "pass"
+    },
+    {
+      "browser": "chrome",
+      "version": "149.0.0.0",
+      "viewport": [390, 844],
+      "duration_ms": 1724,
+      "canvases": [
+        { "width": 364, "height": 223, "nontransparent": true, "nonuniform": true },
+        { "width": 364, "height": 223, "nontransparent": true, "nonuniform": true },
+        { "width": 364, "height": 223, "nontransparent": true, "nonuniform": true }
+      ],
+      "status": "pass"
+    },
+    {
+      "browser": "edge",
+      "version": "150.0.0.0",
+      "viewport": [1440, 900],
+      "duration_ms": 1483,
+      "canvases": [
+        { "width": 578, "height": 181, "nontransparent": true, "nonuniform": true },
+        { "width": 578, "height": 181, "nontransparent": true, "nonuniform": true },
+        { "width": 381, "height": 181, "nontransparent": true, "nonuniform": true }
+      ],
+      "status": "pass"
+    },
+    {
+      "browser": "edge",
+      "version": "150.0.0.0",
+      "viewport": [390, 844],
+      "duration_ms": 1483,
+      "canvases": [
+        { "width": 364, "height": 223, "nontransparent": true, "nonuniform": true },
+        { "width": 364, "height": 223, "nontransparent": true, "nonuniform": true },
+        { "width": 364, "height": 223, "nontransparent": true, "nonuniform": true }
+      ],
+      "status": "pass"
+    }
+  ]
+}

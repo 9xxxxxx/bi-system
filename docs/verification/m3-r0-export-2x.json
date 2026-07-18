@@ -1,0 +1,25 @@
+{
+  "schema_version": 1,
+  "base_git_sha": "cb7a9451d86ae337bf402166df4af38df93ccba4",
+  "browser": "chrome",
+  "version": "150.0.0.0",
+  "session": "m3-r0-export",
+  "started_at": "2026-07-18T16:38:55Z",
+  "component_id": "bar",
+  "source_css": { "width": 578, "height": 181 },
+  "source_canvas": { "width": 578, "height": 181 },
+  "pixel_ratio": 2,
+  "export": {
+    "file": "docs/verification/export-2x-bar-chrome.png",
+    "width": 1156,
+    "height": 362,
+    "bytes": 26095,
+    "sha256": "2c1f210947e463911ff06089edbf53727d29402e77227d9fa2af0f6596fb0b82",
+    "sample_count": 3403,
+    "unique_sampled_colors": 27,
+    "nontransparent_samples": 3403,
+    "nonuniform": true,
+    "nontransparent": true
+  },
+  "status": "pass"
+}

@@ -1,0 +1,72 @@
+{
+  "schema_version": 1,
+  "base_git_sha": "cb7a9451d86ae337bf402166df4af38df93ccba4",
+  "source_state": "M3-R0 uncommitted spike and documentation artifacts",
+  "package_lock_sha256": "7d0993dbcb33f2798ec1573e849238b31a3445410ed883dc1e0a35a044fbbe46",
+  "fixture_version": "m3-star-v2",
+  "server_runtime": { "node": "v24.18.0", "npm": "11.18.0", "url": "http://127.0.0.1:4176/" },
+  "default_runs": [
+    {
+      "browser": "chrome",
+      "version": "149.0.0.0",
+      "session": "m3-r0-node24",
+      "started_at": "2026-07-18T15:40:06Z",
+      "duration_ms": 1724,
+      "desktop": { "viewport": [1440, 900], "items": 7, "overlaps": 0, "scroll_width": 1440, "editor_controls": 8, "form_controls": 3 },
+      "mobile": { "viewport": [390, 844], "items": 7, "overlaps": 0, "scroll_width": 390, "editor_controls": 0, "form_controls": 0, "drag_icons": 0, "filter_expanded": true },
+      "interaction": { "component_id": "line", "series_id": "monthly", "field_id": "30000000-0000-0000-0000-000000000004", "operator": "eq", "value": "2026-01" },
+      "layout": { "snapshot_bytes": 610, "react_grid_layout_dragged": true, "snapshot_restored": true, "gridstack_items": 3, "gridstack_dragged": true },
+      "screenshots": {
+        "desktop": { "file": "docs/verification/m3-r0-chart-layout-desktop.png", "sha256": "a0d2e81aabeebc8917cfd70f36142080499f82a7c9e04952ad6a5f609babce2c" },
+        "mobile": { "file": "docs/verification/m3-r0-chart-layout-mobile.png", "sha256": "212e4fd305da1cc1aa8b9b070adbf960ed2ecede2e6dcc8fc5edd2c906bb5122" }
+      },
+      "status": "pass"
+    },
+    {
+      "browser": "edge",
+      "version": "150.0.0.0",
+      "session": "m3-r0-edge2",
+      "started_at": "2026-07-18T15:52:06Z",
+      "duration_ms": 1483,
+      "desktop": { "viewport": [1440, 900], "items": 7, "overlaps": 0, "scroll_width": 1440, "editor_controls": 8, "form_controls": 3 },
+      "mobile": { "viewport": [390, 844], "items": 7, "overlaps": 0, "scroll_width": 390, "editor_controls": 0, "form_controls": 0, "drag_icons": 0, "filter_expanded": true },
+      "interaction": { "component_id": "line", "series_id": "monthly", "field_id": "30000000-0000-0000-0000-000000000004", "operator": "eq", "value": "2026-01" },
+      "layout": { "snapshot_bytes": 610, "react_grid_layout_dragged": true, "snapshot_restored": true, "gridstack_items": 3, "gridstack_dragged": true },
+      "screenshots": {
+        "desktop": { "file": "docs/verification/m3-r0-chart-layout-edge-desktop.png", "sha256": "26e17e34161186a8a66fe223f0da24a1c6ef9f133dc618c59efc9c22353f5264" },
+        "mobile": { "file": "docs/verification/m3-r0-chart-layout-edge-mobile.png", "sha256": "212e4fd305da1cc1aa8b9b070adbf960ed2ecede2e6dcc8fc5edd2c906bb5122" }
+      },
+      "status": "pass"
+    }
+  ],
+  "stress_runs": [
+    {
+      "browser": "chrome",
+      "version": "149.0.0.0",
+      "viewport": [1440, 900],
+      "duration_ms": 6300,
+      "cases": [
+        { "stress": 1, "items": 1, "unique_ids": 1, "overlaps": 0, "post_resize_overlaps": 0, "resize_changed": true, "scroll_width": 1440 },
+        { "stress": 20, "items": 20, "unique_ids": 20, "overlaps": 0, "post_resize_overlaps": 0, "resize_changed": true, "scroll_width": 1440 },
+        { "stress": 50, "items": 50, "unique_ids": 50, "overlaps": 0, "post_resize_overlaps": 0, "resize_changed": true, "scroll_width": 1440 }
+      ],
+      "screenshot": { "file": "docs/verification/m3-r0-chart-layout-chrome-stress-50.png", "sha256": "3b228c173e2dd802113f75dc6a19f827bdb62c33150b88afcb173ffbb5f35825" },
+      "status": "pass"
+    },
+    {
+      "browser": "edge",
+      "version": "150.0.0.0",
+      "viewport": [1440, 900],
+      "duration_ms": 10900,
+      "cases": [
+        { "stress": 1, "items": 1, "unique_ids": 1, "overlaps": 0, "post_resize_overlaps": 0, "resize_changed": true, "scroll_width": 1440 },
+        { "stress": 20, "items": 20, "unique_ids": 20, "overlaps": 0, "post_resize_overlaps": 0, "resize_changed": true, "scroll_width": 1440 },
+        { "stress": 50, "items": 50, "unique_ids": 50, "overlaps": 0, "post_resize_overlaps": 0, "resize_changed": true, "scroll_width": 1440 }
+      ],
+      "screenshot": { "file": "docs/verification/m3-r0-chart-layout-edge-stress-50.png", "sha256": "3b228c173e2dd802113f75dc6a19f827bdb62c33150b88afcb173ffbb5f35825" },
+      "status": "pass"
+    }
+  ],
+  "cross_channel_note": "The mobile and stress-50 PNG files are byte-identical across Chrome and Edge. Distinct session names, user agents, durations and desktop hashes prove independent channel runs.",
+  "status": "pass"
+}

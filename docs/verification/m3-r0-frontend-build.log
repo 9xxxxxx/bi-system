@@ -1,0 +1,38 @@
+M3-R0 frontend build evidence
+date=2026-07-18
+base_git_sha=cb7a9451d86ae337bf402166df4af38df93ccba4
+source_state=uncommitted M3-R0 spike and documentation artifacts
+package_lock_sha256=7d0993dbcb33f2798ec1573e849238b31a3445410ed883dc1e0a35a044fbbe46
+node=v24.18.0
+npm=11.18.0
+vite=8.1.1
+
+command=npm test
+result=pass; 3 files; 15 tests
+
+command=npm run build:baseline
+result=pass; 1774 modules
+baseline_initial_raw_bytes=202696
+baseline_initial_gzip_bytes=62943
+baseline_initial_brotli_bytes=54263
+
+command=npm run build
+result=pass; 2404 modules
+candidate_initial_raw_bytes=286895
+candidate_initial_gzip_bytes=87234
+candidate_initial_brotli_bytes=75502
+initial_delta_raw_bytes=84199
+initial_delta_gzip_bytes=24291
+initial_delta_brotli_bytes=21239
+initial_groups=application,react-grid-layout
+echarts_initial_chunks=0
+echarts_lazy_chunk_raw_bytes=552727
+echarts_lazy_chunk_gzip_level9_bytes=185442
+echarts_lazy_chunk_brotli_bytes=156652
+vite_reported_echarts_gzip=187.47 kB
+vite_chunk_warning=present for lazy ECharts chunk
+
+command=npm run evidence
+result=pass; 19 production license rows; 0 review required
+bundle_decision=echarts_initial_load deferred
+production_constraint=preserve the dynamic chart boundary and rerun against the production entry
