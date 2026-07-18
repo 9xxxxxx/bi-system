@@ -2,6 +2,7 @@ from fastapi import APIRouter
 
 from bi_system.api.routes import (
     auth,
+    dashboard_chart_queries,
     dashboards,
     data_sources,
     dataset_queries,
@@ -23,6 +24,11 @@ api_router.include_router(identity.router, prefix="/identity", tags=["identity"]
 api_router.include_router(source_files.router, prefix="/source-files", tags=["source-files"])
 api_router.include_router(data_sources.router, prefix="/data-sources", tags=["data-sources"])
 api_router.include_router(dashboards.router, prefix="/dashboards", tags=["dashboards"])
+api_router.include_router(
+    dashboard_chart_queries.router,
+    prefix="/dashboard-chart-queries",
+    tags=["dashboard-chart-queries"],
+)
 api_router.include_router(
     dashboards.template_router,
     prefix="/dashboard-templates",
