@@ -1,3 +1,13 @@
+from bi_system.db.models.dashboards import (
+    Dashboard,
+    DashboardComponent,
+    DashboardLayout,
+    DashboardPage,
+    DashboardPermission,
+    DashboardTemplate,
+    DashboardTemplateVersion,
+    DashboardVersion,
+)
 from bi_system.db.models.identity import Role, User, UserRole, UserSession
 from bi_system.db.models.ingestion import (
     FileBlob,
@@ -23,6 +33,14 @@ from bi_system.db.models.modeling import (
 )
 
 __all__ = [
+    "Dashboard",
+    "DashboardComponent",
+    "DashboardLayout",
+    "DashboardPage",
+    "DashboardPermission",
+    "DashboardTemplate",
+    "DashboardTemplateVersion",
+    "DashboardVersion",
     "Dataset",
     "DatasetField",
     "FileBlob",
