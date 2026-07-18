@@ -1,0 +1,34 @@
+{
+  "name": "bi-system-m3-chart-layout-spike",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "packageManager": "npm@11.18.0",
+  "scripts": {
+    "dev": "vite --host 127.0.0.1",
+    "build": "tsc -b && vite build",
+    "build:baseline": "tsc -b && vite build --mode baseline",
+    "evidence": "node scripts/collect-evidence.mjs",
+    "preview": "vite preview --host 127.0.0.1",
+    "test": "vitest run"
+  },
+  "engines": {
+    "node": ">=24 <25"
+  },
+  "dependencies": {
+    "echarts": "6.1.0",
+    "gridstack": "12.6.0",
+    "lucide-react": "1.25.0",
+    "react": "19.2.7",
+    "react-dom": "19.2.7",
+    "react-grid-layout": "2.2.3"
+  },
+  "devDependencies": {
+    "@types/react": "19.2.17",
+    "@types/react-dom": "19.2.3",
+    "@vitejs/plugin-react": "6.0.3",
+    "typescript": "6.0.2",
+    "vite": "8.1.1",
+    "vitest": "4.1.10"
+  }
+}
