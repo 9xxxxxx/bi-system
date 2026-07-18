@@ -1,0 +1,34 @@
+{
+  "files": {
+    "chart_cases.json": {
+      "bytes": 2014,
+      "sha256": "dfe07fb4ce32c9024ee7dc45a65374fc64080a6eced5cbd1749d2c2023804f2e"
+    },
+    "dim_product.csv": {
+      "bytes": 231,
+      "sha256": "873dd55b3e88a1f19ccb0a01058ce11a69975e91cf91e81953f9f0db38e02897"
+    },
+    "dim_region.csv": {
+      "bytes": 143,
+      "sha256": "f4f5334f3010ed12e527c2df44ce86bda04da8971a9f4f79aedc2da0206e555b"
+    },
+    "fact_sales.csv": {
+      "bytes": 905,
+      "sha256": "0f55da13ab41c6ccd325f8914f105198e87d0e29027e873aac658cdc9aadadd2"
+    },
+    "golden_results.json": {
+      "bytes": 12308,
+      "sha256": "4d6333750fe7e8ebaf130b0422128a423cbe31b722ab57c2c28f1552e0149346"
+    },
+    "principals.json": {
+      "bytes": 1387,
+      "sha256": "7d7649a4e9ebc0b4d4291b955b64ce4ca1614ebcca1968c967bf4aee9e47bd06"
+    },
+    "schema.json": {
+      "bytes": 2703,
+      "sha256": "1c8b80c3101a9509138f4a8c10f1595f455ce05a0bf2b215cb19fa22fa593cea"
+    }
+  },
+  "fixture_version": "m3-star-v1",
+  "generator": "spikes/m3/quality/fixture_tool.py"
+}

@@ -1,0 +1,73 @@
+{
+  "cases": [
+    {
+      "case_id": "kpi-gross",
+      "component_type": "kpi",
+      "golden_pointer": "/kpi_all/gross_amount"
+    },
+    {
+      "case_id": "detail-products",
+      "component_type": "detail_table",
+      "golden_pointer": "/table_by_product"
+    },
+    {
+      "case_id": "ranking-products-top2",
+      "component_type": "ranking_table",
+      "golden_pointer": "/top_2_products_by_gross_desc"
+    },
+    {
+      "case_id": "bar-category",
+      "component_type": "bar",
+      "golden_pointer": "/bar_and_pie_by_category"
+    },
+    {
+      "case_id": "horizontal-bar-region",
+      "component_type": "horizontal_bar",
+      "golden_pointer": "/bar_by_region"
+    },
+    {
+      "case_id": "stacked-category-region",
+      "component_type": "stacked_bar",
+      "golden_pointer": "/stacked_bar_category_by_region"
+    },
+    {
+      "case_id": "line-month",
+      "component_type": "line",
+      "golden_pointer": "/line_and_area_by_month"
+    },
+    {
+      "case_id": "area-month",
+      "component_type": "area",
+      "golden_pointer": "/line_and_area_by_month"
+    },
+    {
+      "case_id": "pie-category",
+      "component_type": "pie",
+      "golden_pointer": "/bar_and_pie_by_category"
+    },
+    {
+      "case_id": "donut-category",
+      "component_type": "donut",
+      "golden_pointer": "/bar_and_pie_by_category"
+    }
+  ],
+  "filter_cases": [
+    {
+      "case_id": "filter-global-date",
+      "golden_pointer": "/filter_scenarios/global_date_january"
+    },
+    {
+      "case_id": "filter-page-region",
+      "golden_pointer": "/filter_scenarios/global_date_january_and_page_region_north"
+    },
+    {
+      "case_id": "filter-component-category",
+      "golden_pointer": "/filter_scenarios/global_date_january_and_page_region_north_and_component_category_hardware"
+    },
+    {
+      "case_id": "filter-date-intersection",
+      "golden_pointer": "/filter_scenarios/date_intersection_global_january_and_component_from_2026_01_05"
+    }
+  ],
+  "fixture_version": "m3-star-v1"
+}

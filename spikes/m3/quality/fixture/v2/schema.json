@@ -1,0 +1,132 @@
+{
+  "fixture_version": "m3-star-v2",
+  "join_type": "left",
+  "relationships": [
+    {
+      "cardinality": "many_to_one",
+      "from": "fact_sales.product_key",
+      "to": "dim_product.product_key"
+    },
+    {
+      "cardinality": "many_to_one",
+      "from": "fact_sales.region_key",
+      "to": "dim_region.region_key"
+    }
+  ],
+  "sources": {
+    "dim_product": {
+      "fields": {
+        "category": {
+          "nullable": false,
+          "type": "string"
+        },
+        "is_active": {
+          "nullable": false,
+          "type": "boolean"
+        },
+        "launch_date": {
+          "nullable": false,
+          "type": "date"
+        },
+        "product_key": {
+          "nullable": false,
+          "type": "string"
+        },
+        "product_name": {
+          "nullable": false,
+          "type": "string"
+        }
+      },
+      "file": "dim_product.csv",
+      "primary_key": [
+        "product_key"
+      ]
+    },
+    "dim_region": {
+      "fields": {
+        "is_restricted": {
+          "nullable": false,
+          "type": "boolean"
+        },
+        "region_group": {
+          "nullable": false,
+          "type": "string"
+        },
+        "region_key": {
+          "nullable": false,
+          "type": "string"
+        },
+        "region_name": {
+          "nullable": false,
+          "type": "string"
+        }
+      },
+      "file": "dim_region.csv",
+      "primary_key": [
+        "region_key"
+      ]
+    },
+    "fact_sales": {
+      "business_key": [
+        "order_id"
+      ],
+      "fields": {
+        "cost_amount": {
+          "nullable": false,
+          "precision": 12,
+          "scale": 2,
+          "type": "decimal"
+        },
+        "discount_rate": {
+          "nullable": true,
+          "precision": 5,
+          "scale": 2,
+          "type": "decimal"
+        },
+        "gross_amount": {
+          "nullable": false,
+          "precision": 12,
+          "scale": 2,
+          "type": "decimal"
+        },
+        "is_returned": {
+          "nullable": false,
+          "type": "boolean"
+        },
+        "occurred_at": {
+          "nullable": false,
+          "timezone": "UTC",
+          "type": "datetime"
+        },
+        "order_id": {
+          "nullable": false,
+          "type": "string"
+        },
+        "product_key": {
+          "nullable": true,
+          "type": "string"
+        },
+        "quantity": {
+          "nullable": false,
+          "type": "integer"
+        },
+        "region_key": {
+          "nullable": false,
+          "type": "string"
+        },
+        "sales_id": {
+          "nullable": false,
+          "type": "integer"
+        },
+        "sold_on": {
+          "nullable": false,
+          "type": "date"
+        }
+      },
+      "file": "fact_sales.csv",
+      "primary_key": [
+        "sales_id"
+      ]
+    }
+  }
+}

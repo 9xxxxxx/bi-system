@@ -1,0 +1,30 @@
+{
+  "canonicalization_cases": [
+    {
+      "case_id": "canonical_utc_serialization",
+      "input": "2026-01-05T16:30:45+08:00"
+    }
+  ],
+  "fixture_version": "m3-star-v2",
+  "timestamp_field": {
+    "field": "occurred_at",
+    "input_format": "ISO 8601 UTC with trailing Z",
+    "source": "fact_sales"
+  },
+  "verification": {
+    "r2_dual_database_execution_required": true,
+    "scope": "generator_expected_boundaries_only"
+  },
+  "workspace_day_cases": [
+    {
+      "case_id": "hong_kong_workspace_day",
+      "local_date": "2026-01-05",
+      "timezone": "Asia/Hong_Kong"
+    },
+    {
+      "case_id": "new_york_dst_spring_forward_day",
+      "local_date": "2026-03-08",
+      "timezone": "America/New_York"
+    }
+  ]
+}

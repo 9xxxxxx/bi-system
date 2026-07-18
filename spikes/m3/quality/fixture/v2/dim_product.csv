@@ -1,0 +1,5 @@
+product_key,product_name,category,launch_date,is_active
+P100,Widget Alpha,Hardware,2025-01-15,true
+P200,Widget Beta,Hardware,2025-06-01,true
+P300,Service Plan,Services,2024-11-20,false
+P400,Widget Alpha,Accessories,2026-02-01,true

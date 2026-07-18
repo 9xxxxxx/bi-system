@@ -1,0 +1,583 @@
+{
+  "bar_and_pie_by_category": [
+    {
+      "category": "(Unmatched product)",
+      "cost_amount": "50.00",
+      "distinct_order_count": 2,
+      "gross_amount": "155.25",
+      "margin_amount": "105.25",
+      "quantity": 3,
+      "returned_row_count": 0,
+      "row_count": 2,
+      "sales_ids": [
+        7,
+        12
+      ]
+    },
+    {
+      "category": "Hardware",
+      "cost_amount": "1297.75",
+      "distinct_order_count": 8,
+      "gross_amount": "2163.50",
+      "margin_amount": "865.75",
+      "quantity": 18,
+      "returned_row_count": 1,
+      "row_count": 9,
+      "sales_ids": [
+        1,
+        2,
+        4,
+        5,
+        8,
+        9,
+        11,
+        13,
+        14
+      ]
+    },
+    {
+      "category": "Services",
+      "cost_amount": "210.00",
+      "distinct_order_count": 3,
+      "gross_amount": "519.99",
+      "margin_amount": "309.99",
+      "quantity": 5,
+      "returned_row_count": 1,
+      "row_count": 3,
+      "sales_ids": [
+        3,
+        6,
+        10
+      ]
+    }
+  ],
+  "bar_by_region": [
+    {
+      "cost_amount": "66.00",
+      "distinct_order_count": 1,
+      "gross_amount": "110.00",
+      "margin_amount": "44.00",
+      "quantity": 1,
+      "region_name": "(Unmatched region)",
+      "returned_row_count": 0,
+      "row_count": 1,
+      "sales_ids": [
+        11
+      ]
+    },
+    {
+      "cost_amount": "420.25",
+      "distinct_order_count": 6,
+      "gross_amount": "805.74",
+      "margin_amount": "385.49",
+      "quantity": 9,
+      "region_name": "North",
+      "returned_row_count": 0,
+      "row_count": 7,
+      "sales_ids": [
+        1,
+        2,
+        6,
+        7,
+        12,
+        13,
+        14
+      ]
+    },
+    {
+      "cost_amount": "660.50",
+      "distinct_order_count": 4,
+      "gross_amount": "1201.00",
+      "margin_amount": "540.50",
+      "quantity": 11,
+      "region_name": "South",
+      "returned_row_count": 1,
+      "row_count": 4,
+      "sales_ids": [
+        3,
+        4,
+        8,
+        9
+      ]
+    },
+    {
+      "cost_amount": "411.00",
+      "distinct_order_count": 2,
+      "gross_amount": "722.00",
+      "margin_amount": "311.00",
+      "quantity": 5,
+      "region_name": "Strategic",
+      "returned_row_count": 1,
+      "row_count": 2,
+      "sales_ids": [
+        5,
+        10
+      ]
+    }
+  ],
+  "date_semantics": "ISO date; ranges are [start, end) in fixture timezone Asia/Hong_Kong",
+  "decimal_semantics": "base-10 exact arithmetic; money rounded to scale 2 only for output",
+  "filter_scenarios": {
+    "date_intersection_global_january_and_component_from_2026_01_05": {
+      "cost_amount": "691.25",
+      "distinct_order_count": 6,
+      "gross_amount": "1332.49",
+      "margin_amount": "641.24",
+      "quantity": 12,
+      "returned_row_count": 1,
+      "row_count": 6,
+      "sales_ids": [
+        2,
+        3,
+        4,
+        5,
+        6,
+        7
+      ]
+    },
+    "global_date_january": {
+      "cost_amount": "811.25",
+      "distinct_order_count": 7,
+      "gross_amount": "1532.49",
+      "margin_amount": "721.24",
+      "quantity": 14,
+      "returned_row_count": 1,
+      "row_count": 7,
+      "sales_ids": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7
+      ]
+    },
+    "global_date_january_and_page_region_north": {
+      "cost_amount": "270.25",
+      "distinct_order_count": 4,
+      "gross_amount": "530.49",
+      "margin_amount": "260.24",
+      "quantity": 6,
+      "returned_row_count": 0,
+      "row_count": 4,
+      "sales_ids": [
+        1,
+        2,
+        6,
+        7
+      ]
+    },
+    "global_date_january_and_page_region_north_and_component_category_hardware": {
+      "cost_amount": "210.25",
+      "distinct_order_count": 2,
+      "gross_amount": "350.50",
+      "margin_amount": "140.25",
+      "quantity": 3,
+      "returned_row_count": 0,
+      "row_count": 2,
+      "sales_ids": [
+        1,
+        2
+      ]
+    }
+  },
+  "fixture_version": "m3-star-v1",
+  "join_semantics": "fact LEFT JOIN dimensions; unknown and NULL keys use explicit unmatched labels",
+  "kpi_all": {
+    "cost_amount": "1557.75",
+    "distinct_order_count": 13,
+    "gross_amount": "2838.74",
+    "margin_amount": "1280.99",
+    "null_discount_row_count": 4,
+    "null_product_key_row_count": 1,
+    "quantity": 26,
+    "returned_row_count": 2,
+    "row_count": 14,
+    "sales_ids": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11,
+      12,
+      13,
+      14
+    ],
+    "unknown_product_key_row_count": 1,
+    "unknown_region_key_row_count": 1
+  },
+  "line_and_area_by_month": [
+    {
+      "cost_amount": "811.25",
+      "distinct_order_count": 7,
+      "gross_amount": "1532.49",
+      "margin_amount": "721.24",
+      "month": "2026-01",
+      "quantity": 14,
+      "returned_row_count": 1,
+      "row_count": 7,
+      "sales_ids": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7
+      ]
+    },
+    {
+      "cost_amount": "746.50",
+      "distinct_order_count": 6,
+      "gross_amount": "1306.25",
+      "margin_amount": "559.75",
+      "month": "2026-02",
+      "quantity": 12,
+      "returned_row_count": 1,
+      "row_count": 7,
+      "sales_ids": [
+        8,
+        9,
+        10,
+        11,
+        12,
+        13,
+        14
+      ]
+    }
+  ],
+  "permission_scenarios": {
+    "administrator": {
+      "cost_amount": "1557.75",
+      "decision": "allow",
+      "distinct_order_count": 13,
+      "gross_amount": "2838.74",
+      "margin_amount": "1280.99",
+      "quantity": 26,
+      "returned_row_count": 2,
+      "row_count": 14,
+      "sales_ids": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11,
+        12,
+        13,
+        14
+      ]
+    },
+    "editor": {
+      "cost_amount": "1557.75",
+      "decision": "allow",
+      "distinct_order_count": 13,
+      "gross_amount": "2838.74",
+      "margin_amount": "1280.99",
+      "quantity": 26,
+      "returned_row_count": 2,
+      "row_count": 14,
+      "sales_ids": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11,
+        12,
+        13,
+        14
+      ]
+    },
+    "foreign_administrator": {
+      "decision": "deny",
+      "error_code": "workspace_access_denied",
+      "query_executed": false
+    },
+    "restricted_viewer": {
+      "cost_amount": "420.25",
+      "decision": "allow_after_rls",
+      "distinct_order_count": 6,
+      "gross_amount": "805.74",
+      "margin_amount": "385.49",
+      "quantity": 9,
+      "returned_row_count": 0,
+      "row_count": 7,
+      "sales_ids": [
+        1,
+        2,
+        6,
+        7,
+        12,
+        13,
+        14
+      ]
+    },
+    "restricted_viewer_forged_south_filter": {
+      "cost_amount": "0.00",
+      "decision": "allow_empty_after_rls_and_user_filter_intersection",
+      "distinct_order_count": 0,
+      "gross_amount": "0.00",
+      "margin_amount": "0.00",
+      "quantity": 0,
+      "returned_row_count": 0,
+      "row_count": 0,
+      "sales_ids": []
+    }
+  },
+  "stacked_bar_category_by_region": [
+    {
+      "category": "(Unmatched product)",
+      "cost_amount": "50.00",
+      "distinct_order_count": 2,
+      "gross_amount": "155.25",
+      "margin_amount": "105.25",
+      "quantity": 3,
+      "region_name": "North",
+      "returned_row_count": 0,
+      "row_count": 2,
+      "sales_ids": [
+        7,
+        12
+      ]
+    },
+    {
+      "category": "Hardware",
+      "cost_amount": "66.00",
+      "distinct_order_count": 1,
+      "gross_amount": "110.00",
+      "margin_amount": "44.00",
+      "quantity": 1,
+      "region_name": "(Unmatched region)",
+      "returned_row_count": 0,
+      "row_count": 1,
+      "sales_ids": [
+        11
+      ]
+    },
+    {
+      "category": "Hardware",
+      "cost_amount": "330.25",
+      "distinct_order_count": 3,
+      "gross_amount": "550.50",
+      "margin_amount": "220.25",
+      "quantity": 5,
+      "region_name": "North",
+      "returned_row_count": 0,
+      "row_count": 4,
+      "sales_ids": [
+        1,
+        2,
+        13,
+        14
+      ]
+    },
+    {
+      "category": "Hardware",
+      "cost_amount": "540.50",
+      "distinct_order_count": 3,
+      "gross_amount": "901.00",
+      "margin_amount": "360.50",
+      "quantity": 8,
+      "region_name": "South",
+      "returned_row_count": 1,
+      "row_count": 3,
+      "sales_ids": [
+        4,
+        8,
+        9
+      ]
+    },
+    {
+      "category": "Hardware",
+      "cost_amount": "361.00",
+      "distinct_order_count": 1,
+      "gross_amount": "602.00",
+      "margin_amount": "241.00",
+      "quantity": 4,
+      "region_name": "Strategic",
+      "returned_row_count": 0,
+      "row_count": 1,
+      "sales_ids": [
+        5
+      ]
+    },
+    {
+      "category": "Services",
+      "cost_amount": "40.00",
+      "distinct_order_count": 1,
+      "gross_amount": "99.99",
+      "margin_amount": "59.99",
+      "quantity": 1,
+      "region_name": "North",
+      "returned_row_count": 0,
+      "row_count": 1,
+      "sales_ids": [
+        6
+      ]
+    },
+    {
+      "category": "Services",
+      "cost_amount": "120.00",
+      "distinct_order_count": 1,
+      "gross_amount": "300.00",
+      "margin_amount": "180.00",
+      "quantity": 3,
+      "region_name": "South",
+      "returned_row_count": 0,
+      "row_count": 1,
+      "sales_ids": [
+        3
+      ]
+    },
+    {
+      "category": "Services",
+      "cost_amount": "50.00",
+      "distinct_order_count": 1,
+      "gross_amount": "120.00",
+      "margin_amount": "70.00",
+      "quantity": 1,
+      "region_name": "Strategic",
+      "returned_row_count": 1,
+      "row_count": 1,
+      "sales_ids": [
+        10
+      ]
+    }
+  ],
+  "table_by_product": [
+    {
+      "cost_amount": "30.00",
+      "distinct_order_count": 1,
+      "gross_amount": "75.25",
+      "margin_amount": "45.25",
+      "product_key": null,
+      "product_name": "(Unmatched product)",
+      "quantity": 1,
+      "returned_row_count": 0,
+      "row_count": 1,
+      "sales_ids": [
+        12
+      ]
+    },
+    {
+      "cost_amount": "666.00",
+      "distinct_order_count": 5,
+      "gross_amount": "1110.00",
+      "margin_amount": "444.00",
+      "product_key": "P100",
+      "product_name": "Widget Alpha",
+      "quantity": 11,
+      "returned_row_count": 1,
+      "row_count": 6,
+      "sales_ids": [
+        1,
+        4,
+        8,
+        11,
+        13,
+        14
+      ]
+    },
+    {
+      "cost_amount": "631.75",
+      "distinct_order_count": 3,
+      "gross_amount": "1053.50",
+      "margin_amount": "421.75",
+      "product_key": "P200",
+      "product_name": "Widget Beta",
+      "quantity": 7,
+      "returned_row_count": 0,
+      "row_count": 3,
+      "sales_ids": [
+        2,
+        5,
+        9
+      ]
+    },
+    {
+      "cost_amount": "210.00",
+      "distinct_order_count": 3,
+      "gross_amount": "519.99",
+      "margin_amount": "309.99",
+      "product_key": "P300",
+      "product_name": "Service Plan",
+      "quantity": 5,
+      "returned_row_count": 1,
+      "row_count": 3,
+      "sales_ids": [
+        3,
+        6,
+        10
+      ]
+    },
+    {
+      "cost_amount": "20.00",
+      "distinct_order_count": 1,
+      "gross_amount": "80.00",
+      "margin_amount": "60.00",
+      "product_key": "P999",
+      "product_name": "(Unmatched product)",
+      "quantity": 2,
+      "returned_row_count": 0,
+      "row_count": 1,
+      "sales_ids": [
+        7
+      ]
+    }
+  ],
+  "top_2_products_by_gross_desc": [
+    {
+      "cost_amount": "666.00",
+      "distinct_order_count": 5,
+      "gross_amount": "1110.00",
+      "margin_amount": "444.00",
+      "product_key": "P100",
+      "product_name": "Widget Alpha",
+      "quantity": 11,
+      "returned_row_count": 1,
+      "row_count": 6,
+      "sales_ids": [
+        1,
+        4,
+        8,
+        11,
+        13,
+        14
+      ]
+    },
+    {
+      "cost_amount": "631.75",
+      "distinct_order_count": 3,
+      "gross_amount": "1053.50",
+      "margin_amount": "421.75",
+      "product_key": "P200",
+      "product_name": "Widget Beta",
+      "quantity": 7,
+      "returned_row_count": 0,
+      "row_count": 3,
+      "sales_ids": [
+        2,
+        5,
+        9
+      ]
+    }
+  ]
+}
