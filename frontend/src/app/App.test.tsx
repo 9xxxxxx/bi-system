@@ -61,6 +61,39 @@ it("restores the session and lazy loads the dataset route", async () => {
   expect(screen.getByText("数据分析员")).toBeInTheDocument();
 });
 
+it("lazy loads the dashboard list from the primary navigation", async () => {
+  vi.stubGlobal(
+    "fetch",
+    vi.fn(async (input: RequestInfo | URL) => {
+      const url = String(input);
+      if (url.endsWith("/auth/me")) {
+        return new Response(JSON.stringify(currentUser), { status: 200 });
+      }
+      if (new URL(url).pathname.endsWith("/dashboards")) {
+        return new Response(
+          JSON.stringify({ items: [], total: 0, offset: 0, limit: 50 }),
+          { status: 200 },
+        );
+      }
+      return apiError(404, "not_found", "Not found");
+    }),
+  );
+
+  render(
+    <TestProviders initialEntries={["/dashboards"]}>
+      <App />
+    </TestProviders>,
+  );
+
+  expect(
+    await screen.findByRole("heading", { name: "仪表盘" }, { timeout: 5_000 }),
+  ).toBeInTheDocument();
+  expect(screen.getByRole("link", { name: "仪表盘" })).toHaveAttribute(
+    "href",
+    "/dashboards",
+  );
+});
+
 describe("authentication", () => {
   it("shows login after an unauthorized session check and enters the app", async () => {
     const fetchMock = vi.fn(

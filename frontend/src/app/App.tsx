@@ -1,5 +1,6 @@
 import {
   ApartmentOutlined,
+  BarChartOutlined,
   DashboardOutlined,
   ImportOutlined,
   LogoutOutlined,
@@ -48,6 +49,20 @@ const DatasetWorkbenchPage = lazy(async () => {
   const module = await import("../features/data-modeling/DatasetWorkbenchPage");
   return { default: module.DatasetWorkbenchPage };
 });
+const DashboardListPage = lazy(async () => {
+  const module = await import("../features/dashboards/pages/DashboardListPage");
+  return { default: module.DashboardListPage };
+});
+const DashboardCreatePage = lazy(async () => {
+  const module =
+    await import("../features/dashboards/pages/DashboardCreatePage");
+  return { default: module.DashboardCreatePage };
+});
+const DashboardEditorPage = lazy(async () => {
+  const module =
+    await import("../features/dashboards/pages/DashboardEditorPage");
+  return { default: module.DashboardEditorPage };
+});
 const SystemStatusPage = lazy(async () => {
   const module = await import("../features/system-status/SystemStatusPage");
   return { default: module.SystemStatusPage };
@@ -58,6 +73,7 @@ const GovernancePage = lazy(async () => {
 });
 
 function routeKey(pathname: string): string {
+  if (pathname.startsWith("/dashboards")) return "dashboards";
   if (pathname.startsWith("/datasets")) return "datasets";
   if (pathname.startsWith("/data-ingestion")) return "ingestion";
   if (pathname.startsWith("/governance")) return "governance";
@@ -153,6 +169,9 @@ function AuthenticatedShell({
   const location = useLocation();
   const selectedKey = routeKey(location.pathname);
   const isModelingWorkbench = /^\/datasets\/[^/]+/.test(location.pathname);
+  const isDashboardWorkbench =
+    /^\/dashboards\/[^/]+/.test(location.pathname) &&
+    location.pathname !== "/dashboards/new";
 
   return (
     <Layout className="app-shell">
@@ -185,6 +204,11 @@ function AuthenticatedShell({
               key: "datasets",
               icon: <ApartmentOutlined />,
               label: <NavLink to="/datasets">数据集</NavLink>,
+            },
+            {
+              key: "dashboards",
+              icon: <BarChartOutlined />,
+              label: <NavLink to="/dashboards">仪表盘</NavLink>,
             },
             {
               key: "governance",
@@ -225,7 +249,9 @@ function AuthenticatedShell({
           />
         )}
         <Content
-          className={`app-content${isModelingWorkbench ? " is-workbench" : ""}`}
+          className={`app-content${
+            isModelingWorkbench || isDashboardWorkbench ? " is-workbench" : ""
+          }`}
         >
           <Suspense
             fallback={
@@ -238,6 +264,12 @@ function AuthenticatedShell({
               <Route path="/system-status" element={<SystemStatusPage />} />
               <Route path="/data-ingestion" element={<DataIngestionPage />} />
               <Route path="/datasets" element={<DatasetListPage />} />
+              <Route path="/dashboards" element={<DashboardListPage />} />
+              <Route path="/dashboards/new" element={<DashboardCreatePage />} />
+              <Route
+                path="/dashboards/:dashboardId"
+                element={<DashboardEditorPage />}
+              />
               <Route path="/governance" element={<GovernancePage />} />
               <Route
                 path="/datasets/:datasetId"
