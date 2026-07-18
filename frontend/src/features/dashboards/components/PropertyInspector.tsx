@@ -46,8 +46,8 @@ export function PropertyInspector({
             />
           </Form.Item>
           <div className="dashboard-property-placeholder">
-            <strong>数据配置待接入</strong>
-            <span>M3-R2 将在此配置数据集、字段槽、排序和筛选。</span>
+            <strong>数据配置</strong>
+            <span>暂无配置</span>
           </div>
         </Form>
       ) : (

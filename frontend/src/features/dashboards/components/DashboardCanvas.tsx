@@ -119,7 +119,7 @@ export function DashboardCanvas({
                 >
                   <AppstoreOutlined aria-hidden />
                   <span>组件合同已创建</span>
-                  <small>数据字段将在 M3-R2 配置</small>
+                  <small>暂无数据配置</small>
                 </button>
               </article>
             );
