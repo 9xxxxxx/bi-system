@@ -120,11 +120,163 @@ it("renders the component palette, 12-column canvas and property inspector", asy
   );
   expect(screen.getByLabelText("属性面板")).toBeInTheDocument();
   expect(screen.getByDisplayValue("总营收")).toBeInTheDocument();
+  expect(document.querySelector(".react-grid-layout")).toBeInTheDocument();
+  expect(document.querySelector(".react-resizable-handle")).toBeInTheDocument();
 
   await user.click(screen.getByRole("button", { name: "添加柱状图组件" }));
   expect(screen.getByText("2 个组件")).toBeInTheDocument();
   expect(screen.getByDisplayValue("柱状图")).toBeInTheDocument();
   expect(screen.getByText("有未保存更改")).toBeInTheDocument();
+});
+
+it("persists stable layout changes and copied components in both profiles", async () => {
+  let saveBody: unknown;
+  vi.stubGlobal(
+    "fetch",
+    vi.fn(async (_input: string | URL | Request, init?: RequestInit) => {
+      if (init?.method === "POST") {
+        saveBody = JSON.parse(String(init.body));
+        return jsonResponse(
+          toWire({
+            ...dashboard,
+            revision: 8,
+            current_version: 3,
+            current_version_id: "dashboard-version-3",
+          }),
+        );
+      }
+      return jsonResponse(toWire(dashboard));
+    }),
+  );
+  const user = userEvent.setup();
+  const view = renderPage();
+
+  await screen.findByRole("heading", { name: "销售经营总览" });
+  const revenue = view.container.querySelector<HTMLElement>(
+    '[data-component-id="component-revenue"]',
+  )!;
+  expect(revenue).toHaveAttribute("data-layout-x", "0");
+  fireEvent.keyDown(revenue, { key: "ArrowRight" });
+  await waitFor(() =>
+    expect(
+      view.container.querySelector('[data-component-id="component-revenue"]'),
+    ).toHaveAttribute("data-layout-x", "1"),
+  );
+  fireEvent.keyDown(
+    view.container.querySelector('[data-component-id="component-revenue"]')!,
+    { key: "ArrowRight", shiftKey: true },
+  );
+  await waitFor(() =>
+    expect(
+      view.container.querySelector('[data-component-id="component-revenue"]'),
+    ).toHaveAttribute("data-layout-width", "5"),
+  );
+
+  await user.click(screen.getByRole("button", { name: "复制当前组件" }));
+  await user.click(screen.getByRole("button", { name: "粘贴组件" }));
+  expect(screen.getByText("2 个组件")).toBeInTheDocument();
+  expect(screen.getByDisplayValue("总营收 副本")).toBeInTheDocument();
+
+  await user.click(screen.getByRole("button", { name: /保存新版本/ }));
+  await waitFor(() => expect(saveBody).toBeDefined());
+  const wire = saveBody as {
+    components: Array<{
+      component_id: string;
+      config: { title: string };
+    }>;
+    layouts: Array<{
+      profile: "desktop" | "mobile";
+      items: Array<{
+        component_id: string;
+        x: number;
+        y: number;
+        width: number;
+      }>;
+    }>;
+  };
+  const copied = wire.components.find(
+    (component) => component.component_id !== "component-revenue",
+  )!;
+  expect(copied.config.title).toBe("总营收 副本");
+  const desktop = wire.layouts.find((layout) => layout.profile === "desktop")!;
+  const mobile = wire.layouts.find((layout) => layout.profile === "mobile")!;
+  expect(desktop.items).toEqual(
+    expect.arrayContaining([
+      expect.objectContaining({
+        component_id: "component-revenue",
+        x: 1,
+      }),
+      expect.objectContaining({
+        component_id: copied.component_id,
+        x: 0,
+        y: 4,
+        width: 5,
+      }),
+    ]),
+  );
+  expect(mobile.items).toEqual(
+    expect.arrayContaining([
+      expect.objectContaining({
+        component_id: "component-revenue",
+        x: 0,
+      }),
+      expect.objectContaining({
+        component_id: copied.component_id,
+        x: 0,
+        y: 4,
+        width: 4,
+      }),
+    ]),
+  );
+});
+
+it("navigates multiple pages without mixing component layout snapshots", async () => {
+  const secondComponent = {
+    ...dashboard.pages[0].components[0],
+    id: "component-margin",
+    title: "区域利润率",
+  };
+  const multiPage: DashboardDetail = {
+    ...dashboard,
+    page_count: 2,
+    pages: [
+      dashboard.pages[0],
+      {
+        id: "page-region",
+        title: "区域分析",
+        ordinal: 1,
+        components: [secondComponent],
+      },
+    ],
+    layouts: dashboard.layouts.map((layout) => ({
+      ...layout,
+      items: [
+        ...layout.items,
+        {
+          ...layout.items[0],
+          component_id: secondComponent.id,
+          x: layout.profile === "desktop" ? 4 : 0,
+          y: layout.profile === "desktop" ? 0 : 4,
+        },
+      ],
+    })),
+  };
+  vi.stubGlobal(
+    "fetch",
+    vi.fn(async () => jsonResponse(toWire(multiPage))),
+  );
+  const user = userEvent.setup();
+  const view = renderPage();
+
+  await screen.findByDisplayValue("总营收");
+  await user.click(screen.getByRole("button", { name: "区域分析" }));
+  expect(screen.getByDisplayValue("区域利润率")).toBeInTheDocument();
+  expect(
+    view.container.querySelector('[data-component-id="component-revenue"]'),
+  ).not.toBeInTheDocument();
+  expect(
+    view.container.querySelector('[data-component-id="component-margin"]'),
+  ).toHaveAttribute("data-layout-x", "4");
 });
 
 it("shows an explicit empty canvas for a blank draft", async () => {

@@ -293,12 +293,19 @@
   font-size: 42px;
 }
 
-.dashboard-canvas-grid {
-  display: grid;
-  gap: 10px;
-  grid-auto-rows: var(--dashboard-row-height);
-  grid-template-columns: repeat(var(--dashboard-columns), minmax(0, 1fr));
+.dashboard-canvas-grid-shell {
   min-height: 440px;
+  min-width: 0;
+}
+
+.dashboard-canvas-grid {
+  min-height: 440px;
+}
+
+.dashboard-canvas-grid > .react-grid-placeholder {
+  background: #1677ff;
+  border-radius: 6px;
+  opacity: 0.14;
 }
 
 .dashboard-component-placeholder {
@@ -316,6 +323,12 @@
   box-shadow: 0 0 0 2px rgb(22 119 255 / 12%);
 }
 
+.dashboard-component-placeholder:focus-visible {
+  border-color: #1677ff;
+  box-shadow: 0 0 0 3px rgb(22 119 255 / 18%);
+  outline: 0;
+}
+
 .dashboard-component-placeholder > header {
   align-items: center;
   border-bottom: 1px solid #eef0f4;
@@ -324,6 +337,22 @@
   justify-content: space-between;
   min-height: 44px;
   padding: 8px 10px 8px 12px;
+}
+
+.dashboard-drag-handle {
+  cursor: grab;
+  user-select: none;
+}
+
+.react-draggable-dragging .dashboard-drag-handle {
+  cursor: grabbing;
+}
+
+.dashboard-component-placeholder > .react-resizable-handle {
+  background: #ffffff;
+  border-left: 1px solid #d8dde5;
+  border-top: 1px solid #d8dde5;
+  opacity: 1;
 }
 
 .dashboard-component-placeholder > header > div {
@@ -631,8 +660,15 @@
   }
 
   .dashboard-canvas-grid {
-    gap: 8px;
     min-height: 0;
+  }
+
+  .dashboard-canvas-grid-shell {
+    min-height: 0;
+  }
+
+  .dashboard-drag-handle {
+    cursor: default;
   }
 
   .dashboard-canvas-empty {

@@ -1,12 +1,14 @@
 import {
   ArrowLeftOutlined,
   CheckOutlined,
+  CopyOutlined,
   LockOutlined,
   SaveOutlined,
+  SnippetsOutlined,
 } from "@ant-design/icons";
 import { useMutation, useQuery } from "@tanstack/react-query";
-import { Alert, Button, Space, Tag, Typography } from "antd";
-import { useEffect, useState } from "react";
+import { Alert, Button, Space, Tag, Tooltip, Typography } from "antd";
+import { useCallback, useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 
 import { getDashboard, saveDashboardVersion } from "../api";
@@ -27,7 +29,9 @@ import type {
   DashboardComponent,
   DashboardComponentType,
   DashboardDetail,
+  DashboardLayoutItem,
   DashboardLayoutProfile,
+  DashboardLayoutProfileName,
   DashboardPage,
 } from "../types";
 import { isChartComponentConfig } from "../charts/config";
@@ -35,6 +39,11 @@ import type { ScopedFilter } from "../charts/types";
 import "../dashboards.css";
 
 const mobileQuery = "(max-width: 768px)";
+
+interface ComponentClipboard {
+  component: DashboardComponent;
+  layoutItems: Partial<Record<DashboardLayoutProfileName, DashboardLayoutItem>>;
+}
 
 function useMobileViewport(): boolean {
   const [mobile, setMobile] = useState(
@@ -94,10 +103,15 @@ function cloneLayouts(
 function appendLayoutItem(
   layouts: DashboardLayoutProfile[],
   componentId: string,
+  pageComponentIds: string[],
 ): DashboardLayoutProfile[] {
+  const pageIds = new Set(pageComponentIds);
   return layouts.map((layout) => {
     const y = layout.items.reduce(
-      (bottom, item) => Math.max(bottom, item.y + item.height),
+      (bottom, item) =>
+        pageIds.has(item.component_id)
+          ? Math.max(bottom, item.y + item.height)
+          : bottom,
       0,
     );
     const width = layout.profile === "desktop" ? 4 : layout.columns;
@@ -119,6 +133,68 @@ function appendLayoutItem(
   });
 }
 
+function replacePageLayoutItems(
+  layouts: DashboardLayoutProfile[],
+  profile: DashboardLayoutProfileName,
+  pageComponentIds: string[],
+  nextItems: DashboardLayoutItem[],
+): DashboardLayoutProfile[] {
+  const pageIds = new Set(pageComponentIds);
+  return layouts.map((layout) =>
+    layout.profile === profile
+      ? {
+          ...layout,
+          items: [
+            ...layout.items.filter((item) => !pageIds.has(item.component_id)),
+            ...nextItems,
+          ].toSorted((left, right) =>
+            left.component_id.localeCompare(right.component_id),
+          ),
+        }
+      : layout,
+  );
+}
+
+function appendCopiedLayoutItems(
+  layouts: DashboardLayoutProfile[],
+  clipboard: ComponentClipboard,
+  componentId: string,
+  pageComponentIds: string[],
+): DashboardLayoutProfile[] {
+  const pageIds = new Set(pageComponentIds);
+  return layouts.map((layout) => {
+    const source = clipboard.layoutItems[layout.profile];
+    const width = Math.min(
+      layout.columns,
+      source?.width ?? (layout.profile === "desktop" ? 4 : layout.columns),
+    );
+    const y = layout.items.reduce(
+      (bottom, item) =>
+        pageIds.has(item.component_id)
+          ? Math.max(bottom, item.y + item.height)
+          : bottom,
+      0,
+    );
+    return {
+      ...layout,
+      items: [
+        ...layout.items,
+        {
+          component_id: componentId,
+          x: 0,
+          y,
+          width,
+          height: source?.height ?? 4,
+          min_width: Math.min(source?.min_width ?? 2, width),
+          min_height: source?.min_height ?? 3,
+        },
+      ].toSorted((left, right) =>
+        left.component_id.localeCompare(right.component_id),
+      ),
+    };
+  });
+}
+
 function EditorWorkspace({ dashboard }: { dashboard: DashboardDetail }) {
   const mobile = useMobileViewport();
   const canEdit = dashboard.capabilities.includes("edit");
@@ -133,6 +209,7 @@ function EditorWorkspace({ dashboard }: { dashboard: DashboardDetail }) {
   const [selectedComponentId, setSelectedComponentId] = useState<string | null>(
     () => pages[0].components[0]?.id ?? null,
   );
+  const [clipboard, setClipboard] = useState<ComponentClipboard | null>(null);
   const [versionContext, setVersionContext] = useState(() => ({
     id: dashboard.current_version_id,
     version: dashboard.current_version,
@@ -170,6 +247,83 @@ function EditorWorkspace({ dashboard }: { dashboard: DashboardDetail }) {
     },
   });
 
+  const copySelectedComponent = useCallback(() => {
+    if (!selectedComponent) return;
+    setClipboard({
+      component: {
+        ...selectedComponent,
+        config: structuredClone(selectedComponent.config),
+      },
+      layoutItems: Object.fromEntries(
+        layouts.flatMap((layout) => {
+          const item = layout.items.find(
+            (candidate) => candidate.component_id === selectedComponent.id,
+          );
+          return item ? [[layout.profile, { ...item }]] : [];
+        }),
+      ),
+    });
+  }, [layouts, selectedComponent]);
+
+  const pasteComponent = useCallback(() => {
+    if (!clipboard || readonly) return;
+    const componentId = crypto.randomUUID();
+    const component: DashboardComponent = {
+      ...clipboard.component,
+      id: componentId,
+      title: `${clipboard.component.title} 副本`,
+      ordinal: currentPage.components.length,
+      config: structuredClone(clipboard.component.config),
+    };
+    setPages((current) =>
+      current.map((page) =>
+        page.id === currentPage.id
+          ? { ...page, components: [...page.components, component] }
+          : page,
+      ),
+    );
+    setLayouts((current) =>
+      appendCopiedLayoutItems(
+        current,
+        clipboard,
+        componentId,
+        currentPage.components.map((item) => item.id),
+      ),
+    );
+    setSelectedComponentId(componentId);
+    setSaveState("有未保存更改");
+  }, [clipboard, currentPage.components, currentPage.id, readonly]);
+
+  useEffect(() => {
+    if (readonly) return;
+    const handleClipboardShortcut = (event: KeyboardEvent) => {
+      const target = event.target;
+      if (
+        target instanceof HTMLElement &&
+        target.closest("input, textarea, select, [contenteditable='true']")
+      )
+        return;
+      if (!(event.ctrlKey || event.metaKey)) return;
+      if (event.key.toLowerCase() === "c" && selectedComponent) {
+        event.preventDefault();
+        copySelectedComponent();
+      }
+      if (event.key.toLowerCase() === "v" && clipboard) {
+        event.preventDefault();
+        pasteComponent();
+      }
+    };
+    document.addEventListener("keydown", handleClipboardShortcut);
+    return () =>
+      document.removeEventListener("keydown", handleClipboardShortcut);
+  }, [
+    clipboard,
+    copySelectedComponent,
+    pasteComponent,
+    readonly,
+    selectedComponent,
+  ]);
+
   function markChanged() {
     if (canEdit) setSaveState("有未保存更改");
   }
@@ -190,7 +344,13 @@ function EditorWorkspace({ dashboard }: { dashboard: DashboardDetail }) {
           : page,
       ),
     );
-    setLayouts((current) => appendLayoutItem(current, component.id));
+    setLayouts((current) =>
+      appendLayoutItem(
+        current,
+        component.id,
+        currentPage.components.map((item) => item.id),
+      ),
+    );
     setSelectedComponentId(component.id);
     markChanged();
   }
@@ -256,16 +416,34 @@ function EditorWorkspace({ dashboard }: { dashboard: DashboardDetail }) {
           {readonly ? (
             <Tag icon={<LockOutlined />}>只读</Tag>
           ) : (
-            <Button
-              type="primary"
-              icon={
-                saveMutation.isSuccess ? <CheckOutlined /> : <SaveOutlined />
-              }
-              loading={saveMutation.isPending}
-              onClick={() => saveMutation.mutate()}
-            >
-              保存新版本
-            </Button>
+            <>
+              <Tooltip title="复制当前组件 (Ctrl/Cmd+C)">
+                <Button
+                  icon={<CopyOutlined />}
+                  aria-label="复制当前组件"
+                  disabled={!selectedComponent}
+                  onClick={copySelectedComponent}
+                />
+              </Tooltip>
+              <Tooltip title="粘贴组件 (Ctrl/Cmd+V)">
+                <Button
+                  icon={<SnippetsOutlined />}
+                  aria-label="粘贴组件"
+                  disabled={!clipboard}
+                  onClick={pasteComponent}
+                />
+              </Tooltip>
+              <Button
+                type="primary"
+                icon={
+                  saveMutation.isSuccess ? <CheckOutlined /> : <SaveOutlined />
+                }
+                loading={saveMutation.isPending}
+                onClick={() => saveMutation.mutate()}
+              >
+                保存新版本
+              </Button>
+            </>
           )}
         </Space>
       </header>
@@ -344,6 +522,17 @@ function EditorWorkspace({ dashboard }: { dashboard: DashboardDetail }) {
           readonly={readonly}
           preview={canEdit}
           onSelect={setSelectedComponentId}
+          onLayoutChange={(nextItems) => {
+            setLayouts((current) =>
+              replacePageLayoutItems(
+                current,
+                activeProfile,
+                currentPage.components.map((component) => component.id),
+                nextItems,
+              ),
+            );
+            markChanged();
+          }}
         />
         {readonly ? null : (
           <PropertyInspector
