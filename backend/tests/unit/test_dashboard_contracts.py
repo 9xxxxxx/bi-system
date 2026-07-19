@@ -3,7 +3,11 @@ from typing import Any, cast
 from uuid import uuid4
 
 import pytest
-from bi_system.dashboards.contracts import SaveDashboardVersion
+from bi_system.dashboards.contracts import (
+    CreateDashboardTemplateVersion,
+    InstantiateDashboardTemplate,
+    SaveDashboardVersion,
+)
 from pydantic import ValidationError
 
 
@@ -122,3 +126,38 @@ def test_dashboard_version_contract_rejects_overlap_and_executable_config() -> N
     components[0]["config"] = {"raw_sql": "DROP TABLE dashboards"}
     with pytest.raises(ValidationError, match="forbidden key"):
         SaveDashboardVersion.model_validate(injection)
+
+
+def test_template_version_and_instantiation_contracts_require_explicit_versions() -> None:
+    source_version_id = uuid4()
+    template_version_id = uuid4()
+
+    version = CreateDashboardTemplateVersion.model_validate(
+        {
+            "source_dashboard_version_id": source_version_id,
+            "expected_revision": 2,
+        }
+    )
+    instance = InstantiateDashboardTemplate.model_validate(
+        {
+            "name": "  Regional dashboard  ",
+            "description": "  Independent copy  ",
+            "template_version_id": template_version_id,
+        }
+    )
+
+    assert version.source_dashboard_version_id == source_version_id
+    assert version.expected_revision == 2
+    assert instance.name == "Regional dashboard"
+    assert instance.description == "Independent copy"
+    assert instance.template_version_id == template_version_id
+
+    with pytest.raises(ValidationError):
+        InstantiateDashboardTemplate.model_validate({"name": "Missing version"})
+    with pytest.raises(ValidationError):
+        CreateDashboardTemplateVersion.model_validate(
+            {
+                "source_dashboard_version_id": source_version_id,
+                "expected_revision": 0,
+            }
+        )

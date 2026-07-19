@@ -185,6 +185,27 @@ class DashboardRevisionRequest(StrictDashboardModel):
     expected_revision: int = Field(ge=1)
 
 
+class InstantiateDashboardTemplate(StrictDashboardModel):
+    name: str = Field(min_length=1, max_length=128)
+    description: str | None = Field(default=None, max_length=500)
+    template_version_id: UUID
+
+    @field_validator("name")
+    @classmethod
+    def normalize_name(cls, value: str) -> str:
+        normalized = value.strip()
+        if not normalized:
+            raise ValueError("Dashboard name must not be blank")
+        return normalized
+
+    @field_validator("description")
+    @classmethod
+    def normalize_description(cls, value: str | None) -> str | None:
+        if value is None:
+            return None
+        return value.strip() or None
+
+
 class CreateDashboardTemplate(StrictDashboardModel):
     name: str = Field(min_length=1, max_length=128)
     description: str | None = Field(default=None, max_length=500)
@@ -198,6 +219,11 @@ class CreateDashboardTemplate(StrictDashboardModel):
         if not normalized:
             raise ValueError("Dashboard template name must not be blank")
         return normalized
+
+
+class CreateDashboardTemplateVersion(StrictDashboardModel):
+    source_dashboard_version_id: UUID
+    expected_revision: int = Field(ge=1)
 
 
 def _find_forbidden_key(value: object) -> str | None:
