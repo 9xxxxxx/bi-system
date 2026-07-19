@@ -2,6 +2,8 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
+import platform
 import tempfile
 from collections.abc import Sequence
 from concurrent.futures import ThreadPoolExecutor, as_completed
@@ -10,11 +12,18 @@ from pathlib import Path
 from time import perf_counter
 from uuid import UUID, uuid4
 
-from benchmark_m2_queries import (
-    benchmark_database_engine,
-    percentile,
-    seed_benchmark,
-)
+if __package__:
+    from scripts.benchmark_m2_queries import (
+        benchmark_database_engine,
+        percentile,
+        seed_benchmark,
+    )
+else:
+    from benchmark_m2_queries import (
+        benchmark_database_engine,
+        percentile,
+        seed_benchmark,
+    )
 from bi_system.dashboards.chart_contracts import (
     DashboardChartQueryRequest,
     RuntimeChartFilterScopes,
@@ -33,7 +42,7 @@ from bi_system.db.models import (
 from bi_system.db.session import create_session_factory
 from bi_system.identity import QueryPrincipal
 from sqlalchemy import select
-from sqlalchemy.engine import make_url
+from sqlalchemy.engine import Engine, make_url
 from sqlalchemy.orm import Session, sessionmaker
 
 
@@ -45,6 +54,7 @@ class BenchmarkContext:
 
 @dataclass(frozen=True, slots=True)
 class BenchmarkSample:
+    sample_index: int
     duration_ms: float
     truncated_results: int
 
@@ -54,12 +64,13 @@ def parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
     parser.add_argument("--rows", type=int, default=100_000)
     parser.add_argument("--concurrency", type=int, default=20)
     parser.add_argument("--iterations", type=int, default=5)
+    parser.add_argument("--warmups", type=int, default=5)
     parser.add_argument("--timeout-seconds", type=int, default=10)
     parser.add_argument("--database-url")
     parser.add_argument("--output", type=Path)
     args = parser.parse_args(argv)
-    if min(args.rows, args.concurrency, args.iterations, args.timeout_seconds) < 1:
-        parser.error("rows, concurrency, iterations, and timeout must be positive")
+    if min(args.rows, args.concurrency, args.iterations, args.warmups, args.timeout_seconds) < 1:
+        parser.error("rows, concurrency, iterations, warmups, and timeout must be positive")
     if args.database_url and make_url(args.database_url).get_backend_name() != "postgresql":
         parser.error("database-url must use the PostgreSQL dialect")
     return args
@@ -86,11 +97,14 @@ def main(argv: Sequence[str] | None = None) -> int:
             principal=principal,
             dataset_id=dataset_request.dataset_id,
         )
-        run_once(
-            session_factory,
-            context=context,
-            timeout_seconds=args.timeout_seconds,
-        )
+        warmups_completed = 0
+        for _ in range(args.warmups):
+            run_once(
+                session_factory,
+                context=context,
+                timeout_seconds=args.timeout_seconds,
+            )
+            warmups_completed += 1
         samples, errors, timeouts, wall_seconds = run_benchmark(
             session_factory,
             context=context,
@@ -99,16 +113,56 @@ def main(argv: Sequence[str] | None = None) -> int:
             timeout_seconds=args.timeout_seconds,
         )
         dialect = engine.dialect.name
+        environment = environment_metadata(engine)
 
+    output = build_output(
+        dialect=dialect,
+        rows=args.rows,
+        concurrency=args.concurrency,
+        iterations=args.iterations,
+        warmups=args.warmups,
+        warmups_completed=warmups_completed,
+        queries_per_request=len(context.requests),
+        samples=samples,
+        errors=errors,
+        timeouts=timeouts,
+        wall_seconds=wall_seconds,
+        environment=environment,
+    )
+    serialized = json.dumps(output, ensure_ascii=False, indent=2)
+    if args.output is not None:
+        args.output.parent.mkdir(parents=True, exist_ok=True)
+        args.output.write_text(serialized + "\n", encoding="utf-8")
+    print(serialized)
+    return 0 if not errors else 1
+
+
+def build_output(
+    *,
+    dialect: str,
+    rows: int,
+    concurrency: int,
+    iterations: int,
+    warmups: int,
+    warmups_completed: int,
+    queries_per_request: int,
+    samples: list[BenchmarkSample],
+    errors: dict[str, int],
+    timeouts: int,
+    wall_seconds: float,
+    environment: dict[str, object],
+) -> dict[str, object]:
     durations = [sample.duration_ms for sample in samples]
     completed = len(samples)
-    output = {
+    return {
         "dialect": dialect,
-        "rows": args.rows,
-        "concurrency": args.concurrency,
-        "iterations": args.iterations,
-        "requests": args.concurrency * args.iterations,
-        "queries_per_request": len(context.requests),
+        "rows": rows,
+        "concurrency": concurrency,
+        "iterations": iterations,
+        "warmups": warmups,
+        "warmups_completed": warmups_completed,
+        "requests": concurrency * iterations,
+        "queries_per_request": queries_per_request,
         "completed": completed,
         "errors": errors,
         "error_count": sum(errors.values()),
@@ -116,15 +170,38 @@ def main(argv: Sequence[str] | None = None) -> int:
         "truncated_results": sum(sample.truncated_results for sample in samples),
         "p50_ms": percentile(durations, 0.50),
         "p95_ms": percentile(durations, 0.95),
+        "max_ms": round(max(durations), 3) if durations else None,
+        "cache_state": "warm",
+        "percentile_method": "nearest-rank",
         "throughput_rps": round(completed / wall_seconds, 3) if wall_seconds else 0,
         "wall_seconds": round(wall_seconds, 3),
+        "samples": [
+            {
+                "sample_index": sample.sample_index,
+                "duration_ms": sample.duration_ms,
+                "truncated_results": sample.truncated_results,
+            }
+            for sample in samples
+        ],
+        "environment": environment,
     }
-    serialized = json.dumps(output, ensure_ascii=False, indent=2)
-    if args.output is not None:
-        args.output.parent.mkdir(parents=True, exist_ok=True)
-        args.output.write_text(serialized + "\n", encoding="utf-8")
-    print(serialized)
-    return 0 if not errors else 1
+
+
+def environment_metadata(engine: Engine) -> dict[str, object]:
+    version_info = engine.dialect.server_version_info
+    server_version = (
+        ".".join(str(component) for component in version_info) if version_info else None
+    )
+    return {
+        "python_version": platform.python_version(),
+        "python_implementation": platform.python_implementation(),
+        "platform": platform.platform(),
+        "machine": platform.machine(),
+        "processor": platform.processor(),
+        "cpu_count": os.cpu_count(),
+        "dialect": engine.dialect.name,
+        "server_version": server_version,
+    }
 
 
 def run_benchmark(
@@ -146,8 +223,9 @@ def run_benchmark(
                 session_factory,
                 context=context,
                 timeout_seconds=timeout_seconds,
+                sample_index=sample_index,
             )
-            for _ in range(concurrency * iterations)
+            for sample_index in range(concurrency * iterations)
         ]
         for future in as_completed(futures):
             try:
@@ -159,6 +237,7 @@ def run_benchmark(
             except Exception as exc:
                 name = type(exc).__name__
                 errors[name] = errors.get(name, 0) + 1
+    samples.sort(key=lambda sample: sample.sample_index)
     return samples, errors, timeouts, perf_counter() - started
 
 
@@ -167,6 +246,7 @@ def run_once(
     *,
     context: BenchmarkContext,
     timeout_seconds: int,
+    sample_index: int = -1,
 ) -> BenchmarkSample:
     started = perf_counter()
     truncated_results = 0
@@ -181,6 +261,7 @@ def run_once(
             )
             truncated_results += int(result.truncated)
     return BenchmarkSample(
+        sample_index=sample_index,
         duration_ms=(perf_counter() - started) * 1_000,
         truncated_results=truncated_results,
     )
