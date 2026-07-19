@@ -14,6 +14,8 @@ def test_auth_dataset_query_and_dashboard_routes_are_registered() -> None:
         "/api/v1/dataset-queries": {"post"},
         "/api/v1/dashboard-chart-queries/validate": {"post"},
         "/api/v1/dashboard-chart-queries": {"post"},
+        "/api/v1/dashboard-assets": {"get", "post"},
+        "/api/v1/dashboard-assets/{asset_id}/content": {"get"},
         "/api/v1/dashboards": {"get", "post"},
         "/api/v1/dashboards/{dashboard_id}": {"get", "delete"},
         "/api/v1/dashboards/{dashboard_id}/versions": {"post"},
