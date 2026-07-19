@@ -1,5 +1,6 @@
 from bi_system.db.models.dashboards import (
     Dashboard,
+    DashboardAsset,
     DashboardComponent,
     DashboardLayout,
     DashboardPage,
@@ -34,6 +35,7 @@ from bi_system.db.models.modeling import (
 
 __all__ = [
     "Dashboard",
+    "DashboardAsset",
     "DashboardComponent",
     "DashboardLayout",
     "DashboardPage",

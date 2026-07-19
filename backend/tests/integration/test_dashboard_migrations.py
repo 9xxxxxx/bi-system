@@ -24,6 +24,7 @@ DASHBOARD_TABLES = {
     "dashboard_template_versions",
     "dashboard_permissions",
 }
+DASHBOARD_ASSET_TABLE = "dashboard_assets"
 
 
 def _alembic_config(database_url: str) -> Config:
@@ -47,18 +48,19 @@ def test_dashboard_migration_upgrades_downgrades_and_reupgrades(tmp_path: Path) 
     )
     config = _alembic_config(database_url)
     scripts = ScriptDirectory.from_config(config)
-    head = scripts.get_current_head()
-    assert head is not None
-    head_script = scripts.get_revision(head)
-    assert head_script is not None
-    previous = head_script.down_revision
-    assert isinstance(previous, str)
+    assert scripts.get_current_head() == "0006_dashboard_assets"
 
     command.upgrade(config, "head")
     assert _table_names(database_url) >= DASHBOARD_TABLES
+    assert DASHBOARD_ASSET_TABLE in _table_names(database_url)
 
-    command.downgrade(config, previous)
+    command.downgrade(config, "0005_dashboard_foundation")
+    assert _table_names(database_url) >= DASHBOARD_TABLES
+    assert DASHBOARD_ASSET_TABLE not in _table_names(database_url)
+
+    command.downgrade(config, "0004_identity_sessions")
     assert DASHBOARD_TABLES.isdisjoint(_table_names(database_url))
 
     command.upgrade(config, "head")
     assert _table_names(database_url) >= DASHBOARD_TABLES
+    assert DASHBOARD_ASSET_TABLE in _table_names(database_url)

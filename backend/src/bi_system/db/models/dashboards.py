@@ -219,6 +219,46 @@ class DashboardPermission(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now)
 
 
+class DashboardAsset(Base):
+    __tablename__ = "dashboard_assets"
+    __table_args__ = (
+        CheckConstraint("width > 0", name="ck_dashboard_assets_width_positive"),
+        CheckConstraint("height > 0", name="ck_dashboard_assets_height_positive"),
+        CheckConstraint(
+            "width * height <= 40000000",
+            name="ck_dashboard_assets_pixel_count",
+        ),
+        UniqueConstraint(
+            "workspace_id",
+            "blob_id",
+            name="uq_dashboard_assets_workspace_blob",
+        ),
+        Index(
+            "ix_dashboard_assets_workspace_created",
+            "workspace_id",
+            "created_at",
+            "id",
+        ),
+    )
+
+    id: Mapped[UUID] = mapped_column(Uuid(as_uuid=True), primary_key=True, default=uuid4)
+    workspace_id: Mapped[UUID] = mapped_column(Uuid(as_uuid=True), nullable=False)
+    blob_id: Mapped[UUID] = mapped_column(
+        Uuid(as_uuid=True),
+        ForeignKey("file_blobs.id", ondelete="RESTRICT"),
+        nullable=False,
+    )
+    uploaded_by_user_id: Mapped[UUID] = mapped_column(
+        Uuid(as_uuid=True),
+        ForeignKey("users.id", ondelete="RESTRICT"),
+        nullable=False,
+    )
+    original_name: Mapped[str] = mapped_column(String(255), nullable=False)
+    width: Mapped[int] = mapped_column(Integer, nullable=False)
+    height: Mapped[int] = mapped_column(Integer, nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now)
+
+
 class DashboardTemplate(Base):
     __tablename__ = "dashboard_templates"
     __table_args__ = (

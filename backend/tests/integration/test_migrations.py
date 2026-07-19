@@ -34,8 +34,9 @@ def test_database_is_at_current_migration_head() -> None:
     head_revision = ScriptDirectory.from_config(alembic_config()).get_current_head()
 
     assert current_revision == head_revision
-    assert current_revision == "0005_dashboard_foundation"
+    assert current_revision == "0006_dashboard_assets"
     assert {
+        "dashboard_assets",
         "dashboard_components",
         "dashboard_layouts",
         "dashboard_pages",
