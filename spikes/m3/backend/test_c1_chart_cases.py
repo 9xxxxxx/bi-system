@@ -215,6 +215,8 @@ def _canonical(value: object) -> JsonValue:
 def _expected_projection(
     golden: JsonValue,
     projection: tuple[tuple[str, str], ...],
+    *,
+    sort_dimension: bool,
 ) -> list[dict[str, JsonValue]]:
     if not isinstance(golden, list):
         if projection != (("value_1", "$"),):
@@ -225,6 +227,14 @@ def _expected_projection(
         if not isinstance(row, dict):
             raise AssertionError("golden result rows must be objects")
         result.append({output: row[key] for output, key in projection})
+    if sort_dimension:
+        dimension_output = projection[0][0]
+        result.sort(
+            key=lambda row: (
+                row[dimension_output] is None,
+                str(row[dimension_output]) if row[dimension_output] is not None else "",
+            )
+        )
     return result
 
 
@@ -272,7 +282,19 @@ def test_c1_chart_cases_compile_or_return_the_declared_gap_and_match_golden() ->
                 }
                 for row in rows
             ]
-            expected = _expected_projection(golden, coverage.golden_projection)
+            expected = _expected_projection(
+                golden,
+                coverage.golden_projection,
+                sort_dimension=coverage.sort_dimension,
+            )
+            if coverage.sort_dimension:
+                dimension_output = coverage.golden_projection[0][0]
+                null_indexes = [
+                    index for index, row in enumerate(actual) if row[dimension_output] is None
+                ]
+                assert not null_indexes or null_indexes == list(
+                    range(null_indexes[0], len(actual))
+                ), coverage.case_id
             assert actual == expected, coverage.case_id
     engine.dispose()
 
