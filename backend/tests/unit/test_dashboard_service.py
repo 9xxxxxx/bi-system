@@ -720,7 +720,7 @@ def test_template_instantiation_rejects_unavailable_legacy_source(
     assert foreign.value.code == "dashboard_template_source_unavailable"
 
 
-def test_restore_expires_after_thirty_days_and_system_admin_can_hard_purge(
+def test_restore_expires_after_thirty_days(
     dashboard_store: tuple[sessionmaker[Session], DashboardResources, Engine],
 ) -> None:
     session_factory, resources, _engine = dashboard_store
@@ -777,20 +777,159 @@ def test_restore_expires_after_thirty_days_and_system_admin_can_hard_purge(
         )
     assert restored.status == "draft"
 
-    with session_factory() as session, pytest.raises(DashboardForbiddenError) as forbidden:
-        purge_expired_dashboards(session, principal=principal, now=now)
-    assert forbidden.value.code == "dashboard_purge_forbidden"
 
+@pytest.mark.parametrize("limit", [0, 1001])
+def test_purge_rejects_invalid_limit(
+    dashboard_store: tuple[sessionmaker[Session], DashboardResources, Engine],
+    limit: int,
+) -> None:
+    session_factory, resources, _engine = dashboard_store
     administrator = QueryPrincipal(
         user_id=resources.owner_id,
         workspace_id=resources.workspace_id,
         is_system_admin=True,
     )
+    with session_factory() as session, pytest.raises(DashboardConfigurationError) as invalid:
+        purge_expired_dashboards(
+            session,
+            principal=administrator,
+            limit=limit,
+        )
+
+    assert invalid.value.code == "dashboard_purge_limit_invalid"
+
+
+def test_purge_dry_run_respects_limit_without_deleting_candidates(
+    dashboard_store: tuple[sessionmaker[Session], DashboardResources, Engine],
+) -> None:
+    session_factory, resources, _engine = dashboard_store
+    principal = owner_principal(resources)
+    administrator = QueryPrincipal(
+        user_id=resources.owner_id,
+        workspace_id=resources.workspace_id,
+        is_system_admin=True,
+    )
+    now = datetime(2026, 7, 19, tzinfo=UTC)
     with session_factory() as session:
-        purged = purge_expired_dashboards(session, principal=administrator, now=now)
+        dashboards = [
+            create_dashboard(
+                session,
+                principal=principal,
+                request=CreateDashboard(name=f"Dry-run candidate {index}"),
+            )
+            for index in range(3)
+        ]
+    with session_factory.begin() as session:
+        for index, detail in enumerate(dashboards):
+            dashboard = session.get(Dashboard, detail.id)
+            assert dashboard is not None
+            dashboard.status = "deleted"
+            dashboard.deleted_at = now - timedelta(days=33 - index)
+
     with session_factory() as session:
-        purged_again = purge_expired_dashboards(session, principal=administrator, now=now)
+        result = purge_expired_dashboards(
+            session,
+            principal=administrator,
+            now=now,
+            limit=2,
+            dry_run=True,
+        )
+
+    assert result.cutoff == now - timedelta(days=30)
+    assert result.dry_run is True
+    assert result.candidate_ids == (dashboards[0].id, dashboards[1].id)
+    assert result.eligible_ids == result.candidate_ids
+    assert result.purged_ids == ()
+    assert result.blocked == ()
     with session_factory() as session:
-        assert session.get(Dashboard, created.id) is None
-    assert purged == 1
-    assert purged_again == 0
+        assert all(session.get(Dashboard, detail.id) is not None for detail in dashboards)
+
+
+def test_purge_skips_referenced_candidates_and_remains_idempotent(
+    dashboard_store: tuple[sessionmaker[Session], DashboardResources, Engine],
+) -> None:
+    session_factory, resources, _engine = dashboard_store
+    principal = owner_principal(resources)
+    administrator = QueryPrincipal(
+        user_id=resources.owner_id,
+        workspace_id=resources.workspace_id,
+        is_system_admin=True,
+    )
+    now = datetime(2026, 7, 19, tzinfo=UTC)
+    with session_factory() as session:
+        blocked_dashboard = create_dashboard(
+            session,
+            principal=principal,
+            request=CreateDashboard(name="Referenced purge candidate"),
+        )
+        template = create_dashboard_template(
+            session,
+            principal=principal,
+            request=CreateDashboardTemplate(
+                name="Purge blocker",
+                source_dashboard_version_id=blocked_dashboard.current_version_id,
+                visibility="workspace",
+            ),
+        )
+        safe_dashboard = create_dashboard(
+            session,
+            principal=principal,
+            request=CreateDashboard(name="Safe purge candidate"),
+        )
+    with session_factory.begin() as session:
+        blocked = session.get(Dashboard, blocked_dashboard.id)
+        safe = session.get(Dashboard, safe_dashboard.id)
+        assert blocked is not None
+        assert safe is not None
+        blocked.status = "deleted"
+        blocked.deleted_at = now - timedelta(days=32)
+        safe.status = "deleted"
+        safe.deleted_at = now - timedelta(days=31)
+
+    with session_factory() as session:
+        result = purge_expired_dashboards(
+            session,
+            principal=administrator,
+            now=now,
+        )
+    with session_factory() as session:
+        repeated = purge_expired_dashboards(
+            session,
+            principal=administrator,
+            now=now,
+        )
+
+    assert result.candidate_ids == (blocked_dashboard.id, safe_dashboard.id)
+    assert result.eligible_ids == (safe_dashboard.id,)
+    assert result.purged_ids == (safe_dashboard.id,)
+    assert len(result.blocked) == 1
+    assert result.blocked[0].dashboard_id == blocked_dashboard.id
+    assert len(result.blocked[0].references) == 1
+    assert result.blocked[0].references[0].template_id == template.id
+    assert result.blocked[0].references[0].template_version_id == template.version_id
+    assert repeated.candidate_ids == (blocked_dashboard.id,)
+    assert repeated.eligible_ids == ()
+    assert repeated.purged_ids == ()
+    assert repeated.blocked == result.blocked
+    with session_factory() as session:
+        assert session.get(Dashboard, blocked_dashboard.id) is not None
+        assert session.get(Dashboard, safe_dashboard.id) is None
+
+
+def test_purge_requires_system_administrator(
+    dashboard_store: tuple[sessionmaker[Session], DashboardResources, Engine],
+) -> None:
+    session_factory, resources, _engine = dashboard_store
+    principal = owner_principal(resources)
+    with session_factory() as session, pytest.raises(DashboardForbiddenError) as forbidden:
+        purge_expired_dashboards(session, principal=principal)
+    assert forbidden.value.code == "dashboard_purge_forbidden"
+
+    unknown_administrator = QueryPrincipal(
+        user_id=uuid4(),
+        workspace_id=resources.workspace_id,
+        is_system_admin=True,
+    )
+    with session_factory() as session, pytest.raises(DashboardNotFoundError) as missing_actor:
+        purge_expired_dashboards(session, principal=unknown_administrator)
+    assert missing_actor.value.code == "dashboard_actor_not_found"

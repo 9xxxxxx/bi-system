@@ -159,6 +159,22 @@ class DashboardTemplateListPage:
     limit: int
 
 
+@dataclass(frozen=True, slots=True)
+class DashboardPurgeBlock:
+    dashboard_id: UUID
+    references: tuple[DashboardTemplateReference, ...]
+
+
+@dataclass(frozen=True, slots=True)
+class DashboardPurgeResult:
+    cutoff: datetime
+    dry_run: bool
+    candidate_ids: tuple[UUID, ...]
+    eligible_ids: tuple[UUID, ...]
+    purged_ids: tuple[UUID, ...]
+    blocked: tuple[DashboardPurgeBlock, ...]
+
+
 def create_dashboard(
     session: Session,
     *,
@@ -399,34 +415,64 @@ def purge_expired_dashboards(
     *,
     principal: QueryPrincipal,
     now: datetime | None = None,
-) -> int:
+    limit: int = 100,
+    dry_run: bool = False,
+) -> DashboardPurgeResult:
     if not principal.is_system_admin:
         raise DashboardForbiddenError(
             "dashboard_purge_forbidden",
             "System administrator access is required to purge dashboards",
         )
+    if not 1 <= limit <= 1000:
+        raise DashboardConfigurationError(
+            "dashboard_purge_limit_invalid",
+            "Dashboard purge limit must be between 1 and 1000",
+        )
     resolved_now = utc_now() if now is None else _as_utc(now)
     cutoff = resolved_now - timedelta(days=DASHBOARD_RETENTION_DAYS)
     with session.begin():
-        expired = list(
-            session.scalars(
-                select(Dashboard)
-                .where(
-                    Dashboard.workspace_id == principal.workspace_id,
-                    Dashboard.status == "deleted",
-                    Dashboard.deleted_at.is_not(None),
-                    Dashboard.deleted_at <= cutoff,
-                )
-                .order_by(Dashboard.deleted_at, Dashboard.id)
-                .with_for_update()
-            ).all()
+        _require_actor(session, principal)
+        statement = (
+            select(Dashboard)
+            .where(
+                Dashboard.workspace_id == principal.workspace_id,
+                Dashboard.status == "deleted",
+                Dashboard.deleted_at.is_not(None),
+                Dashboard.deleted_at <= cutoff,
+            )
+            .order_by(Dashboard.deleted_at, Dashboard.id)
+            .limit(limit)
         )
-        for dashboard in expired:
-            _require_no_template_references(session, dashboard)
-        for dashboard in expired:
-            session.delete(dashboard)
-        session.flush()
-        return len(expired)
+        if not dry_run:
+            statement = statement.with_for_update(skip_locked=True)
+        candidates = list(session.scalars(statement).all())
+        eligible: list[Dashboard] = []
+        blocked: list[DashboardPurgeBlock] = []
+        for dashboard in candidates:
+            references = _dashboard_template_references(session, dashboard)
+            if references:
+                blocked.append(
+                    DashboardPurgeBlock(
+                        dashboard_id=dashboard.id,
+                        references=references,
+                    )
+                )
+            else:
+                eligible.append(dashboard)
+        purged_ids: tuple[UUID, ...] = ()
+        if not dry_run:
+            purged_ids = tuple(dashboard.id for dashboard in eligible)
+            for dashboard in eligible:
+                session.delete(dashboard)
+            session.flush()
+        return DashboardPurgeResult(
+            cutoff=cutoff,
+            dry_run=dry_run,
+            candidate_ids=tuple(dashboard.id for dashboard in candidates),
+            eligible_ids=tuple(dashboard.id for dashboard in eligible),
+            purged_ids=purged_ids,
+            blocked=tuple(blocked),
+        )
 
 
 def replace_dashboard_permissions(
@@ -1097,8 +1143,11 @@ def _required_template_source_version(
     return source
 
 
-def _require_no_template_references(session: Session, dashboard: Dashboard) -> None:
-    references = tuple(
+def _dashboard_template_references(
+    session: Session,
+    dashboard: Dashboard,
+) -> tuple[DashboardTemplateReference, ...]:
+    return tuple(
         DashboardTemplateReference(
             template_id=template_id,
             template_name=template_name,
@@ -1124,6 +1173,10 @@ def _require_no_template_references(session: Session, dashboard: Dashboard) -> N
             .order_by(DashboardTemplate.id, DashboardTemplateVersion.version)
         ).all()
     )
+
+
+def _require_no_template_references(session: Session, dashboard: Dashboard) -> None:
+    references = _dashboard_template_references(session, dashboard)
     if references:
         raise DashboardReferenceConflictError(
             "dashboard_reference_conflict",
