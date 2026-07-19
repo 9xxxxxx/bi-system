@@ -24,6 +24,33 @@ import type {
 } from "./types";
 
 const EChartRenderer = lazy(() => import("./EChartRenderer"));
+const DASHBOARD_ROW_KEY = "__dashboardRowKey";
+
+type DashboardTableRow = Record<string, unknown> & {
+  [DASHBOARD_ROW_KEY]: string;
+};
+
+function tableDataSource(
+  response: DashboardChartQueryResponse,
+): DashboardTableRow[] {
+  const occurrences = new Map<string, number>();
+  return response.rows.map((row) => {
+    const fingerprint = JSON.stringify(
+      response.columns.map((column) => {
+        const value = row[column.query_alias];
+        return value === undefined
+          ? [column.query_alias, "undefined"]
+          : [column.query_alias, typeof value, value];
+      }),
+    );
+    const occurrence = occurrences.get(fingerprint) ?? 0;
+    occurrences.set(fingerprint, occurrence + 1);
+    return {
+      ...row,
+      [DASHBOARD_ROW_KEY]: `${fingerprint}:${occurrence}`,
+    };
+  });
+}
 
 function chartError(error: unknown): { title: string; description: string } {
   if (error instanceof ApiError) {
@@ -240,9 +267,9 @@ function LightweightResult({
   return (
     <Table
       size="small"
-      rowKey={(_, index) => String(index)}
+      rowKey={DASHBOARD_ROW_KEY}
       columns={columns}
-      dataSource={response.rows}
+      dataSource={tableDataSource(response)}
       pagination={false}
       scroll={{ x: true, y: 220 }}
     />

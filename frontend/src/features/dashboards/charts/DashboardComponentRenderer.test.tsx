@@ -157,6 +157,39 @@ it("lazy renders canvas charts, truncation, warnings and accessible data", async
   ).toBeInTheDocument();
 });
 
+it("uses stable unique table row keys without relying on response indexes", async () => {
+  const firstRows = [
+    { dimension: "华东", value_1: "128.5" },
+    { dimension: "华南", value_1: "96" },
+    { dimension: "华东", value_1: "128.5" },
+  ];
+  const responses = [
+    chartResponse(firstRows),
+    chartResponse([firstRows[1]!, firstRows[0]!]),
+  ];
+  vi.stubGlobal(
+    "fetch",
+    vi.fn(async () => responses.shift()!),
+  );
+
+  const first = renderComponent(chartComponent("detail_table"));
+  await screen.findAllByText("华东");
+  const firstKeys = tableRowKeys(first.container);
+  expect(firstKeys).toHaveLength(3);
+  expect(new Set(firstKeys.map(({ key }) => key)).size).toBe(3);
+  expect(firstKeys.map(({ key }) => key)).not.toEqual(["0", "1", "2"]);
+  const stableKeys = new Map(
+    firstKeys.slice(0, 2).map(({ label, key }) => [label, key]),
+  );
+  first.unmount();
+
+  const second = renderComponent(chartComponent("detail_table"));
+  await screen.findAllByText("华南");
+  for (const { label, key } of tableRowKeys(second.container)) {
+    expect(key).toBe(stableKeys.get(label));
+  }
+});
+
 it("renders governed rich text and controlled image resources without a query", () => {
   const richText: DashboardComponent = {
     id: "component-text",
@@ -241,5 +274,17 @@ function problem(status: number, code: string, message: string) {
   return new Response(
     JSON.stringify({ detail: { code, message, action: "调整后重试" } }),
     { status, headers: { "Content-Type": "application/json" } },
+  );
+}
+
+function tableRowKeys(container: HTMLElement) {
+  return Array.from(
+    container.querySelectorAll<HTMLTableRowElement>(
+      ".ant-table-tbody > tr[data-row-key]",
+    ),
+    (row) => ({
+      label: row.cells[0]?.textContent ?? "",
+      key: row.dataset.rowKey ?? "",
+    }),
   );
 }
