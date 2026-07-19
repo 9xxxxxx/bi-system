@@ -1,7 +1,7 @@
 from collections.abc import Callable
 from typing import Any
 
-from sqlalchemy import Date, Integer, cast, distinct, func
+from sqlalchemy import Date, Integer, cast, distinct, func, literal
 from sqlalchemy.sql.elements import ColumnElement
 
 from bi_system.modeling.contracts import AggregateFunction, SortDirection, TimeGrain
@@ -42,7 +42,8 @@ def compile_time_grain(
 ) -> ColumnElement[Any]:
     ensure_supported_query_dialect(dialect_name)
     if dialect_name == "postgresql":
-        return cast(func.date_trunc(grain.value, column), Date)
+        grain_literal = literal(grain.value, literal_execute=True)
+        return cast(func.date_trunc(grain_literal, column), Date)
 
     if grain is TimeGrain.DAY:
         return func.date(column)
