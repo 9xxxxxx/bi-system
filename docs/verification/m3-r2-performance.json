@@ -1,0 +1,42 @@
+{
+  "schema_version": 1,
+  "fixture": "m3-star-v2 deterministic 100000-row scale",
+  "queries_per_sample": 3,
+  "sqlite": {
+    "concurrency": 1,
+    "iterations": 30,
+    "completed": 30,
+    "p50_ms": 1035.975,
+    "p95_ms": 1056.359,
+    "throughput_rps": 0.964,
+    "wall_seconds": 31.119,
+    "errors": 0,
+    "timeouts": 0
+  },
+  "postgresql": {
+    "version": 18,
+    "concurrency": 20,
+    "iterations": 3,
+    "completed": 60,
+    "p50_ms": 2076.669,
+    "p95_ms": 3551.428,
+    "throughput_rps": 8.471,
+    "wall_seconds": 7.083,
+    "errors": 0,
+    "timeouts": 0
+  },
+  "acceptance": {
+    "regular_query_p95_target_ms": 5000,
+    "sqlite_pass": true,
+    "postgresql_pass": true,
+    "scope": "M3-R2 P95 baseline only",
+    "full_m3_performance_gate": false
+  },
+  "method_limitations": {
+    "warmup_runs": 1,
+    "representative_queries_per_sample": 3,
+    "raw_samples_committed": false,
+    "environment_inventory_committed": false,
+    "required_r3_followup": "Rerun the full acceptance matrix with five warmups, raw samples, complete representative principal/query mix, page/cache timings, and isolated environment inventory."
+  }
+}

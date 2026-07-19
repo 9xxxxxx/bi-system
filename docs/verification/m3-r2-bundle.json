@@ -1,0 +1,328 @@
+{
+  "schema_version": 1,
+  "environment": {
+    "node": "v24.18.0",
+    "npm": "11.18.0",
+    "vite": "8.1.4",
+    "platform": "win32",
+    "architecture": "x64"
+  },
+  "package_lock_sha256": "e571e67218d2b1645127b0df0b2ce24ddca1949694791d0569b96613e6a5f0c5",
+  "entry": {
+    "key": "index.html",
+    "asset_closure": {
+      "raw_bytes": 784299,
+      "gzip_bytes": 259684,
+      "brotli_bytes": 225210,
+      "files": [
+        {
+          "file": "assets/LockOutlined-BIHFXfgK.js",
+          "raw_bytes": 1982,
+          "gzip_bytes": 807,
+          "brotli_bytes": 696
+        },
+        {
+          "file": "assets/alert-DdGl33Lk.js",
+          "raw_bytes": 7111,
+          "gzip_bytes": 3110,
+          "brotli_bytes": 2760
+        },
+        {
+          "file": "assets/chunk-KS7C4IRE-Cp-rykcz.js",
+          "raw_bytes": 42584,
+          "gzip_bytes": 15074,
+          "brotli_bytes": 13507
+        },
+        {
+          "file": "assets/client-CnBuJ5bv.js",
+          "raw_bytes": 451939,
+          "gzip_bytes": 147727,
+          "brotli_bytes": 126346
+        },
+        {
+          "file": "assets/context-CuTsX64D.js",
+          "raw_bytes": 789,
+          "gzip_bytes": 484,
+          "brotli_bytes": 439
+        },
+        {
+          "file": "assets/index-Ckch0aNc.css",
+          "raw_bytes": 10889,
+          "gzip_bytes": 2737,
+          "brotli_bytes": 2368
+        },
+        {
+          "file": "assets/index-l0NCffim.js",
+          "raw_bytes": 67596,
+          "gzip_bytes": 23717,
+          "brotli_bytes": 20603
+        },
+        {
+          "file": "assets/jsx-runtime-n5LQ9ujS.js",
+          "raw_bytes": 8535,
+          "gzip_bytes": 3260,
+          "brotli_bytes": 2918
+        },
+        {
+          "file": "assets/menu-C_VIDBj2.js",
+          "raw_bytes": 65384,
+          "gzip_bytes": 20730,
+          "brotli_bytes": 18697
+        },
+        {
+          "file": "assets/result-CCmIrQiI.js",
+          "raw_bytes": 34454,
+          "gzip_bytes": 10610,
+          "brotli_bytes": 8647
+        },
+        {
+          "file": "assets/skeleton-DOTkLwV9.js",
+          "raw_bytes": 9350,
+          "gzip_bytes": 3138,
+          "brotli_bytes": 2821
+        },
+        {
+          "file": "assets/spin-D5TabTRU.js",
+          "raw_bytes": 50502,
+          "gzip_bytes": 16884,
+          "brotli_bytes": 15093
+        },
+        {
+          "file": "assets/style-BPtRgZ93.js",
+          "raw_bytes": 1970,
+          "gzip_bytes": 827,
+          "brotli_bytes": 726
+        },
+        {
+          "file": "assets/useModal-CeIwl4Of.js",
+          "raw_bytes": 25641,
+          "gzip_bytes": 8809,
+          "brotli_bytes": 7976
+        },
+        {
+          "file": "assets/useMutation-9wQZTLbw.js",
+          "raw_bytes": 5573,
+          "gzip_bytes": 1770,
+          "brotli_bytes": 1613
+        }
+      ]
+    }
+  },
+  "dashboard_route": {
+    "key": "src/features/dashboards/pages/DashboardEditorPage.tsx",
+    "static_asset_closure": {
+      "raw_bytes": 1244643,
+      "gzip_bytes": 408755,
+      "brotli_bytes": 355149,
+      "files": [
+        {
+          "file": "assets/ArrowLeftOutlined-ChUdd6nK.js",
+          "raw_bytes": 873,
+          "gzip_bytes": 609,
+          "brotli_bytes": 524
+        },
+        {
+          "file": "assets/DashboardEditorPage-MbpNYlQg.js",
+          "raw_bytes": 66539,
+          "gzip_bytes": 20493,
+          "brotli_bytes": 17835
+        },
+        {
+          "file": "assets/DashboardQueryState-CXUl0e7f.js",
+          "raw_bytes": 786,
+          "gzip_bytes": 516,
+          "brotli_bytes": 420
+        },
+        {
+          "file": "assets/DatabaseOutlined-BC2O81LS.js",
+          "raw_bytes": 951,
+          "gzip_bytes": 591,
+          "brotli_bytes": 497
+        },
+        {
+          "file": "assets/LockOutlined-BIHFXfgK.js",
+          "raw_bytes": 1982,
+          "gzip_bytes": 807,
+          "brotli_bytes": 696
+        },
+        {
+          "file": "assets/PlusOutlined-PzCDuvnQ.js",
+          "raw_bytes": 790,
+          "gzip_bytes": 527,
+          "brotli_bytes": 431
+        },
+        {
+          "file": "assets/SaveOutlined-udPU6tCW.js",
+          "raw_bytes": 2390,
+          "gzip_bytes": 1134,
+          "brotli_bytes": 961
+        },
+        {
+          "file": "assets/alert-DdGl33Lk.js",
+          "raw_bytes": 7111,
+          "gzip_bytes": 3110,
+          "brotli_bytes": 2760
+        },
+        {
+          "file": "assets/api-BpH1Tmuj.js",
+          "raw_bytes": 14949,
+          "gzip_bytes": 5709,
+          "brotli_bytes": 5134
+        },
+        {
+          "file": "assets/api-DLl1Ny4O.js",
+          "raw_bytes": 783,
+          "gzip_bytes": 315,
+          "brotli_bytes": 271
+        },
+        {
+          "file": "assets/chunk-KS7C4IRE-Cp-rykcz.js",
+          "raw_bytes": 42584,
+          "gzip_bytes": 15074,
+          "brotli_bytes": 13507
+        },
+        {
+          "file": "assets/client-CnBuJ5bv.js",
+          "raw_bytes": 451939,
+          "gzip_bytes": 147727,
+          "brotli_bytes": 126346
+        },
+        {
+          "file": "assets/context-CuTsX64D.js",
+          "raw_bytes": 789,
+          "gzip_bytes": 484,
+          "brotli_bytes": 439
+        },
+        {
+          "file": "assets/dashboards-CJqSKxCj.css",
+          "raw_bytes": 8843,
+          "gzip_bytes": 2075,
+          "brotli_bytes": 1767
+        },
+        {
+          "file": "assets/dashboards-D1vxccmr.js",
+          "raw_bytes": 2848,
+          "gzip_bytes": 1238,
+          "brotli_bytes": 1012
+        },
+        {
+          "file": "assets/form-kGP8D4qn.js",
+          "raw_bytes": 21596,
+          "gzip_bytes": 8395,
+          "brotli_bytes": 7507
+        },
+        {
+          "file": "assets/index-Ckch0aNc.css",
+          "raw_bytes": 10889,
+          "gzip_bytes": 2737,
+          "brotli_bytes": 2368
+        },
+        {
+          "file": "assets/index-l0NCffim.js",
+          "raw_bytes": 67596,
+          "gzip_bytes": 23717,
+          "brotli_bytes": 20603
+        },
+        {
+          "file": "assets/jsx-runtime-n5LQ9ujS.js",
+          "raw_bytes": 8535,
+          "gzip_bytes": 3260,
+          "brotli_bytes": 2918
+        },
+        {
+          "file": "assets/menu-C_VIDBj2.js",
+          "raw_bytes": 65384,
+          "gzip_bytes": 20730,
+          "brotli_bytes": 18697
+        },
+        {
+          "file": "assets/radio-CgS-vW6t.js",
+          "raw_bytes": 21161,
+          "gzip_bytes": 7780,
+          "brotli_bytes": 6927
+        },
+        {
+          "file": "assets/result-CCmIrQiI.js",
+          "raw_bytes": 34454,
+          "gzip_bytes": 10610,
+          "brotli_bytes": 8647
+        },
+        {
+          "file": "assets/row-SySX6Gdk.js",
+          "raw_bytes": 2458,
+          "gzip_bytes": 1287,
+          "brotli_bytes": 1171
+        },
+        {
+          "file": "assets/skeleton-DOTkLwV9.js",
+          "raw_bytes": 9350,
+          "gzip_bytes": 3138,
+          "brotli_bytes": 2821
+        },
+        {
+          "file": "assets/spin-D5TabTRU.js",
+          "raw_bytes": 50502,
+          "gzip_bytes": 16884,
+          "brotli_bytes": 15093
+        },
+        {
+          "file": "assets/style-BPtRgZ93.js",
+          "raw_bytes": 1970,
+          "gzip_bytes": 827,
+          "brotli_bytes": 726
+        },
+        {
+          "file": "assets/tag-DNO_b0ox.js",
+          "raw_bytes": 261881,
+          "gzip_bytes": 80649,
+          "brotli_bytes": 69517
+        },
+        {
+          "file": "assets/upload-DqFowOzg.js",
+          "raw_bytes": 53496,
+          "gzip_bytes": 17753,
+          "brotli_bytes": 15965
+        },
+        {
+          "file": "assets/useModal-CeIwl4Of.js",
+          "raw_bytes": 25641,
+          "gzip_bytes": 8809,
+          "brotli_bytes": 7976
+        },
+        {
+          "file": "assets/useMutation-9wQZTLbw.js",
+          "raw_bytes": 5573,
+          "gzip_bytes": 1770,
+          "brotli_bytes": 1613
+        }
+      ]
+    },
+    "dynamic_imports": [
+      "src/features/dashboards/charts/EChartRenderer.tsx"
+    ]
+  },
+  "echarts_renderer": {
+    "key": "src/features/dashboards/charts/EChartRenderer.tsx",
+    "file": "assets/EChartRenderer-CmgePQdN.js",
+    "is_dynamic_entry": true,
+    "in_initial_static_closure": false,
+    "in_dashboard_static_closure": false,
+    "sizes": {
+      "raw_bytes": 556244,
+      "gzip_bytes": 186880,
+      "brotli_bytes": 157906,
+      "files": [
+        {
+          "file": "assets/EChartRenderer-CmgePQdN.js",
+          "raw_bytes": 556244,
+          "gzip_bytes": 186880,
+          "brotli_bytes": 157906
+        }
+      ]
+    }
+  },
+  "decision": {
+    "initial_load": "deferred",
+    "accepted": true
+  }
+}

@@ -1,0 +1,141 @@
+{
+  "schema_version": 1,
+  "captured_at": "2026-07-19",
+  "git_head_before_runtime_fix": "fc38e1edfd6c48c48ebb62fa42fec2dfdf0b2351",
+  "runtime_fix_commit": "0cfa963",
+  "browser": {
+    "channel": "chrome",
+    "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/150.0.0.0 Safari/537.36",
+    "playwright_cli": "0.1.17",
+    "explicit_channel_required": true
+  },
+  "fixture": {
+    "version": "m3-star-v2",
+    "manifest_sha256": "015df74d59fb6e70c04c0f05da1392a57a1e8acd919d851d51fff0394f123c8c",
+    "database": "ignored Alembic-upgraded SQLite runtime",
+    "authentication": "real HttpOnly session cookie",
+    "component_count": 14,
+    "query_component_count": 12
+  },
+  "real_network": {
+    "endpoint": "POST http://localhost:8001/api/v1/dashboard-chart-queries",
+    "initial_aborted_requests": 12,
+    "successful_requests": 12,
+    "successful_status": 200,
+    "strict_mode_cancellation": true,
+    "request_contract": {
+      "dashboard_version_id_present": true,
+      "preview_component_present": true,
+      "runtime_filter_scopes": ["global_filter", "page_filter", "component_filter"]
+    },
+    "representative_kpi": {
+      "value": "350.50",
+      "data_type": "decimal",
+      "dataset_version": 1,
+      "metric_version_count": 1,
+      "source_batch_count": 3,
+      "resolved_date_scopes": ["global", "page", "component"],
+      "timezone": "Asia/Hong_Kong"
+    },
+    "page_filter_edit": {
+      "value": "R-SOUTH",
+      "successful_requeries": 12,
+      "resulting_kpi": "100.00"
+    }
+  },
+  "desktop": {
+    "viewport": {"width": 1440, "height": 900, "device_pixel_ratio": 1},
+    "document": {"client_width": 1440, "scroll_width": 1440, "scroll_height": 1993},
+    "component_count": 14,
+    "overlap_count": 0,
+    "canvas_count": 7,
+    "canvas_css_size": {"width": 174, "height": 152},
+    "canvas_pixel_size": {"width": 174, "height": 152},
+    "sampled_nontransparent_range": [2047, 10280],
+    "sampled_color_count_range": [49, 402],
+    "query_evidence_count": 12,
+    "accessible_table_count": 12,
+    "chart_error_visible": false,
+    "console_errors": 0,
+    "console_warnings": 0
+  },
+  "mobile": {
+    "viewport": {"width": 390, "height": 844, "device_pixel_ratio": 1},
+    "document": {"client_width": 390, "scroll_width": 390, "scroll_height": 5044},
+    "component_count": 14,
+    "component_width": 344,
+    "overlap_count": 0,
+    "canvas_count": 7,
+    "canvas_css_size": {"width": 318, "height": 166},
+    "canvas_pixel_size": {"width": 318, "height": 166},
+    "sampled_nontransparent_range": [1619, 6536],
+    "sampled_color_count_range": [38, 366],
+    "readonly_notice_visible": true,
+    "component_panel_count": 0,
+    "property_panel_count": 0,
+    "save_button_count": 0,
+    "chart_error_visible": false,
+    "console_errors": 0,
+    "console_warnings": 0,
+    "filter_drawer": {
+      "x": 12,
+      "width": 378,
+      "right": 390,
+      "height": 844,
+      "scopes": ["global", "page", "component"]
+    }
+  },
+  "frontend_state_replay": {
+    "scope": "target KPI only; frontend presentation evidence, not backend contract evidence",
+    "loading_and_cancel": "pass",
+    "empty": "pass",
+    "forbidden_403": "pass",
+    "timeout_504": "pass",
+    "internal_500_retry": "pass",
+    "truncated_mock": "pass",
+    "real_truncated_response": "Top-2 ranking displayed server truncation warning"
+  },
+  "content": {
+    "literal_script_text_visible": true,
+    "executable_nested_script_count": 0,
+    "asset_upload": {
+      "status": 201,
+      "asset_id": "3d61c146-02a9-4cdf-bd5f-419f1dd69556",
+      "filename": "playwright-upload.png",
+      "content_type": "image/png",
+      "bytes": 320,
+      "width": 160,
+      "height": 96,
+      "sha256": "b586f2d70dd5d0ef0fa5683ba4c221749dc003a04c0c5939696327d51969b139",
+      "content_status": 200,
+      "decoded_natural_size": [160, 96],
+      "alt_text": "M3-R2 验收图片"
+    }
+  },
+  "screenshots": [
+    {
+      "file": "m3-r2-dashboard-desktop-chrome.png",
+      "dimensions": [1440, 1993],
+      "bytes": 236654,
+      "sha256": "4381ce75aca5071e9cdd6d1b96229043bba1181d5236abfee8f1229e74d83c1a"
+    },
+    {
+      "file": "m3-r2-dashboard-mobile-chrome.png",
+      "dimensions": [390, 5044],
+      "bytes": 244626,
+      "sha256": "dc20fffb0507e2091d50e70bbc96dcda3ca65317a979b77031c713224c444af2"
+    },
+    {
+      "file": "m3-r2-dashboard-mobile-filter-chrome.png",
+      "dimensions": [390, 844],
+      "bytes": 35573,
+      "sha256": "1605992686964b621633474cc8931837040ed19c44e50194b5de92b8e1a13e1e"
+    }
+  ],
+  "r3_followup": {
+    "edge_full_flow": true,
+    "dpr2_export_matrix": true,
+    "production_page_and_cached_dashboard_p95": true,
+    "trace_and_full_accessibility_artifacts": true
+  }
+}

@@ -1,0 +1,37 @@
+M3-R2 final verification command record
+Date: 2026-07-19
+
+[passed] uv run pytest backend/tests -q --cov=bi_system
+Result: 323 passed, 6 skipped, 91% coverage
+
+[passed] uv run python scripts/run_postgres_tests.py
+Result: PostgreSQL 18 integration 82 passed; migration head -> base -> head passed
+
+[passed] uv run ruff check backend scripts
+[passed] uv run ruff format --check backend scripts
+[passed] uv run basedpyright backend/src backend/tests scripts
+
+[passed] <node24> <npm-cli> --prefix frontend run check -- --maxWorkers=1 --no-file-parallelism
+Result: 22 files, 80 tests; lint, format, and typecheck passed; 101.273 seconds
+
+[passed] <node24> <npm-cli> --prefix frontend run build
+Result: 3,753 modules; Vite build 474 ms; command 5.336 seconds
+
+[passed] <node24> <npm-cli> --prefix frontend run build -- --manifest
+Result: production manifest generated; Vite 8.1.4 build 642 ms
+
+[passed] <node24> .tmp/m3-r2-browser/collect_production_bundle.mjs
+Result: docs/verification/m3-r2-bundle.json
+
+[passed] playwright-cli -s=m3-r2-final-desktop open about:blank --browser chrome
+[passed] playwright-cli -s=m3-r2-final-desktop resize 1440 900
+[passed] playwright-cli -s=m3-r2-final-desktop run-code --filename .tmp/m3-r2-browser/collect_desktop.js
+[passed] playwright-cli -s=m3-r2-final-mobile open about:blank --browser chrome
+[passed] playwright-cli -s=m3-r2-final-mobile resize 390 844
+[passed] playwright-cli -s=m3-r2-final-mobile run-code --filename .tmp/m3-r2-browser/collect_mobile.js
+
+Historical benchmark aggregate artifacts:
+- .tmp/m3-r2-sqlite-perf.json
+- .tmp/m3-r2-postgres-perf.json
+The original PostgreSQL URL and shell invocation were intentionally not retained. The committed
+aggregate is an R2 baseline, not the full M3-R3 five-warmup/raw-sample performance certification.
