@@ -103,6 +103,7 @@ class DashboardSummary:
     status: str
     owner_name: str
     updated_at: datetime
+    revision: int
     current_version: int
     page_count: int
     capabilities: list[DashboardCapability]
@@ -110,7 +111,6 @@ class DashboardSummary:
 
 @dataclass(frozen=True, slots=True)
 class DashboardDetail(DashboardSummary):
-    revision: int
     current_version_id: UUID
     global_filter: dict[str, object] | None
     pages: list[DashboardPageDetail]
@@ -879,6 +879,7 @@ def _dashboard_summary(
         status=dashboard.status,
         owner_name=owner_name,
         updated_at=dashboard.updated_at,
+        revision=dashboard.revision,
         current_version=dashboard.current_version,
         page_count=page_count or 0,
         capabilities=_capabilities(session, dashboard=dashboard, principal=principal),

@@ -211,6 +211,30 @@ def test_dashboard_api_saves_version_and_rejects_stale_revision(
     assert stale.json()["detail"]["code"] == "dashboard_revision_conflict"
 
 
+def test_dashboard_list_exposes_revision_for_lifecycle_actions(
+    dashboard_api_context: DashboardApiContext,
+) -> None:
+    created = _create_dashboard(dashboard_api_context)
+    deleted = cast(
+        Response,
+        dashboard_api_context.client.delete(
+            f"/api/v1/dashboards/{created['id']}",
+            params={"expected_revision": 1},
+        ),
+    )
+    trash = cast(
+        Response,
+        dashboard_api_context.client.get(
+            "/api/v1/dashboards",
+            params={"status": "deleted", "include_deleted": True},
+        ),
+    )
+
+    assert deleted.status_code == 200
+    assert trash.status_code == 200
+    assert trash.json()["items"][0]["revision"] == 2
+
+
 def test_dashboard_api_activates_and_instantiates_published_template_version(
     dashboard_api_context: DashboardApiContext,
 ) -> None:

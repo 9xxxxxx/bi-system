@@ -320,6 +320,7 @@ def test_dashboard_delete_restore_and_trash_listing(
 
     assert deleted.status == "deleted"
     assert trash.total == 1
+    assert trash.items[0].revision == 2
     assert restored.status == "draft"
     assert restored.revision == 3
 

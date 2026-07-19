@@ -59,6 +59,7 @@ class DashboardSummaryResponse(BaseModel):
     status: DashboardStatus
     owner_name: str
     updated_at: datetime
+    revision: int
     current_version: int
     page_count: int
     capabilities: list[DashboardCapability]
@@ -123,7 +124,6 @@ class DashboardPermissionResponse(BaseModel):
 
 
 class DashboardDetailResponse(DashboardSummaryResponse):
-    revision: int
     current_version_id: UUID
     global_filter: dict[str, object] | None
     pages: list[DashboardPageResponse]
