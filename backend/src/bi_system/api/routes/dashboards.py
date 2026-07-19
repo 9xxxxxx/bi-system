@@ -10,7 +10,9 @@ from bi_system.api.dependencies import CurrentActor, get_database_session
 from bi_system.dashboards.contracts import (
     CreateDashboard,
     CreateDashboardTemplate,
+    CreateDashboardTemplateVersion,
     DashboardRevisionRequest,
+    InstantiateDashboardTemplate,
     ReplaceDashboardPermissions,
     SaveDashboardVersion,
 )
@@ -19,17 +21,22 @@ from bi_system.dashboards.errors import (
     DashboardConflictError,
     DashboardForbiddenError,
     DashboardNotFoundError,
+    DashboardReferenceConflictError,
 )
 from bi_system.dashboards.service import (
     DashboardDetail,
     DashboardTemplateDetail,
+    activate_dashboard,
     create_dashboard,
     create_dashboard_template,
+    create_dashboard_template_version,
     delete_dashboard,
     get_dashboard,
     get_dashboard_template,
+    instantiate_dashboard_template,
     list_dashboard_templates,
     list_dashboards,
+    publish_dashboard_template,
     replace_dashboard_permissions,
     restore_dashboard,
     save_dashboard_version,
@@ -225,6 +232,25 @@ def save_dashboard_version_endpoint(
     return _dashboard_response(dashboard)
 
 
+@router.post("/{dashboard_id}/activate", response_model=DashboardDetailResponse)
+def activate_dashboard_endpoint(
+    dashboard_id: UUID,
+    request_body: DashboardRevisionRequest,
+    session: DatabaseSession,
+    actor: CurrentActor,
+) -> DashboardDetailResponse:
+    try:
+        dashboard = activate_dashboard(
+            session,
+            principal=actor,
+            dashboard_id=dashboard_id,
+            expected_revision=request_body.expected_revision,
+        )
+    except Exception as exc:
+        raise _mapped_dashboard_error(exc) from exc
+    return _dashboard_response(dashboard)
+
+
 @router.put("/{dashboard_id}/permissions", response_model=DashboardDetailResponse)
 def replace_dashboard_permissions_endpoint(
     dashboard_id: UUID,
@@ -344,6 +370,71 @@ def list_dashboard_templates_endpoint(
     )
 
 
+@template_router.post(
+    "/{template_id}/versions",
+    response_model=DashboardTemplateResponse,
+    status_code=status.HTTP_201_CREATED,
+)
+def create_dashboard_template_version_endpoint(
+    template_id: UUID,
+    request_body: CreateDashboardTemplateVersion,
+    session: DatabaseSession,
+    actor: CurrentActor,
+) -> DashboardTemplateResponse:
+    try:
+        template = create_dashboard_template_version(
+            session,
+            principal=actor,
+            template_id=template_id,
+            request=request_body,
+        )
+    except Exception as exc:
+        raise _mapped_dashboard_error(exc) from exc
+    return _template_response(template)
+
+
+@template_router.post("/{template_id}/publish", response_model=DashboardTemplateResponse)
+def publish_dashboard_template_endpoint(
+    template_id: UUID,
+    request_body: DashboardRevisionRequest,
+    session: DatabaseSession,
+    actor: CurrentActor,
+) -> DashboardTemplateResponse:
+    try:
+        template = publish_dashboard_template(
+            session,
+            principal=actor,
+            template_id=template_id,
+            expected_revision=request_body.expected_revision,
+        )
+    except Exception as exc:
+        raise _mapped_dashboard_error(exc) from exc
+    return _template_response(template)
+
+
+@template_router.post(
+    "/{template_id}/instantiate",
+    response_model=DashboardDetailResponse,
+    status_code=status.HTTP_201_CREATED,
+)
+def instantiate_dashboard_template_endpoint(
+    template_id: UUID,
+    request_body: InstantiateDashboardTemplate,
+    session: DatabaseSession,
+    actor: CurrentActor,
+) -> DashboardDetailResponse:
+    try:
+        dashboard = instantiate_dashboard_template(
+            session,
+            principal=actor,
+            template_id=template_id,
+            request=request_body,
+        )
+    except Exception as exc:
+        raise _mapped_dashboard_error(exc) from exc
+    return _dashboard_response(dashboard)
+
+
 @template_router.get("/{template_id}", response_model=DashboardTemplateResponse)
 def read_dashboard_template_endpoint(
     template_id: UUID,
@@ -372,6 +463,9 @@ def _mapped_dashboard_error(exc: Exception) -> HTTPException:
     elif isinstance(exc, DashboardForbiddenError):
         status_code = status.HTTP_403_FORBIDDEN
         action = "Ask the dashboard owner or workspace administrator for access"
+    elif isinstance(exc, DashboardReferenceConflictError):
+        status_code = status.HTTP_409_CONFLICT
+        action = "Review the listed templates and keep this dashboard or retire their references"
     elif isinstance(exc, DashboardConflictError):
         status_code = status.HTTP_409_CONFLICT
         action = "Refresh the dashboard and retry against its latest revision"
@@ -380,7 +474,19 @@ def _mapped_dashboard_error(exc: Exception) -> HTTPException:
         action = "Correct the dashboard configuration and try again"
     else:
         raise exc
-    return HTTPException(
-        status_code=status_code,
-        detail={"code": exc.code, "message": str(exc), "action": action},
-    )
+    detail: dict[str, object] = {"code": exc.code, "message": str(exc), "action": action}
+    if isinstance(exc, DashboardReferenceConflictError):
+        detail["impact"] = {
+            "resource_type": "dashboard_template",
+            "count": len(exc.references),
+            "items": [
+                {
+                    "template_id": str(reference.template_id),
+                    "template_name": reference.template_name,
+                    "template_version_id": str(reference.template_version_id),
+                    "version": reference.version,
+                }
+                for reference in exc.references
+            ],
+        }
+    return HTTPException(status_code=status_code, detail=detail)

@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from collections.abc import Iterator
 from dataclasses import dataclass
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from uuid import UUID, uuid4
 
@@ -9,26 +10,37 @@ import pytest
 from bi_system.dashboards.contracts import (
     CreateDashboard,
     CreateDashboardTemplate,
+    CreateDashboardTemplateVersion,
+    InstantiateDashboardTemplate,
     ReplaceDashboardPermissions,
     SaveDashboardVersion,
 )
 from bi_system.dashboards.errors import (
+    DashboardConfigurationError,
     DashboardConflictError,
     DashboardForbiddenError,
     DashboardNotFoundError,
+    DashboardReferenceConflictError,
 )
 from bi_system.dashboards.service import (
+    activate_dashboard,
     create_dashboard,
     create_dashboard_template,
+    create_dashboard_template_version,
     delete_dashboard,
     get_dashboard,
+    get_dashboard_template,
+    instantiate_dashboard_template,
+    list_dashboard_templates,
     list_dashboards,
+    publish_dashboard_template,
+    purge_expired_dashboards,
     replace_dashboard_permissions,
     restore_dashboard,
     save_dashboard_version,
 )
 from bi_system.db.base import Base
-from bi_system.db.models.dashboards import DashboardVersion
+from bi_system.db.models.dashboards import Dashboard, DashboardTemplateVersion, DashboardVersion
 from bi_system.db.models.identity import User
 from bi_system.db.session import create_database_engine, create_session_factory
 from bi_system.identity import QueryPrincipal
@@ -103,6 +115,7 @@ def owner_principal(resources: DashboardResources) -> QueryPrincipal:
                 "dashboards:share",
                 "dashboards:export",
                 "dashboard_templates:manage",
+                "dashboard_templates:publish",
             }
         ),
     )
@@ -335,6 +348,12 @@ def test_dashboard_template_instance_copies_aggregate_with_new_logical_ids(
                 visibility="workspace",
             ),
         )
+        template = publish_dashboard_template(
+            session,
+            principal=principal,
+            template_id=template.id,
+            expected_revision=1,
+        )
         instance = create_dashboard(
             session,
             principal=principal,
@@ -349,3 +368,429 @@ def test_dashboard_template_instance_copies_aggregate_with_new_logical_ids(
     assert (
         instance.pages[0].components[0].component_id != source.pages[0].components[0].component_id
     )
+
+
+def test_dashboard_activate_save_and_reactivate_archives_previous_active_version(
+    dashboard_store: tuple[sessionmaker[Session], DashboardResources, Engine],
+) -> None:
+    session_factory, resources, _engine = dashboard_store
+    principal = owner_principal(resources)
+    with session_factory() as session:
+        created = create_dashboard(
+            session,
+            principal=principal,
+            request=CreateDashboard(name="Activation lifecycle"),
+        )
+        first_active = activate_dashboard(
+            session,
+            principal=principal,
+            dashboard_id=created.id,
+            expected_revision=1,
+        )
+        draft = save_dashboard_version(
+            session,
+            principal=principal,
+            dashboard_id=created.id,
+            request=aggregate_request(base_version=1, expected_revision=2),
+        )
+        second_active = activate_dashboard(
+            session,
+            principal=principal,
+            dashboard_id=created.id,
+            expected_revision=3,
+        )
+    with session_factory() as session:
+        versions = list(
+            session.scalars(
+                select(DashboardVersion)
+                .where(DashboardVersion.dashboard_id == created.id)
+                .order_by(DashboardVersion.version)
+            ).all()
+        )
+
+    assert first_active.status == "active"
+    assert first_active.revision == 2
+    assert draft.status == "draft"
+    assert draft.current_version == 2
+    assert second_active.status == "active"
+    assert second_active.revision == 4
+    assert [version.status for version in versions] == ["archived", "active"]
+
+
+def test_template_source_rejects_deleted_and_cross_workspace_dashboards(
+    dashboard_store: tuple[sessionmaker[Session], DashboardResources, Engine],
+) -> None:
+    session_factory, resources, _engine = dashboard_store
+    principal = owner_principal(resources)
+    foreign_principal = QueryPrincipal(
+        user_id=resources.foreign_user_id,
+        workspace_id=resources.foreign_workspace_id,
+        permissions=frozenset({"dashboards:view", "dashboards:edit"}),
+    )
+    with session_factory() as session:
+        foreign_source = create_dashboard(
+            session,
+            principal=foreign_principal,
+            request=CreateDashboard(name="Foreign source"),
+        )
+        deleted_source = create_dashboard(
+            session,
+            principal=principal,
+            request=CreateDashboard(name="Deleted source"),
+        )
+        delete_dashboard(
+            session,
+            principal=principal,
+            dashboard_id=deleted_source.id,
+            expected_revision=1,
+        )
+        for source_version_id in (
+            foreign_source.current_version_id,
+            deleted_source.current_version_id,
+        ):
+            with pytest.raises(DashboardNotFoundError) as hidden_source:
+                create_dashboard_template(
+                    session,
+                    principal=principal,
+                    request=CreateDashboardTemplate(
+                        name="Invalid source",
+                        source_dashboard_version_id=source_version_id,
+                        visibility="workspace",
+                    ),
+                )
+            assert hidden_source.value.code == "dashboard_version_not_found"
+
+
+def test_template_publish_version_and_explicit_old_version_instantiation_are_isolated(
+    dashboard_store: tuple[sessionmaker[Session], DashboardResources, Engine],
+) -> None:
+    session_factory, resources, _engine = dashboard_store
+    principal = owner_principal(resources)
+    with session_factory() as session:
+        source = create_dashboard(
+            session,
+            principal=principal,
+            request=CreateDashboard(name="Template source"),
+        )
+        source_v2 = save_dashboard_version(
+            session,
+            principal=principal,
+            dashboard_id=source.id,
+            request=aggregate_request(),
+        )
+        template = create_dashboard_template(
+            session,
+            principal=principal,
+            request=CreateDashboardTemplate(
+                name="Published template",
+                source_dashboard_version_id=source_v2.current_version_id,
+                visibility="workspace",
+            ),
+        )
+        ordinary_editor = QueryPrincipal(
+            user_id=resources.viewer_id,
+            workspace_id=resources.workspace_id,
+            permissions=frozenset({"dashboards:view", "dashboards:edit"}),
+        )
+        with session_factory() as visibility_session:
+            assert (
+                list_dashboard_templates(
+                    visibility_session,
+                    principal=ordinary_editor,
+                    status="draft",
+                ).total
+                == 0
+            )
+        with session_factory() as visibility_session, pytest.raises(DashboardNotFoundError):
+            get_dashboard_template(
+                visibility_session,
+                principal=ordinary_editor,
+                template_id=template.id,
+            )
+        with pytest.raises(DashboardConflictError) as unpublished_v1:
+            instantiate_dashboard_template(
+                session,
+                principal=ordinary_editor,
+                template_id=template.id,
+                request=InstantiateDashboardTemplate(
+                    name="Unpublished V1",
+                    template_version_id=template.version_id,
+                ),
+            )
+        manager_without_publish = QueryPrincipal(
+            user_id=resources.owner_id,
+            workspace_id=resources.workspace_id,
+            permissions=frozenset({"dashboards:edit", "dashboard_templates:manage"}),
+        )
+        with pytest.raises(DashboardForbiddenError) as publish_forbidden:
+            publish_dashboard_template(
+                session,
+                principal=manager_without_publish,
+                template_id=template.id,
+                expected_revision=1,
+            )
+        published_v1 = publish_dashboard_template(
+            session,
+            principal=principal,
+            template_id=template.id,
+            expected_revision=1,
+        )
+        with pytest.raises(DashboardConflictError) as duplicate_publish:
+            publish_dashboard_template(
+                session,
+                principal=principal,
+                template_id=template.id,
+                expected_revision=2,
+            )
+        with pytest.raises(DashboardNotFoundError) as mismatched_template:
+            instantiate_dashboard_template(
+                session,
+                principal=principal,
+                template_id=uuid4(),
+                request=InstantiateDashboardTemplate(
+                    name="Wrong template path",
+                    template_version_id=published_v1.version_id,
+                ),
+            )
+        instance_v1 = instantiate_dashboard_template(
+            session,
+            principal=principal,
+            template_id=template.id,
+            request=InstantiateDashboardTemplate(
+                name="V1 instance",
+                template_version_id=published_v1.version_id,
+            ),
+        )
+        source_v3 = save_dashboard_version(
+            session,
+            principal=principal,
+            dashboard_id=source.id,
+            request=aggregate_request(base_version=2, expected_revision=2),
+        )
+        draft_v2 = create_dashboard_template_version(
+            session,
+            principal=principal,
+            template_id=template.id,
+            request=CreateDashboardTemplateVersion(
+                source_dashboard_version_id=source_v3.current_version_id,
+                expected_revision=2,
+            ),
+        )
+        with pytest.raises(DashboardConflictError) as unpublished_v2:
+            instantiate_dashboard_template(
+                session,
+                principal=ordinary_editor,
+                template_id=template.id,
+                request=InstantiateDashboardTemplate(
+                    name="Unpublished V2",
+                    template_version_id=draft_v2.version_id,
+                ),
+            )
+        with pytest.raises(DashboardConflictError) as duplicate_draft:
+            create_dashboard_template_version(
+                session,
+                principal=principal,
+                template_id=template.id,
+                request=CreateDashboardTemplateVersion(
+                    source_dashboard_version_id=source_v3.current_version_id,
+                    expected_revision=3,
+                ),
+            )
+        with pytest.raises(DashboardConflictError) as stale_template:
+            create_dashboard_template_version(
+                session,
+                principal=principal,
+                template_id=template.id,
+                request=CreateDashboardTemplateVersion(
+                    source_dashboard_version_id=source_v3.current_version_id,
+                    expected_revision=2,
+                ),
+            )
+        old_version_instance = instantiate_dashboard_template(
+            session,
+            principal=ordinary_editor,
+            template_id=template.id,
+            request=InstantiateDashboardTemplate(
+                name="Pinned V1 instance",
+                template_version_id=published_v1.version_id,
+            ),
+        )
+        published_v2 = publish_dashboard_template(
+            session,
+            principal=principal,
+            template_id=template.id,
+            expected_revision=3,
+        )
+
+    assert published_v1.status == "published"
+    assert unpublished_v1.value.code == "dashboard_template_version_unpublished"
+    assert publish_forbidden.value.code == "dashboard_template_publish_forbidden"
+    assert duplicate_publish.value.code == "dashboard_template_publish_conflict"
+    assert mismatched_template.value.code == "dashboard_template_version_not_found"
+    assert draft_v2.status == "draft"
+    assert unpublished_v2.value.code == "dashboard_template_version_unpublished"
+    assert duplicate_draft.value.code == "dashboard_template_version_conflict"
+    assert stale_template.value.code == "dashboard_template_revision_conflict"
+    assert draft_v2.version_id != published_v1.version_id
+    assert published_v2.status == "published"
+    assert published_v2.revision == 4
+    assert instance_v1.current_version == 1
+    assert old_version_instance.current_version == 1
+    assert old_version_instance.pages[0].components[0].config == (
+        instance_v1.pages[0].components[0].config
+    )
+    with session_factory() as session:
+        template_version_count = session.scalar(
+            select(func.count(DashboardTemplateVersion.id)).where(
+                DashboardTemplateVersion.template_id == template.id
+            )
+        )
+    with session_factory() as session, pytest.raises(DashboardReferenceConflictError) as referenced:
+        delete_dashboard(
+            session,
+            principal=principal,
+            dashboard_id=source.id,
+            expected_revision=3,
+        )
+    assert template_version_count == 2
+    assert referenced.value.code == "dashboard_reference_conflict"
+    assert len(referenced.value.references) == 2
+    assert {reference.version for reference in referenced.value.references} == {1, 2}
+
+
+def test_template_instantiation_rejects_unavailable_legacy_source(
+    dashboard_store: tuple[sessionmaker[Session], DashboardResources, Engine],
+) -> None:
+    session_factory, resources, _engine = dashboard_store
+    principal = owner_principal(resources)
+    with session_factory() as session:
+        source = create_dashboard(
+            session,
+            principal=principal,
+            request=CreateDashboard(name="Legacy template source"),
+        )
+        template = create_dashboard_template(
+            session,
+            principal=principal,
+            request=CreateDashboardTemplate(
+                name="Legacy template",
+                source_dashboard_version_id=source.current_version_id,
+                visibility="workspace",
+            ),
+        )
+        published = publish_dashboard_template(
+            session,
+            principal=principal,
+            template_id=template.id,
+            expected_revision=1,
+        )
+    with session_factory.begin() as session:
+        dashboard = session.get(Dashboard, source.id)
+        assert dashboard is not None
+        dashboard.status = "deleted"
+        dashboard.deleted_at = datetime.now(UTC)
+    with session_factory() as session, pytest.raises(DashboardConfigurationError) as deleted:
+        instantiate_dashboard_template(
+            session,
+            principal=principal,
+            template_id=template.id,
+            request=InstantiateDashboardTemplate(
+                name="Deleted source instance",
+                template_version_id=published.version_id,
+            ),
+        )
+    assert deleted.value.code == "dashboard_template_source_unavailable"
+
+    with session_factory.begin() as session:
+        dashboard = session.get(Dashboard, source.id)
+        assert dashboard is not None
+        dashboard.status = "draft"
+        dashboard.deleted_at = None
+        dashboard.workspace_id = resources.foreign_workspace_id
+    with session_factory() as session, pytest.raises(DashboardConfigurationError) as foreign:
+        instantiate_dashboard_template(
+            session,
+            principal=principal,
+            template_id=template.id,
+            request=InstantiateDashboardTemplate(
+                name="Foreign source instance",
+                template_version_id=published.version_id,
+            ),
+        )
+    assert foreign.value.code == "dashboard_template_source_unavailable"
+
+
+def test_restore_expires_after_thirty_days_and_system_admin_can_hard_purge(
+    dashboard_store: tuple[sessionmaker[Session], DashboardResources, Engine],
+) -> None:
+    session_factory, resources, _engine = dashboard_store
+    principal = owner_principal(resources)
+    now = datetime(2026, 7, 19, tzinfo=UTC)
+    with session_factory() as session:
+        created = create_dashboard(
+            session,
+            principal=principal,
+            request=CreateDashboard(name="Expired trash"),
+        )
+        delete_dashboard(
+            session,
+            principal=principal,
+            dashboard_id=created.id,
+            expected_revision=1,
+        )
+        within_window = create_dashboard(
+            session,
+            principal=principal,
+            request=CreateDashboard(name="Restorable trash"),
+        )
+        delete_dashboard(
+            session,
+            principal=principal,
+            dashboard_id=within_window.id,
+            expected_revision=1,
+        )
+    with session_factory.begin() as session:
+        dashboard = session.get(Dashboard, created.id)
+        restorable_dashboard = session.get(Dashboard, within_window.id)
+        assert dashboard is not None
+        assert restorable_dashboard is not None
+        dashboard.deleted_at = now - timedelta(days=30)
+        restorable_dashboard.deleted_at = now - timedelta(days=30) + timedelta(microseconds=1)
+
+    with session_factory() as session, pytest.raises(DashboardConflictError) as expired:
+        restore_dashboard(
+            session,
+            principal=principal,
+            dashboard_id=created.id,
+            expected_revision=2,
+            now=now,
+        )
+    assert expired.value.code == "dashboard_restore_expired"
+
+    with session_factory() as session:
+        restored = restore_dashboard(
+            session,
+            principal=principal,
+            dashboard_id=within_window.id,
+            expected_revision=2,
+            now=now,
+        )
+    assert restored.status == "draft"
+
+    with session_factory() as session, pytest.raises(DashboardForbiddenError) as forbidden:
+        purge_expired_dashboards(session, principal=principal, now=now)
+    assert forbidden.value.code == "dashboard_purge_forbidden"
+
+    administrator = QueryPrincipal(
+        user_id=resources.owner_id,
+        workspace_id=resources.workspace_id,
+        is_system_admin=True,
+    )
+    with session_factory() as session:
+        purged = purge_expired_dashboards(session, principal=administrator, now=now)
+    with session_factory() as session:
+        purged_again = purge_expired_dashboards(session, principal=administrator, now=now)
+    with session_factory() as session:
+        assert session.get(Dashboard, created.id) is None
+    assert purged == 1
+    assert purged_again == 0

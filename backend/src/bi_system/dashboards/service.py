@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from copy import deepcopy
 from dataclasses import dataclass
-from datetime import datetime
+from datetime import UTC, datetime, timedelta
 from typing import Literal, cast
 from uuid import UUID, uuid4
 
@@ -13,11 +13,13 @@ from sqlalchemy.orm import Session
 from bi_system.dashboards.contracts import (
     CreateDashboard,
     CreateDashboardTemplate,
+    CreateDashboardTemplateVersion,
     DashboardComponentInput,
     DashboardLayoutInput,
     DashboardLayoutItemInput,
     DashboardPageInput,
     DashboardPermissionInput,
+    InstantiateDashboardTemplate,
     ReplaceDashboardPermissions,
     SaveDashboardVersion,
 )
@@ -26,6 +28,8 @@ from bi_system.dashboards.errors import (
     DashboardConflictError,
     DashboardForbiddenError,
     DashboardNotFoundError,
+    DashboardReferenceConflictError,
+    DashboardTemplateReference,
 )
 from bi_system.db.models.dashboards import (
     Dashboard,
@@ -44,6 +48,8 @@ from bi_system.db.models.identity import Role, User
 from bi_system.identity import QueryPrincipal
 
 type DashboardCapability = Literal["view", "edit", "share", "export"]
+
+DASHBOARD_RETENTION_DAYS = 30
 
 _CAPABILITIES: tuple[DashboardCapability, ...] = ("view", "edit", "share", "export")
 _COARSE_PERMISSION = {
@@ -170,30 +176,13 @@ def create_dashboard(
                     principal=principal,
                     template_version_id=request.template_version_id,
                 )
-            dashboard = Dashboard(
-                workspace_id=principal.workspace_id,
-                owner_user_id=principal.user_id,
+            detail = _create_dashboard_from_aggregate(
+                session,
+                principal=principal,
                 name=request.name,
                 description=request.description,
-                status="draft",
-                revision=1,
-                current_version=1,
+                aggregate=aggregate,
             )
-            session.add(dashboard)
-            session.flush()
-            version = DashboardVersion(
-                dashboard_id=dashboard.id,
-                version=1,
-                status="draft",
-                base_version=None,
-                global_filter=deepcopy(aggregate.global_filter),
-                created_by_user_id=principal.user_id,
-            )
-            session.add(version)
-            session.flush()
-            _persist_version_aggregate(session, version=version, request=aggregate)
-            session.flush()
-            detail = _dashboard_detail(session, dashboard=dashboard, principal=principal)
     except IntegrityError as exc:
         raise DashboardConflictError(
             "dashboard_create_conflict", "Dashboard conflicts with an existing resource"
@@ -291,6 +280,7 @@ def save_dashboard_version(
             session.flush()
             _persist_version_aggregate(session, version=version, request=request)
             dashboard.current_version = next_version
+            dashboard.status = "draft"
             dashboard.revision += 1
             dashboard.updated_at = utc_now()
             session.flush()
@@ -300,6 +290,45 @@ def save_dashboard_version(
             "dashboard_version_conflict", "Dashboard version conflicts with existing state"
         ) from exc
     return detail
+
+
+def activate_dashboard(
+    session: Session,
+    *,
+    principal: QueryPrincipal,
+    dashboard_id: UUID,
+    expected_revision: int,
+) -> DashboardDetail:
+    with session.begin():
+        dashboard = _required_dashboard(
+            session,
+            principal=principal,
+            dashboard_id=dashboard_id,
+            lock=True,
+        )
+        _require_capability(session, dashboard=dashboard, principal=principal, capability="edit")
+        _require_revision(dashboard, expected_revision)
+        current_version = _current_version(session, dashboard)
+        if dashboard.status == "active" and current_version.status == "active":
+            raise DashboardConflictError(
+                "dashboard_activate_conflict",
+                "Dashboard current version is already active",
+            )
+        active_versions = session.scalars(
+            select(DashboardVersion).where(
+                DashboardVersion.dashboard_id == dashboard.id,
+                DashboardVersion.status == "active",
+                DashboardVersion.id != current_version.id,
+            )
+        ).all()
+        for version in active_versions:
+            version.status = "archived"
+        current_version.status = "active"
+        dashboard.status = "active"
+        dashboard.revision += 1
+        dashboard.updated_at = utc_now()
+        session.flush()
+        return _dashboard_detail(session, dashboard=dashboard, principal=principal)
 
 
 def delete_dashboard(
@@ -318,6 +347,7 @@ def delete_dashboard(
         )
         _require_capability(session, dashboard=dashboard, principal=principal, capability="edit")
         _require_revision(dashboard, expected_revision)
+        _require_no_template_references(session, dashboard)
         dashboard.status = "deleted"
         dashboard.deleted_at = utc_now()
         dashboard.revision += 1
@@ -332,7 +362,9 @@ def restore_dashboard(
     principal: QueryPrincipal,
     dashboard_id: UUID,
     expected_revision: int,
+    now: datetime | None = None,
 ) -> DashboardDetail:
+    resolved_now = utc_now() if now is None else _as_utc(now)
     with session.begin():
         dashboard = _required_dashboard(
             session,
@@ -346,6 +378,13 @@ def restore_dashboard(
                 "dashboard_restore_conflict", "Only deleted dashboards can be restored"
             )
         _require_capability(session, dashboard=dashboard, principal=principal, capability="edit")
+        if dashboard.deleted_at is None or _as_utc(dashboard.deleted_at) <= (
+            resolved_now - timedelta(days=DASHBOARD_RETENTION_DAYS)
+        ):
+            raise DashboardConflictError(
+                "dashboard_restore_expired",
+                "Dashboard restore window has expired",
+            )
         _require_revision(dashboard, expected_revision)
         dashboard.status = "draft"
         dashboard.deleted_at = None
@@ -353,6 +392,41 @@ def restore_dashboard(
         dashboard.updated_at = utc_now()
         session.flush()
         return _dashboard_detail(session, dashboard=dashboard, principal=principal)
+
+
+def purge_expired_dashboards(
+    session: Session,
+    *,
+    principal: QueryPrincipal,
+    now: datetime | None = None,
+) -> int:
+    if not principal.is_system_admin:
+        raise DashboardForbiddenError(
+            "dashboard_purge_forbidden",
+            "System administrator access is required to purge dashboards",
+        )
+    resolved_now = utc_now() if now is None else _as_utc(now)
+    cutoff = resolved_now - timedelta(days=DASHBOARD_RETENTION_DAYS)
+    with session.begin():
+        expired = list(
+            session.scalars(
+                select(Dashboard)
+                .where(
+                    Dashboard.workspace_id == principal.workspace_id,
+                    Dashboard.status == "deleted",
+                    Dashboard.deleted_at.is_not(None),
+                    Dashboard.deleted_at <= cutoff,
+                )
+                .order_by(Dashboard.deleted_at, Dashboard.id)
+                .with_for_update()
+            ).all()
+        )
+        for dashboard in expired:
+            _require_no_template_references(session, dashboard)
+        for dashboard in expired:
+            session.delete(dashboard)
+        session.flush()
+        return len(expired)
 
 
 def replace_dashboard_permissions(
@@ -404,24 +478,14 @@ def create_dashboard_template(
     principal: QueryPrincipal,
     request: CreateDashboardTemplate,
 ) -> DashboardTemplateDetail:
-    if not principal.has_permission("dashboard_templates:manage"):
-        raise DashboardForbiddenError(
-            "dashboard_template_manage_forbidden",
-            "Dashboard template management permission is required",
-        )
+    _require_template_management(principal)
     with session.begin():
         _require_actor(session, principal)
-        source = session.get(DashboardVersion, request.source_dashboard_version_id)
-        if source is None:
-            raise DashboardNotFoundError(
-                "dashboard_version_not_found", "Source dashboard version was not found"
-            )
-        dashboard = session.get(Dashboard, source.dashboard_id)
-        if dashboard is None or dashboard.workspace_id != principal.workspace_id:
-            raise DashboardNotFoundError(
-                "dashboard_version_not_found", "Source dashboard version was not found"
-            )
-        _require_capability(session, dashboard=dashboard, principal=principal, capability="view")
+        source = _required_template_source_version(
+            session,
+            principal=principal,
+            source_dashboard_version_id=request.source_dashboard_version_id,
+        )
         template = DashboardTemplate(
             workspace_id=principal.workspace_id,
             name=request.name,
@@ -444,6 +508,114 @@ def create_dashboard_template(
         return _template_detail(session, template=template, version=version)
 
 
+def create_dashboard_template_version(
+    session: Session,
+    *,
+    principal: QueryPrincipal,
+    template_id: UUID,
+    request: CreateDashboardTemplateVersion,
+) -> DashboardTemplateDetail:
+    _require_template_management(principal)
+    try:
+        with session.begin():
+            _require_actor(session, principal)
+            template = _required_template(
+                session,
+                principal=principal,
+                template_id=template_id,
+                lock=True,
+            )
+            _require_template_revision(template, request.expected_revision)
+            if template.status != "published":
+                raise DashboardConflictError(
+                    "dashboard_template_version_conflict",
+                    "Only published dashboard templates can create a new draft version",
+                )
+            source = _required_template_source_version(
+                session,
+                principal=principal,
+                source_dashboard_version_id=request.source_dashboard_version_id,
+            )
+            next_version = template.current_version + 1
+            version = DashboardTemplateVersion(
+                template_id=template.id,
+                version=next_version,
+                source_dashboard_version_id=source.id,
+                created_by_user_id=principal.user_id,
+            )
+            session.add(version)
+            template.current_version = next_version
+            template.status = "draft"
+            template.revision += 1
+            template.updated_at = utc_now()
+            session.flush()
+            return _template_detail(session, template=template, version=version)
+    except IntegrityError as exc:
+        raise DashboardConflictError(
+            "dashboard_template_version_conflict",
+            "Dashboard template version conflicts with existing state",
+        ) from exc
+
+
+def publish_dashboard_template(
+    session: Session,
+    *,
+    principal: QueryPrincipal,
+    template_id: UUID,
+    expected_revision: int,
+) -> DashboardTemplateDetail:
+    _require_template_publish(principal)
+    with session.begin():
+        template = _required_template(
+            session,
+            principal=principal,
+            template_id=template_id,
+            lock=True,
+        )
+        _require_template_revision(template, expected_revision)
+        if template.status != "draft":
+            raise DashboardConflictError(
+                "dashboard_template_publish_conflict",
+                "Only draft dashboard templates can be published",
+            )
+        version = _latest_template_version(session, template)
+        template.status = "published"
+        template.revision += 1
+        template.updated_at = utc_now()
+        session.flush()
+        return _template_detail(session, template=template, version=version)
+
+
+def instantiate_dashboard_template(
+    session: Session,
+    *,
+    principal: QueryPrincipal,
+    template_id: UUID,
+    request: InstantiateDashboardTemplate,
+) -> DashboardDetail:
+    _require_coarse(principal, "edit")
+    try:
+        with session.begin():
+            _require_actor(session, principal)
+            aggregate = _aggregate_from_template(
+                session,
+                principal=principal,
+                template_version_id=request.template_version_id,
+                expected_template_id=template_id,
+            )
+            return _create_dashboard_from_aggregate(
+                session,
+                principal=principal,
+                name=request.name,
+                description=request.description,
+                aggregate=aggregate,
+            )
+    except IntegrityError as exc:
+        raise DashboardConflictError(
+            "dashboard_create_conflict", "Dashboard conflicts with an existing resource"
+        ) from exc
+
+
 def list_dashboard_templates(
     session: Session,
     *,
@@ -452,16 +624,25 @@ def list_dashboard_templates(
     offset: int = 0,
     limit: int = 50,
 ) -> DashboardTemplateListPage:
+    can_manage = principal.has_permission("dashboard_templates:manage") or principal.has_permission(
+        "dashboard_templates:publish"
+    )
+    if status == "published":
+        visibility_filter = or_(
+            DashboardTemplate.visibility == "workspace",
+            DashboardTemplate.owner_user_id == principal.user_id,
+        )
+    elif can_manage:
+        visibility_filter = DashboardTemplate.workspace_id == principal.workspace_id
+    else:
+        visibility_filter = DashboardTemplate.owner_user_id == principal.user_id
     templates = list(
         session.scalars(
             select(DashboardTemplate)
             .where(
                 DashboardTemplate.workspace_id == principal.workspace_id,
                 DashboardTemplate.status == status,
-                or_(
-                    DashboardTemplate.visibility == "workspace",
-                    DashboardTemplate.owner_user_id == principal.user_id,
-                ),
+                visibility_filter,
             )
             .order_by(DashboardTemplate.updated_at.desc(), DashboardTemplate.id.asc())
         ).all()
@@ -487,9 +668,15 @@ def get_dashboard_template(
             DashboardTemplate.workspace_id == principal.workspace_id,
         )
     )
-    if template is None or (
-        template.visibility != "workspace" and template.owner_user_id != principal.user_id
-    ):
+    can_manage = principal.has_permission("dashboard_templates:manage") or principal.has_permission(
+        "dashboard_templates:publish"
+    )
+    can_view = template is not None and (
+        template.owner_user_id == principal.user_id
+        or can_manage
+        or (template.status == "published" and template.visibility == "workspace")
+    )
+    if template is None or not can_view:
         raise DashboardNotFoundError(
             "dashboard_template_not_found", "Dashboard template was not found"
         )
@@ -498,6 +685,40 @@ def get_dashboard_template(
         template=template,
         version=_latest_template_version(session, template),
     )
+
+
+def _create_dashboard_from_aggregate(
+    session: Session,
+    *,
+    principal: QueryPrincipal,
+    name: str,
+    description: str | None,
+    aggregate: SaveDashboardVersion,
+) -> DashboardDetail:
+    dashboard = Dashboard(
+        workspace_id=principal.workspace_id,
+        owner_user_id=principal.user_id,
+        name=name,
+        description=description,
+        status="draft",
+        revision=1,
+        current_version=1,
+    )
+    session.add(dashboard)
+    session.flush()
+    version = DashboardVersion(
+        dashboard_id=dashboard.id,
+        version=1,
+        status="draft",
+        base_version=None,
+        global_filter=deepcopy(aggregate.global_filter),
+        created_by_user_id=principal.user_id,
+    )
+    session.add(version)
+    session.flush()
+    _persist_version_aggregate(session, version=version, request=aggregate)
+    session.flush()
+    return _dashboard_detail(session, dashboard=dashboard, principal=principal)
 
 
 def _blank_aggregate() -> SaveDashboardVersion:
@@ -802,6 +1023,121 @@ def _require_revision(dashboard: Dashboard, expected_revision: int) -> None:
         )
 
 
+def _require_template_revision(
+    template: DashboardTemplate,
+    expected_revision: int,
+) -> None:
+    if template.revision != expected_revision:
+        raise DashboardConflictError(
+            "dashboard_template_revision_conflict",
+            f"Dashboard template revision is {template.revision}, not {expected_revision}",
+        )
+
+
+def _require_template_management(principal: QueryPrincipal) -> None:
+    if not principal.has_permission("dashboard_templates:manage"):
+        raise DashboardForbiddenError(
+            "dashboard_template_manage_forbidden",
+            "Dashboard template management permission is required",
+        )
+
+
+def _require_template_publish(principal: QueryPrincipal) -> None:
+    if not principal.has_permission("dashboard_templates:publish"):
+        raise DashboardForbiddenError(
+            "dashboard_template_publish_forbidden",
+            "Dashboard template publish permission is required",
+        )
+
+
+def _required_template(
+    session: Session,
+    *,
+    principal: QueryPrincipal,
+    template_id: UUID,
+    lock: bool = False,
+) -> DashboardTemplate:
+    statement = select(DashboardTemplate).where(
+        DashboardTemplate.id == template_id,
+        DashboardTemplate.workspace_id == principal.workspace_id,
+    )
+    if lock:
+        statement = statement.with_for_update()
+    template = session.scalar(statement)
+    if template is None:
+        raise DashboardNotFoundError(
+            "dashboard_template_not_found", "Dashboard template was not found"
+        )
+    return template
+
+
+def _required_template_source_version(
+    session: Session,
+    *,
+    principal: QueryPrincipal,
+    source_dashboard_version_id: UUID,
+) -> DashboardVersion:
+    source = session.get(DashboardVersion, source_dashboard_version_id)
+    if source is None:
+        raise DashboardNotFoundError(
+            "dashboard_version_not_found", "Source dashboard version was not found"
+        )
+    dashboard = session.scalar(
+        select(Dashboard).where(Dashboard.id == source.dashboard_id).with_for_update()
+    )
+    if (
+        dashboard is None
+        or dashboard.workspace_id != principal.workspace_id
+        or dashboard.status == "deleted"
+    ):
+        raise DashboardNotFoundError(
+            "dashboard_version_not_found", "Source dashboard version was not found"
+        )
+    _require_capability(session, dashboard=dashboard, principal=principal, capability="view")
+    return source
+
+
+def _require_no_template_references(session: Session, dashboard: Dashboard) -> None:
+    references = tuple(
+        DashboardTemplateReference(
+            template_id=template_id,
+            template_name=template_name,
+            template_version_id=template_version_id,
+            version=version,
+        )
+        for template_id, template_name, template_version_id, version in session.execute(
+            select(
+                DashboardTemplate.id,
+                DashboardTemplate.name,
+                DashboardTemplateVersion.id,
+                DashboardTemplateVersion.version,
+            )
+            .join(
+                DashboardTemplate,
+                DashboardTemplate.id == DashboardTemplateVersion.template_id,
+            )
+            .join(
+                DashboardVersion,
+                DashboardVersion.id == DashboardTemplateVersion.source_dashboard_version_id,
+            )
+            .where(DashboardVersion.dashboard_id == dashboard.id)
+            .order_by(DashboardTemplate.id, DashboardTemplateVersion.version)
+        ).all()
+    )
+    if references:
+        raise DashboardReferenceConflictError(
+            "dashboard_reference_conflict",
+            "Dashboard versions are referenced by a dashboard template",
+            references=references,
+        )
+
+
+def _as_utc(value: datetime) -> datetime:
+    if value.tzinfo is None or value.utcoffset() is None:
+        return value.replace(tzinfo=UTC)
+    return value.astimezone(UTC)
+
+
 def _require_actor(session: Session, principal: QueryPrincipal) -> None:
     actor = session.scalar(
         select(User).where(
@@ -846,6 +1182,7 @@ def _aggregate_from_template(
     *,
     principal: QueryPrincipal,
     template_version_id: UUID,
+    expected_template_id: UUID | None = None,
 ) -> SaveDashboardVersion:
     version = session.get(DashboardTemplateVersion, template_version_id)
     if version is None:
@@ -853,9 +1190,21 @@ def _aggregate_from_template(
             "dashboard_template_version_not_found", "Dashboard template version was not found"
         )
     template = session.get(DashboardTemplate, version.template_id)
-    if template is None or template.workspace_id != principal.workspace_id:
+    if (
+        template is None
+        or template.workspace_id != principal.workspace_id
+        or (expected_template_id is not None and template.id != expected_template_id)
+    ):
         raise DashboardNotFoundError(
             "dashboard_template_version_not_found", "Dashboard template version was not found"
+        )
+    version_is_published = template.status == "published" or (
+        template.status == "draft" and version.version < template.current_version
+    )
+    if not version_is_published:
+        raise DashboardConflictError(
+            "dashboard_template_version_unpublished",
+            "Dashboard template version is not published",
         )
     if template.visibility != "workspace" and template.owner_user_id != principal.user_id:
         raise DashboardForbiddenError(
@@ -865,6 +1214,16 @@ def _aggregate_from_template(
     if source is None:
         raise DashboardConfigurationError(
             "dashboard_template_source_not_found", "Dashboard template source was not found"
+        )
+    source_dashboard = session.get(Dashboard, source.dashboard_id)
+    if (
+        source_dashboard is None
+        or source_dashboard.workspace_id != principal.workspace_id
+        or source_dashboard.status == "deleted"
+    ):
+        raise DashboardConfigurationError(
+            "dashboard_template_source_unavailable",
+            "Dashboard template source is unavailable",
         )
     return _copy_aggregate(session, source)
 

@@ -81,7 +81,13 @@ def dashboard_api_context(
             application,
             user_id=owner_user_id,
             workspace_id=workspace_id,
-            permissions={"dashboards:view", "dashboards:edit", "dashboards:share"},
+            permissions={
+                "dashboards:view",
+                "dashboards:edit",
+                "dashboards:share",
+                "dashboard_templates:manage",
+                "dashboard_templates:publish",
+            },
         )
         yield DashboardApiContext(
             client=client,
@@ -203,6 +209,81 @@ def test_dashboard_api_saves_version_and_rejects_stale_revision(
     assert saved.json()["current_version"] == 2
     assert stale.status_code == 409
     assert stale.json()["detail"]["code"] == "dashboard_revision_conflict"
+
+
+def test_dashboard_api_activates_and_instantiates_published_template_version(
+    dashboard_api_context: DashboardApiContext,
+) -> None:
+    dashboard = _create_dashboard(dashboard_api_context)
+    dashboard_id = dashboard["id"]
+    version_id = dashboard["current_version_id"]
+    activated = cast(
+        Response,
+        dashboard_api_context.client.post(
+            f"/api/v1/dashboards/{dashboard_id}/activate",
+            json={"expected_revision": 1},
+        ),
+    )
+    template = cast(
+        Response,
+        dashboard_api_context.client.post(
+            "/api/v1/dashboard-templates",
+            json={
+                "name": "经营模板",
+                "source_dashboard_version_id": version_id,
+                "visibility": "workspace",
+            },
+        ),
+    )
+    template_id = template.json()["id"]
+    published = cast(
+        Response,
+        dashboard_api_context.client.post(
+            f"/api/v1/dashboard-templates/{template_id}/publish",
+            json={"expected_revision": 1},
+        ),
+    )
+    instantiated = cast(
+        Response,
+        dashboard_api_context.client.post(
+            f"/api/v1/dashboard-templates/{template_id}/instantiate",
+            json={
+                "name": "模板实例",
+                "template_version_id": published.json()["version_id"],
+            },
+        ),
+    )
+    referenced = cast(
+        Response,
+        dashboard_api_context.client.request(
+            "DELETE",
+            f"/api/v1/dashboards/{dashboard_id}",
+            params={"expected_revision": 2},
+        ),
+    )
+
+    assert activated.status_code == 200
+    assert activated.json()["status"] == "active"
+    assert template.status_code == 201
+    assert published.status_code == 200
+    assert published.json()["status"] == "published"
+    assert instantiated.status_code == 201
+    assert instantiated.json()["name"] == "模板实例"
+    assert instantiated.json()["current_version"] == 1
+    assert referenced.status_code == 409
+    assert referenced.json()["detail"]["code"] == "dashboard_reference_conflict"
+    assert referenced.json()["detail"]["impact"] == {
+        "resource_type": "dashboard_template",
+        "count": 1,
+        "items": [
+            {
+                "template_id": template_id,
+                "template_name": "经营模板",
+                "template_version_id": published.json()["version_id"],
+                "version": 1,
+            }
+        ],
+    }
 
 
 def test_dashboard_api_requires_coarse_and_resource_view_permissions(
