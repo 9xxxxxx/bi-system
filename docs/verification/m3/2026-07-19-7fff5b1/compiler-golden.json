@@ -1,0 +1,41 @@
+{
+  "case_ids": [
+    "kpi-gross",
+    "detail-products",
+    "ranking-products-top2",
+    "bar-category",
+    "horizontal-bar-region",
+    "stacked-category-region",
+    "line-month",
+    "area-month",
+    "pie-category",
+    "donut-category"
+  ],
+  "commands": [
+    {
+      "command": "uv run pytest spikes/m3/backend/test_c1_chart_cases.py -q",
+      "cwd": ".",
+      "duration_seconds": 0.789,
+      "exit_code": 0,
+      "key": "compiler_golden",
+      "started_at": "2026-07-19T13:51:18.666952+00:00",
+      "stderr": "",
+      "stdout": ".....                                                                    [100%]\n5 passed in 0.33s\n"
+    }
+  ],
+  "contains_exported_rows_or_values": false,
+  "fixture_manifest_sha256": "015df74d59fb6e70c04c0f05da1392a57a1e8acd919d851d51fff0394f123c8c",
+  "fixture_version": "m3-star-v2",
+  "git_sha": "7fff5b1e35674708a08490ab35d941f8aa5924a1",
+  "limitation": "Existing tests compare golden values but do not export compiled AST and rows per case.",
+  "matrix_id": "M3-C03",
+  "provenance": {
+    "git_sha": "7fff5b1e35674708a08490ab35d941f8aa5924a1",
+    "git_sha_override": false,
+    "head_sha": "7fff5b1e35674708a08490ab35d941f8aa5924a1",
+    "worktree_diff_sha256": "f53e2f306d5fb611a6492d198842134c1711038502b9cc93e3251dc347cc6ced",
+    "worktree_state": "dirty"
+  },
+  "schema_version": 1,
+  "status": "partial"
+}

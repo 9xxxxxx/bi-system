@@ -1,0 +1,1559 @@
+{
+  "artifacts": [
+    {
+      "artifact": "fixture-check.log",
+      "artifact_files": [
+        {
+          "path": "fixture-check.log",
+          "sha256": "85a70be1da3b8c3887e94b3772b34cc8ff8821a89c553825e8d2d2191f6310bc"
+        }
+      ],
+      "command_keys": [
+        "fixture_check",
+        "fixture_tests"
+      ],
+      "command_results_sha256": "2d1a5526033a7195ea02ac5d87819ef6974070ff69b5e2f31e832dd40e0f715d",
+      "limitation": null,
+      "matrix_id": "M3-C01",
+      "sha256": "875ebb1494be1a125589bbcd9329eadad19f564f06abd6706ffde70e9a48cfa1",
+      "status": "pass"
+    },
+    {
+      "artifact": "contract-negative.json",
+      "artifact_files": [
+        {
+          "path": "contract-negative.json",
+          "sha256": "42b2b79f0a9052ada8b214a4a86e3bbdf5662151d626d9a01012353835b0134a"
+        }
+      ],
+      "command_keys": [
+        "compiler_negative"
+      ],
+      "command_results_sha256": "1fcb0b2069af5500dacdad69d0a77630db3acab6e7a08bcdfd6e7295b9703ae7",
+      "limitation": "Pytest proves rejection but does not emit each error payload or leakage scan.",
+      "matrix_id": "M3-C02",
+      "sha256": "013576a4eabee47619ce6a94ca895b957857e5fb45904ba738e06c37cc801664",
+      "status": "partial"
+    },
+    {
+      "artifact": "compiler-golden.json",
+      "artifact_files": [
+        {
+          "path": "compiler-golden.json",
+          "sha256": "503daac58d5647db7d20bc3817556028c5685e83e089d734b9bbd0dba2d7d634"
+        }
+      ],
+      "command_keys": [
+        "compiler_golden"
+      ],
+      "command_results_sha256": "dff766f28075346168019d30837f1da7196b1b9e38d622cfc0edeb62f2b33eb9",
+      "limitation": "Existing tests compare golden values but do not export compiled AST and rows per case.",
+      "matrix_id": "M3-C03",
+      "sha256": "02b770f2c90fb90141a5ba0601b086659a6c2f6b1553e5db546581050c6f965d",
+      "status": "partial"
+    },
+    {
+      "artifact": "filter-golden.json",
+      "artifact_files": [
+        {
+          "path": "filter-golden.json",
+          "sha256": "2c40c9780b1f56adcdbd33fc66c8de2bfddc71f56ae403f83e6a8b08a9df9eb3"
+        }
+      ],
+      "command_keys": [
+        "sqlite_portability",
+        "postgresql_runner"
+      ],
+      "command_results_sha256": "886800fadb5c5098c9f4617f9a1b850553ac3cd639590b51772f31e8a4a8322c",
+      "limitation": "Existing tests do not export resolved predicates, row IDs, and amounts for every case.",
+      "matrix_id": "M3-C04",
+      "sha256": "6db9b073f5310f59a6dbcd958b6ff77b27debe7a722407be9c8e020a8e4d40bf",
+      "status": "partial"
+    },
+    {
+      "artifact": "type-parity.json",
+      "artifact_files": [
+        {
+          "path": "type-parity.json",
+          "sha256": "20d94259bb0c8d5681e6a51a507512970d42bf836074d7b09eb435c85fe18598"
+        }
+      ],
+      "command_keys": [
+        "sqlite_portability",
+        "postgresql_runner"
+      ],
+      "command_results_sha256": "886800fadb5c5098c9f4617f9a1b850553ac3cd639590b51772f31e8a4a8322c",
+      "limitation": "Dual-database assertions run, but normalized typed values are not exposed to this collector.",
+      "matrix_id": "M3-C05",
+      "sha256": "70d55d8c36b2403606b6ea628673c22750a242033df042364db0c550ec107169",
+      "status": "partial"
+    },
+    {
+      "artifact": "top-n.json",
+      "artifact_files": [
+        {
+          "path": "top-n.json",
+          "sha256": "2db81452f8526172ea6750f9754a4f428110f00596e8ac4454784d516e80f0dd"
+        }
+      ],
+      "command_keys": [
+        "sqlite_portability",
+        "postgresql_runner"
+      ],
+      "command_results_sha256": "886800fadb5c5098c9f4617f9a1b850553ac3cd639590b51772f31e8a4a8322c",
+      "limitation": "Stable Top N is asserted, but ten raw ordered results are not exported.",
+      "matrix_id": "M3-C06",
+      "sha256": "7944682c9aac4777a47da44e7b13df91244c1a57ef50e9ea819ffd1bfbca147f",
+      "status": "partial"
+    },
+    {
+      "artifact": "db-sqlite-golden.json",
+      "artifact_files": [
+        {
+          "path": "db-sqlite-golden.json",
+          "sha256": "e2fde832c9a7003e821f89f14a768d174b7d6bc367d45009e948589e244dedae"
+        }
+      ],
+      "command_keys": [
+        "sqlite_portability"
+      ],
+      "command_results_sha256": "efe5ef961b884aeb196b6a9d8c6d96bb0ccfd91cf2998c2cc79937b2963da990",
+      "limitation": "SQLite tests pass without exporting the complete normalized golden result set.",
+      "matrix_id": "M3-DB01",
+      "sha256": "98a155da090228876e76b886bcb3e76e7f96bcdd94914833c1b264796b33bdd7",
+      "status": "partial"
+    },
+    {
+      "artifact": "db-postgresql-golden.json",
+      "artifact_files": [
+        {
+          "path": "db-postgresql-golden.json",
+          "sha256": "11823297a2f24940b7a7827a71e74f8338e7fb0639c3e9e5b9e6b4c07b849166"
+        }
+      ],
+      "command_keys": [
+        "postgresql_runner"
+      ],
+      "command_results_sha256": "2e78443c187a8d29d02f6248e5dcb1c3895829d492de15ca85e27ede670d42d3",
+      "limitation": "PostgreSQL tests pass without exporting the complete normalized golden result set.",
+      "matrix_id": "M3-DB02",
+      "sha256": "d325d156a87bad7a76ae72ef4c91e8d035d4144aa35522995bf8415bd5c80ecc",
+      "status": "partial"
+    },
+    {
+      "artifact": "db-parity.json",
+      "artifact_files": [
+        {
+          "path": "db-parity.json",
+          "sha256": "7574f8f57dd89cc77420fb6fcdd46c2c099374a30fccabeab9398a4547deff5f"
+        }
+      ],
+      "command_keys": [],
+      "command_results_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+      "limitation": "No existing harness exports both dialect results for field-by-field comparison.",
+      "matrix_id": "M3-DB03",
+      "sha256": "53e4dbb23011b17247f84b363acc1da9945a99a1efd089ec0ccd97d5988cd030",
+      "status": "missing"
+    },
+    {
+      "artifact": "migration-sqlite.log",
+      "artifact_files": [
+        {
+          "path": "migration-sqlite.log",
+          "sha256": "67050d5b90e6b8602a4249c6f7673157b3de260c17012aba4adf5210241431b4"
+        },
+        {
+          "path": "migration-postgresql.log",
+          "sha256": "e43bf645bf514d76619a81c7c4f0a6790ccf872e66f6c91c59b225adf7148ca4"
+        }
+      ],
+      "command_keys": [
+        "sqlite_migrations",
+        "postgresql_runner"
+      ],
+      "command_results_sha256": "1c8ffb7a3478608f37a77c403274159de5f36925130ec4b255969b483dc86d32",
+      "limitation": null,
+      "matrix_id": "M3-DB04",
+      "sha256": "390cacef71ea94a2dab8ac41512a3c6eeae41f1a4186ec125719dabcd14aa1f6",
+      "status": "pass"
+    },
+    {
+      "artifact": "permission-principals.json",
+      "artifact_files": [
+        {
+          "path": "permission-principals.json",
+          "sha256": "984a6d69113c27e4ec3514a3a8aca388d773d862eb08a0f74d3e22c4f15116f2"
+        }
+      ],
+      "command_keys": [
+        "sqlite_portability",
+        "sqlite_permissions",
+        "postgresql_runner"
+      ],
+      "command_results_sha256": "972b4cdc1e84512a7fdd9288d22b5384e3ecc62681f2e954a46970f11c72483a",
+      "limitation": "The current portability context lacks the full same-query editor principal matrix.",
+      "matrix_id": "M3-P01",
+      "sha256": "77ad680c73a6dd9ca085f5da24c59b905302c32c5242e75f7eaab01d2115f542",
+      "status": "partial"
+    },
+    {
+      "artifact": "permission-rls-preaggregate.json",
+      "artifact_files": [
+        {
+          "path": "permission-rls-preaggregate.json",
+          "sha256": "3d43d63914432d6371afdc18163f1ea6823b97bf8b3cd01c0abdb116c55301b5"
+        }
+      ],
+      "command_keys": [
+        "sqlite_portability",
+        "sqlite_permissions",
+        "postgresql_runner"
+      ],
+      "command_results_sha256": "972b4cdc1e84512a7fdd9288d22b5384e3ecc62681f2e954a46970f11c72483a",
+      "limitation": "RLS behavior is asserted, but intermediate cache and tooltip exclusion are not exported.",
+      "matrix_id": "M3-P02",
+      "sha256": "1cf75888c4d21728900c3575f5d8a850e9dd0762aa3d005261532d13360200bc",
+      "status": "partial"
+    },
+    {
+      "artifact": "permission-forged-filter.json",
+      "artifact_files": [
+        {
+          "path": "permission-forged-filter.json",
+          "sha256": "b953ab4900c3aa67876572118df4f655a94594b3448be87a4cdb55e5f252c633"
+        }
+      ],
+      "command_keys": [
+        "sqlite_portability",
+        "sqlite_permissions",
+        "postgresql_runner"
+      ],
+      "command_results_sha256": "972b4cdc1e84512a7fdd9288d22b5384e3ecc62681f2e954a46970f11c72483a",
+      "limitation": "Forged South is asserted; no structured proof of the unexpressible RLS-removal case exists.",
+      "matrix_id": "M3-P03",
+      "sha256": "32fe8acd5eaa9dd14e338e2fac6fb74b586e65d4cbf4c35380b67f96f3fe582a",
+      "status": "partial"
+    },
+    {
+      "artifact": "permission-cross-workspace.json",
+      "artifact_files": [
+        {
+          "path": "permission-cross-workspace.json",
+          "sha256": "fb5fff336c5ecc5a6a2688317d61f25ffdd919e8364221907bf3013b774fb1bb"
+        }
+      ],
+      "command_keys": [
+        "sqlite_portability",
+        "sqlite_permissions",
+        "postgresql_runner"
+      ],
+      "command_results_sha256": "972b4cdc1e84512a7fdd9288d22b5384e3ecc62681f2e954a46970f11c72483a",
+      "limitation": "Cross-workspace tests are distributed and do not export one resource-by-resource result.",
+      "matrix_id": "M3-P04",
+      "sha256": "3889fffe33819b028aa70c457550c2256b99ffbe972feef73bd39f05704eaafc",
+      "status": "partial"
+    },
+    {
+      "artifact": "permission-capabilities.json",
+      "artifact_files": [
+        {
+          "path": "permission-capabilities.json",
+          "sha256": "a40e822867621b63611e329a85c48c2f60a4292cfd352632f8ff3c48278934fe"
+        }
+      ],
+      "command_keys": [
+        "sqlite_permissions",
+        "postgresql_runner"
+      ],
+      "command_results_sha256": "3f98473811899eae202b10ae3c5097de2842fa86dabbfe4e1e84f8ad79f716f9",
+      "limitation": "403 behavior is asserted separately; atomic no-partial-write state is not exported.",
+      "matrix_id": "M3-P05",
+      "sha256": "e6bbb17673172600b70958511fc2562c8b3353aa17b9a784b4821dbefce3501a",
+      "status": "partial"
+    },
+    {
+      "artifact": "perf-page-browser.json",
+      "artifact_files": [
+        {
+          "path": "perf-page-browser.json",
+          "sha256": "895430f877fe3c15288f9227e5528fff9bd09f4a6e5f9bb1fc23cd836dfe37e7"
+        },
+        {
+          "path": "runtime/performance/perf-page-chrome.json",
+          "sha256": "fdc242729a6c993ac5432b1c0dbafb84ddfba2f97f1d4bdfa18015b2e9bb169b"
+        }
+      ],
+      "command_keys": [],
+      "command_results_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+      "limitation": null,
+      "matrix_id": "M3-PERF01",
+      "sha256": "f629aafddfcae6482cca80b627c33876b852e87b47b1b1f19abd9768dc7423cc",
+      "status": "pass"
+    },
+    {
+      "artifact": "perf-dashboard-cached-browser.json",
+      "artifact_files": [
+        {
+          "path": "perf-dashboard-cached-browser.json",
+          "sha256": "b3910f93a779a4b8db92d49c0e8e43fafc8230632179a51cb0056f29a218e4fd"
+        },
+        {
+          "path": "runtime/performance/perf-dashboard-cached-chrome.json",
+          "sha256": "06e4f0c43f436add754c54117b952d6311ba3f64d7c2ebabc1ab3d580597cfac"
+        }
+      ],
+      "command_keys": [],
+      "command_results_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+      "limitation": "Runtime evidence is incomplete; missing or partial checks: checks.sample_contract_complete, checks.server_result_cache_observed.",
+      "matrix_id": "M3-PERF02",
+      "sha256": "80c534029f4d1de9216c1d60e08c4e38261bc923fe57f3659ea25db0232e4419",
+      "status": "partial"
+    },
+    {
+      "artifact": "perf-query-dialects-100000-c1.json",
+      "artifact_files": [
+        {
+          "path": "perf-query-dialects-100000-c1.json",
+          "sha256": "582f0db932512320590aa3c881912bfa2822a480473fb6cf1101fb8ab2eaa272"
+        },
+        {
+          "path": "runtime/performance/perf-query-sqlite-100000-c1-final.json",
+          "sha256": "0b4763c95c0f5b82aea983c2f81e09936b02f71104de710291361a77739087ef"
+        },
+        {
+          "path": "runtime/performance/perf-query-postgresql-100000-c1-final.json",
+          "sha256": "4a3750a60c6235e065d47523553535084f2fe4e494fd3fc6fe92e587a32d2e0d"
+        }
+      ],
+      "command_keys": [],
+      "command_results_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+      "limitation": null,
+      "matrix_id": "M3-PERF03",
+      "sha256": "4adb8c4934f959a6aa80793eb3eaa5fb68305da8c2cd33bba8bdc433a22c8488",
+      "status": "pass"
+    },
+    {
+      "artifact": "perf-query-postgresql-100000-c20.json",
+      "artifact_files": [
+        {
+          "path": "perf-query-postgresql-100000-c20.json",
+          "sha256": "920d4eacb0f66e404d7ff12a584e128bbf073d73996171d901d822d44fbeebe3"
+        },
+        {
+          "path": "runtime/performance/perf-query-postgresql-100000-c20-final.json",
+          "sha256": "43d58596d9d5bb42f0208c947441c26d07da93305bd0b424e0ee122ca608fe30"
+        }
+      ],
+      "command_keys": [],
+      "command_results_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+      "limitation": null,
+      "matrix_id": "M3-PERF04",
+      "sha256": "8b640551aed7d6c9815ac6eff8c2e370cf05662c075e40492cffcec0984e3b70",
+      "status": "pass"
+    },
+    {
+      "artifact": "perf-timeout-recovery.json",
+      "artifact_files": [
+        {
+          "path": "perf-timeout-recovery.json",
+          "sha256": "053c7995ce2f08bfc5c399c92fecc597941551bc19b3f97cc324df2597ddc71a"
+        },
+        {
+          "path": "runtime/performance/perf-timeout-recovery.json",
+          "sha256": "7c0c82a9b5976ec61a7abd4dc750b2b3d2a10cf8026b8dc2dc7f17ec1e9f85ef"
+        }
+      ],
+      "command_keys": [],
+      "command_results_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+      "limitation": null,
+      "matrix_id": "M3-PERF05",
+      "sha256": "315c013078cf7d6b64fd1d29c841320bf547cb179148d6960b76281953cb58cb",
+      "status": "pass"
+    },
+    {
+      "artifact": "ui-core-chart-spike.json",
+      "artifact_files": [
+        {
+          "path": "ui-core-chart-spike.json",
+          "sha256": "4a4923a387143f626c48d02dbb84c8bd0b2be049d5c3c336daabf76fc9957d93"
+        },
+        {
+          "path": "runtime/browser/accessibility-matrix.json",
+          "sha256": "f55041c5a2ff62e2aa129ae15be51a5d722d3c758f9669c884e0fba2619f8999"
+        },
+        {
+          "path": "runtime/browser/browser-chrome-desktop-clean.png",
+          "sha256": "aed4cd9e6a8647eea08d3c6a175e532c38731d05a85bf30df38a747da05599cb"
+        },
+        {
+          "path": "runtime/browser/browser-chrome-desktop-conflict-confirm.png",
+          "sha256": "98fc53eb6f3e98417c733d5c567297b7ab16236a3f1c1b2ca4c6b8266e0c5e88"
+        },
+        {
+          "path": "runtime/browser/browser-chrome-desktop-conflict.png",
+          "sha256": "efd9950512e4b4b76393dd026f73440164bf987b380ea5197de67f7f93cd2cda"
+        },
+        {
+          "path": "runtime/browser/browser-chrome-desktop-failed.network",
+          "sha256": "6064f998e6ea0b8db7ff7269f25871768985da509e2b96777406462af5d156f7"
+        },
+        {
+          "path": "runtime/browser/browser-chrome-desktop-failed.trace",
+          "sha256": "ce1d14800058328c248b5198536ee751ffa7659856a56d0529e289efa6775920"
+        },
+        {
+          "path": "runtime/browser/browser-chrome-desktop.network",
+          "sha256": "b933af646d610c8b9041c70a5abd5b8ddcadb672c1fd2a940dd00d7f6f12e17a"
+        },
+        {
+          "path": "runtime/browser/browser-chrome-desktop.trace",
+          "sha256": "6b387a89691bb5d5ada337552d7dfbf84984c3b6fb1fdaaf1d08fe2305f4b0e2"
+        },
+        {
+          "path": "runtime/browser/browser-chrome-mobile-dpr2.network",
+          "sha256": "e4b65138dd021329bfab6a6bd06a8090716afdf53ec871d9df819cc94fb19734"
+        },
+        {
+          "path": "runtime/browser/browser-chrome-mobile-dpr2.png",
+          "sha256": "605e01af19f6529c4bc051a55baebb9417583b663a81c0c3bd7c1942c03fab3c"
+        },
+        {
+          "path": "runtime/browser/browser-chrome-mobile-dpr2.trace",
+          "sha256": "8a5af1f9500f6c783adb6dc122e78ed75b8ad280f79acb5293875d8002aa27ba"
+        },
+        {
+          "path": "runtime/browser/browser-edge-desktop-clean.png",
+          "sha256": "684e924427ec0e2d24f3ef916a57df431d09736aab67876868cd31f76c314513"
+        },
+        {
+          "path": "runtime/browser/browser-edge-desktop-conflict-confirm.png",
+          "sha256": "0dbd7c49e253335b61af5b27fa97ba7e3aa8840998b655e3c0ad049c340826a3"
+        },
+        {
+          "path": "runtime/browser/browser-edge-desktop-conflict.png",
+          "sha256": "11458e34427aeab9b9e2b93c0872e068b7f716f58689cace6d3abdee50e6f6be"
+        },
+        {
+          "path": "runtime/browser/browser-edge-desktop-fixture.png",
+          "sha256": "a428f59835730547f0e31e072c26993723127eedc14a8f035a90457160762613"
+        },
+        {
+          "path": "runtime/browser/browser-edge-desktop-lifecycle-reopened.png",
+          "sha256": "4516d0200167403e3b3b383ee3efa72b82c033ffd8bd1fd84c05d7facd966456"
+        },
+        {
+          "path": "runtime/browser/browser-edge-desktop-lifecycle-saved.png",
+          "sha256": "295e22d775202f7dc83e8118dc8ee5e3d3778c909ea1cd2ca595606427358883"
+        },
+        {
+          "path": "runtime/browser/browser-edge-desktop.network",
+          "sha256": "fbf8e6c5a32952d3102e91e99a9947e78200a09e3f6938716dbaa96a6b7a19d2"
+        },
+        {
+          "path": "runtime/browser/browser-edge-desktop.trace",
+          "sha256": "ed717a332b4ed23114ad7c71a989ec5917c66d2d2f1d5b7dfeef636b50cae06b"
+        },
+        {
+          "path": "runtime/browser/browser-edge-mobile-dpr1.network",
+          "sha256": "da2a97220623b6f8f17a52900f091e3440bcb5290f1e7dfffb4fc0689292ad2c"
+        },
+        {
+          "path": "runtime/browser/browser-edge-mobile-dpr1.png",
+          "sha256": "74819694915e756cd2f8666dc01168b392d384a434ada582e04ea6b74e597ea9"
+        },
+        {
+          "path": "runtime/browser/browser-edge-mobile-dpr1.trace",
+          "sha256": "fb49c06babcfd2d4c0561ac47e0e5860bdeab80dd8f6a11e21ce9533c56d3a21"
+        },
+        {
+          "path": "runtime/browser/browser-edge-mobile-dpr2.png",
+          "sha256": "605e01af19f6529c4bc051a55baebb9417583b663a81c0c3bd7c1942c03fab3c"
+        },
+        {
+          "path": "runtime/browser/browser-matrix.json",
+          "sha256": "2f4370e36ea2f4e9841db300e63e665801def2915e057958aa9f3114b3c63609"
+        },
+        {
+          "path": "runtime/browser/console-matrix.json",
+          "sha256": "0e4789a5283a74232ba15422142a94be36a97d951e2aa51e230b56bf4064ce30"
+        }
+      ],
+      "command_keys": [],
+      "command_results_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+      "limitation": "Runtime evidence is incomplete; missing or partial checks: checks.desktop_stress_profiles_complete, checks.chart_golden_complete, checks.fixed_dimensions_complete, checks.view_states_complete, checks.full_lifecycle_both_browsers.",
+      "matrix_id": "M3-UI01",
+      "sha256": "e2cf5a674517e392f04b90d8d840dd6681d64ea917698d12cdfb631643e50f18",
+      "status": "partial"
+    },
+    {
+      "artifact": "ui-desktop-layout.json",
+      "artifact_files": [
+        {
+          "path": "ui-desktop-layout.json",
+          "sha256": "c1dee945333dfae36788641954bddd56fdd527fd48be741a8baca545d12919aa"
+        },
+        {
+          "path": "runtime/browser/accessibility-matrix.json",
+          "sha256": "f55041c5a2ff62e2aa129ae15be51a5d722d3c758f9669c884e0fba2619f8999"
+        },
+        {
+          "path": "runtime/browser/browser-chrome-desktop-clean.png",
+          "sha256": "aed4cd9e6a8647eea08d3c6a175e532c38731d05a85bf30df38a747da05599cb"
+        },
+        {
+          "path": "runtime/browser/browser-chrome-desktop-conflict-confirm.png",
+          "sha256": "98fc53eb6f3e98417c733d5c567297b7ab16236a3f1c1b2ca4c6b8266e0c5e88"
+        },
+        {
+          "path": "runtime/browser/browser-chrome-desktop-conflict.png",
+          "sha256": "efd9950512e4b4b76393dd026f73440164bf987b380ea5197de67f7f93cd2cda"
+        },
+        {
+          "path": "runtime/browser/browser-chrome-desktop-failed.network",
+          "sha256": "6064f998e6ea0b8db7ff7269f25871768985da509e2b96777406462af5d156f7"
+        },
+        {
+          "path": "runtime/browser/browser-chrome-desktop-failed.trace",
+          "sha256": "ce1d14800058328c248b5198536ee751ffa7659856a56d0529e289efa6775920"
+        },
+        {
+          "path": "runtime/browser/browser-chrome-desktop.network",
+          "sha256": "b933af646d610c8b9041c70a5abd5b8ddcadb672c1fd2a940dd00d7f6f12e17a"
+        },
+        {
+          "path": "runtime/browser/browser-chrome-desktop.trace",
+          "sha256": "6b387a89691bb5d5ada337552d7dfbf84984c3b6fb1fdaaf1d08fe2305f4b0e2"
+        },
+        {
+          "path": "runtime/browser/browser-chrome-mobile-dpr2.network",
+          "sha256": "e4b65138dd021329bfab6a6bd06a8090716afdf53ec871d9df819cc94fb19734"
+        },
+        {
+          "path": "runtime/browser/browser-chrome-mobile-dpr2.png",
+          "sha256": "605e01af19f6529c4bc051a55baebb9417583b663a81c0c3bd7c1942c03fab3c"
+        },
+        {
+          "path": "runtime/browser/browser-chrome-mobile-dpr2.trace",
+          "sha256": "8a5af1f9500f6c783adb6dc122e78ed75b8ad280f79acb5293875d8002aa27ba"
+        },
+        {
+          "path": "runtime/browser/browser-edge-desktop-clean.png",
+          "sha256": "684e924427ec0e2d24f3ef916a57df431d09736aab67876868cd31f76c314513"
+        },
+        {
+          "path": "runtime/browser/browser-edge-desktop-conflict-confirm.png",
+          "sha256": "0dbd7c49e253335b61af5b27fa97ba7e3aa8840998b655e3c0ad049c340826a3"
+        },
+        {
+          "path": "runtime/browser/browser-edge-desktop-conflict.png",
+          "sha256": "11458e34427aeab9b9e2b93c0872e068b7f716f58689cace6d3abdee50e6f6be"
+        },
+        {
+          "path": "runtime/browser/browser-edge-desktop-fixture.png",
+          "sha256": "a428f59835730547f0e31e072c26993723127eedc14a8f035a90457160762613"
+        },
+        {
+          "path": "runtime/browser/browser-edge-desktop-lifecycle-reopened.png",
+          "sha256": "4516d0200167403e3b3b383ee3efa72b82c033ffd8bd1fd84c05d7facd966456"
+        },
+        {
+          "path": "runtime/browser/browser-edge-desktop-lifecycle-saved.png",
+          "sha256": "295e22d775202f7dc83e8118dc8ee5e3d3778c909ea1cd2ca595606427358883"
+        },
+        {
+          "path": "runtime/browser/browser-edge-desktop.network",
+          "sha256": "fbf8e6c5a32952d3102e91e99a9947e78200a09e3f6938716dbaa96a6b7a19d2"
+        },
+        {
+          "path": "runtime/browser/browser-edge-desktop.trace",
+          "sha256": "ed717a332b4ed23114ad7c71a989ec5917c66d2d2f1d5b7dfeef636b50cae06b"
+        },
+        {
+          "path": "runtime/browser/browser-edge-mobile-dpr1.network",
+          "sha256": "da2a97220623b6f8f17a52900f091e3440bcb5290f1e7dfffb4fc0689292ad2c"
+        },
+        {
+          "path": "runtime/browser/browser-edge-mobile-dpr1.png",
+          "sha256": "74819694915e756cd2f8666dc01168b392d384a434ada582e04ea6b74e597ea9"
+        },
+        {
+          "path": "runtime/browser/browser-edge-mobile-dpr1.trace",
+          "sha256": "fb49c06babcfd2d4c0561ac47e0e5860bdeab80dd8f6a11e21ce9533c56d3a21"
+        },
+        {
+          "path": "runtime/browser/browser-edge-mobile-dpr2.png",
+          "sha256": "605e01af19f6529c4bc051a55baebb9417583b663a81c0c3bd7c1942c03fab3c"
+        },
+        {
+          "path": "runtime/browser/browser-matrix.json",
+          "sha256": "2f4370e36ea2f4e9841db300e63e665801def2915e057958aa9f3114b3c63609"
+        },
+        {
+          "path": "runtime/browser/console-matrix.json",
+          "sha256": "0e4789a5283a74232ba15422142a94be36a97d951e2aa51e230b56bf4064ce30"
+        }
+      ],
+      "command_keys": [],
+      "command_results_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+      "limitation": "Runtime evidence is incomplete; missing or partial checks: checks.desktop_stress_profiles_complete, checks.chart_golden_complete, checks.fixed_dimensions_complete, checks.view_states_complete, checks.full_lifecycle_both_browsers.",
+      "matrix_id": "M3-UI02",
+      "sha256": "aa313ca4e7aebbf3ec89174f283b8b4727a255b454f8bc432b6de6cd936146a9",
+      "status": "partial"
+    },
+    {
+      "artifact": "ui-mobile-readonly.json",
+      "artifact_files": [
+        {
+          "path": "ui-mobile-readonly.json",
+          "sha256": "e6169b8cf0e97aa4cd9d8b7f42caa1a48890f40e9d7ab29dd60ea03ee108ed77"
+        },
+        {
+          "path": "runtime/browser/accessibility-matrix.json",
+          "sha256": "f55041c5a2ff62e2aa129ae15be51a5d722d3c758f9669c884e0fba2619f8999"
+        },
+        {
+          "path": "runtime/browser/browser-chrome-desktop-clean.png",
+          "sha256": "aed4cd9e6a8647eea08d3c6a175e532c38731d05a85bf30df38a747da05599cb"
+        },
+        {
+          "path": "runtime/browser/browser-chrome-desktop-conflict-confirm.png",
+          "sha256": "98fc53eb6f3e98417c733d5c567297b7ab16236a3f1c1b2ca4c6b8266e0c5e88"
+        },
+        {
+          "path": "runtime/browser/browser-chrome-desktop-conflict.png",
+          "sha256": "efd9950512e4b4b76393dd026f73440164bf987b380ea5197de67f7f93cd2cda"
+        },
+        {
+          "path": "runtime/browser/browser-chrome-desktop-failed.network",
+          "sha256": "6064f998e6ea0b8db7ff7269f25871768985da509e2b96777406462af5d156f7"
+        },
+        {
+          "path": "runtime/browser/browser-chrome-desktop-failed.trace",
+          "sha256": "ce1d14800058328c248b5198536ee751ffa7659856a56d0529e289efa6775920"
+        },
+        {
+          "path": "runtime/browser/browser-chrome-desktop.network",
+          "sha256": "b933af646d610c8b9041c70a5abd5b8ddcadb672c1fd2a940dd00d7f6f12e17a"
+        },
+        {
+          "path": "runtime/browser/browser-chrome-desktop.trace",
+          "sha256": "6b387a89691bb5d5ada337552d7dfbf84984c3b6fb1fdaaf1d08fe2305f4b0e2"
+        },
+        {
+          "path": "runtime/browser/browser-chrome-mobile-dpr2.network",
+          "sha256": "e4b65138dd021329bfab6a6bd06a8090716afdf53ec871d9df819cc94fb19734"
+        },
+        {
+          "path": "runtime/browser/browser-chrome-mobile-dpr2.png",
+          "sha256": "605e01af19f6529c4bc051a55baebb9417583b663a81c0c3bd7c1942c03fab3c"
+        },
+        {
+          "path": "runtime/browser/browser-chrome-mobile-dpr2.trace",
+          "sha256": "8a5af1f9500f6c783adb6dc122e78ed75b8ad280f79acb5293875d8002aa27ba"
+        },
+        {
+          "path": "runtime/browser/browser-edge-desktop-clean.png",
+          "sha256": "684e924427ec0e2d24f3ef916a57df431d09736aab67876868cd31f76c314513"
+        },
+        {
+          "path": "runtime/browser/browser-edge-desktop-conflict-confirm.png",
+          "sha256": "0dbd7c49e253335b61af5b27fa97ba7e3aa8840998b655e3c0ad049c340826a3"
+        },
+        {
+          "path": "runtime/browser/browser-edge-desktop-conflict.png",
+          "sha256": "11458e34427aeab9b9e2b93c0872e068b7f716f58689cace6d3abdee50e6f6be"
+        },
+        {
+          "path": "runtime/browser/browser-edge-desktop-fixture.png",
+          "sha256": "a428f59835730547f0e31e072c26993723127eedc14a8f035a90457160762613"
+        },
+        {
+          "path": "runtime/browser/browser-edge-desktop-lifecycle-reopened.png",
+          "sha256": "4516d0200167403e3b3b383ee3efa72b82c033ffd8bd1fd84c05d7facd966456"
+        },
+        {
+          "path": "runtime/browser/browser-edge-desktop-lifecycle-saved.png",
+          "sha256": "295e22d775202f7dc83e8118dc8ee5e3d3778c909ea1cd2ca595606427358883"
+        },
+        {
+          "path": "runtime/browser/browser-edge-desktop.network",
+          "sha256": "fbf8e6c5a32952d3102e91e99a9947e78200a09e3f6938716dbaa96a6b7a19d2"
+        },
+        {
+          "path": "runtime/browser/browser-edge-desktop.trace",
+          "sha256": "ed717a332b4ed23114ad7c71a989ec5917c66d2d2f1d5b7dfeef636b50cae06b"
+        },
+        {
+          "path": "runtime/browser/browser-edge-mobile-dpr1.network",
+          "sha256": "da2a97220623b6f8f17a52900f091e3440bcb5290f1e7dfffb4fc0689292ad2c"
+        },
+        {
+          "path": "runtime/browser/browser-edge-mobile-dpr1.png",
+          "sha256": "74819694915e756cd2f8666dc01168b392d384a434ada582e04ea6b74e597ea9"
+        },
+        {
+          "path": "runtime/browser/browser-edge-mobile-dpr1.trace",
+          "sha256": "fb49c06babcfd2d4c0561ac47e0e5860bdeab80dd8f6a11e21ce9533c56d3a21"
+        },
+        {
+          "path": "runtime/browser/browser-edge-mobile-dpr2.png",
+          "sha256": "605e01af19f6529c4bc051a55baebb9417583b663a81c0c3bd7c1942c03fab3c"
+        },
+        {
+          "path": "runtime/browser/browser-matrix.json",
+          "sha256": "2f4370e36ea2f4e9841db300e63e665801def2915e057958aa9f3114b3c63609"
+        },
+        {
+          "path": "runtime/browser/console-matrix.json",
+          "sha256": "0e4789a5283a74232ba15422142a94be36a97d951e2aa51e230b56bf4064ce30"
+        }
+      ],
+      "command_keys": [],
+      "command_results_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+      "limitation": null,
+      "matrix_id": "M3-UI03",
+      "sha256": "fdf4070fb28b70ccf1211c0cde783db1dc54ea8e5f035f07937d0a782f1b7042",
+      "status": "pass"
+    },
+    {
+      "artifact": "ui-core-chart-golden.json",
+      "artifact_files": [
+        {
+          "path": "ui-core-chart-golden.json",
+          "sha256": "3ddce78ecc5660bcb21fd7a0c473c91bc39b42ffd6af5ca1797e4be1b80d616a"
+        }
+      ],
+      "command_keys": [],
+      "command_results_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+      "limitation": "Structured runtime evidence was not provided for this acceptance item.",
+      "matrix_id": "M3-UI04",
+      "sha256": "85851c75eb79e126db4cf9ab9753d0855bad6f2bec8e333576c33310258e147a",
+      "status": "missing"
+    },
+    {
+      "artifact": "ui-fixed-dimensions.json",
+      "artifact_files": [
+        {
+          "path": "ui-fixed-dimensions.json",
+          "sha256": "3b233bc33502583bae113a3205551089059efc099902fe5d2a2ae0658881e49e"
+        }
+      ],
+      "command_keys": [],
+      "command_results_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+      "limitation": "Structured runtime evidence was not provided for this acceptance item.",
+      "matrix_id": "M3-UI05",
+      "sha256": "0924e78f1a9e968bf471b27b0e9b8607fb27990146462a0c0c9d323d19f7db4c",
+      "status": "missing"
+    },
+    {
+      "artifact": "ui-canvas-accessibility.json",
+      "artifact_files": [
+        {
+          "path": "ui-canvas-accessibility.json",
+          "sha256": "b4c3189951fb7d65fffec9367b229f0f15cf3dd124746d5289c8c5d010afdc67"
+        },
+        {
+          "path": "runtime/browser/accessibility-matrix.json",
+          "sha256": "f55041c5a2ff62e2aa129ae15be51a5d722d3c758f9669c884e0fba2619f8999"
+        },
+        {
+          "path": "runtime/browser/browser-chrome-desktop-clean.png",
+          "sha256": "aed4cd9e6a8647eea08d3c6a175e532c38731d05a85bf30df38a747da05599cb"
+        },
+        {
+          "path": "runtime/browser/browser-chrome-desktop-conflict-confirm.png",
+          "sha256": "98fc53eb6f3e98417c733d5c567297b7ab16236a3f1c1b2ca4c6b8266e0c5e88"
+        },
+        {
+          "path": "runtime/browser/browser-chrome-desktop-conflict.png",
+          "sha256": "efd9950512e4b4b76393dd026f73440164bf987b380ea5197de67f7f93cd2cda"
+        },
+        {
+          "path": "runtime/browser/browser-chrome-desktop-failed.network",
+          "sha256": "6064f998e6ea0b8db7ff7269f25871768985da509e2b96777406462af5d156f7"
+        },
+        {
+          "path": "runtime/browser/browser-chrome-desktop-failed.trace",
+          "sha256": "ce1d14800058328c248b5198536ee751ffa7659856a56d0529e289efa6775920"
+        },
+        {
+          "path": "runtime/browser/browser-chrome-desktop.network",
+          "sha256": "b933af646d610c8b9041c70a5abd5b8ddcadb672c1fd2a940dd00d7f6f12e17a"
+        },
+        {
+          "path": "runtime/browser/browser-chrome-desktop.trace",
+          "sha256": "6b387a89691bb5d5ada337552d7dfbf84984c3b6fb1fdaaf1d08fe2305f4b0e2"
+        },
+        {
+          "path": "runtime/browser/browser-chrome-mobile-dpr2.network",
+          "sha256": "e4b65138dd021329bfab6a6bd06a8090716afdf53ec871d9df819cc94fb19734"
+        },
+        {
+          "path": "runtime/browser/browser-chrome-mobile-dpr2.png",
+          "sha256": "605e01af19f6529c4bc051a55baebb9417583b663a81c0c3bd7c1942c03fab3c"
+        },
+        {
+          "path": "runtime/browser/browser-chrome-mobile-dpr2.trace",
+          "sha256": "8a5af1f9500f6c783adb6dc122e78ed75b8ad280f79acb5293875d8002aa27ba"
+        },
+        {
+          "path": "runtime/browser/browser-edge-desktop-clean.png",
+          "sha256": "684e924427ec0e2d24f3ef916a57df431d09736aab67876868cd31f76c314513"
+        },
+        {
+          "path": "runtime/browser/browser-edge-desktop-conflict-confirm.png",
+          "sha256": "0dbd7c49e253335b61af5b27fa97ba7e3aa8840998b655e3c0ad049c340826a3"
+        },
+        {
+          "path": "runtime/browser/browser-edge-desktop-conflict.png",
+          "sha256": "11458e34427aeab9b9e2b93c0872e068b7f716f58689cace6d3abdee50e6f6be"
+        },
+        {
+          "path": "runtime/browser/browser-edge-desktop-fixture.png",
+          "sha256": "a428f59835730547f0e31e072c26993723127eedc14a8f035a90457160762613"
+        },
+        {
+          "path": "runtime/browser/browser-edge-desktop-lifecycle-reopened.png",
+          "sha256": "4516d0200167403e3b3b383ee3efa72b82c033ffd8bd1fd84c05d7facd966456"
+        },
+        {
+          "path": "runtime/browser/browser-edge-desktop-lifecycle-saved.png",
+          "sha256": "295e22d775202f7dc83e8118dc8ee5e3d3778c909ea1cd2ca595606427358883"
+        },
+        {
+          "path": "runtime/browser/browser-edge-desktop.network",
+          "sha256": "fbf8e6c5a32952d3102e91e99a9947e78200a09e3f6938716dbaa96a6b7a19d2"
+        },
+        {
+          "path": "runtime/browser/browser-edge-desktop.trace",
+          "sha256": "ed717a332b4ed23114ad7c71a989ec5917c66d2d2f1d5b7dfeef636b50cae06b"
+        },
+        {
+          "path": "runtime/browser/browser-edge-mobile-dpr1.network",
+          "sha256": "da2a97220623b6f8f17a52900f091e3440bcb5290f1e7dfffb4fc0689292ad2c"
+        },
+        {
+          "path": "runtime/browser/browser-edge-mobile-dpr1.png",
+          "sha256": "74819694915e756cd2f8666dc01168b392d384a434ada582e04ea6b74e597ea9"
+        },
+        {
+          "path": "runtime/browser/browser-edge-mobile-dpr1.trace",
+          "sha256": "fb49c06babcfd2d4c0561ac47e0e5860bdeab80dd8f6a11e21ce9533c56d3a21"
+        },
+        {
+          "path": "runtime/browser/browser-edge-mobile-dpr2.png",
+          "sha256": "605e01af19f6529c4bc051a55baebb9417583b663a81c0c3bd7c1942c03fab3c"
+        },
+        {
+          "path": "runtime/browser/browser-matrix.json",
+          "sha256": "2f4370e36ea2f4e9841db300e63e665801def2915e057958aa9f3114b3c63609"
+        },
+        {
+          "path": "runtime/browser/console-matrix.json",
+          "sha256": "0e4789a5283a74232ba15422142a94be36a97d951e2aa51e230b56bf4064ce30"
+        }
+      ],
+      "command_keys": [],
+      "command_results_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+      "limitation": null,
+      "matrix_id": "M3-UI06",
+      "sha256": "01f26bb4eb9391404ab04cac4f776a4370e369cb65e685f276161ec5914cbb64",
+      "status": "pass"
+    },
+    {
+      "artifact": "ui-export-2x.json",
+      "artifact_files": [
+        {
+          "path": "ui-export-2x.json",
+          "sha256": "5a22e988ff06183605829150b8bb63715830152aa52271b33bed8bf1d2ae8e95"
+        },
+        {
+          "path": "runtime/browser/accessibility-matrix.json",
+          "sha256": "f55041c5a2ff62e2aa129ae15be51a5d722d3c758f9669c884e0fba2619f8999"
+        },
+        {
+          "path": "runtime/browser/browser-chrome-desktop-clean.png",
+          "sha256": "aed4cd9e6a8647eea08d3c6a175e532c38731d05a85bf30df38a747da05599cb"
+        },
+        {
+          "path": "runtime/browser/browser-chrome-desktop-conflict-confirm.png",
+          "sha256": "98fc53eb6f3e98417c733d5c567297b7ab16236a3f1c1b2ca4c6b8266e0c5e88"
+        },
+        {
+          "path": "runtime/browser/browser-chrome-desktop-conflict.png",
+          "sha256": "efd9950512e4b4b76393dd026f73440164bf987b380ea5197de67f7f93cd2cda"
+        },
+        {
+          "path": "runtime/browser/browser-chrome-desktop-failed.network",
+          "sha256": "6064f998e6ea0b8db7ff7269f25871768985da509e2b96777406462af5d156f7"
+        },
+        {
+          "path": "runtime/browser/browser-chrome-desktop-failed.trace",
+          "sha256": "ce1d14800058328c248b5198536ee751ffa7659856a56d0529e289efa6775920"
+        },
+        {
+          "path": "runtime/browser/browser-chrome-desktop.network",
+          "sha256": "b933af646d610c8b9041c70a5abd5b8ddcadb672c1fd2a940dd00d7f6f12e17a"
+        },
+        {
+          "path": "runtime/browser/browser-chrome-desktop.trace",
+          "sha256": "6b387a89691bb5d5ada337552d7dfbf84984c3b6fb1fdaaf1d08fe2305f4b0e2"
+        },
+        {
+          "path": "runtime/browser/browser-chrome-mobile-dpr2.network",
+          "sha256": "e4b65138dd021329bfab6a6bd06a8090716afdf53ec871d9df819cc94fb19734"
+        },
+        {
+          "path": "runtime/browser/browser-chrome-mobile-dpr2.png",
+          "sha256": "605e01af19f6529c4bc051a55baebb9417583b663a81c0c3bd7c1942c03fab3c"
+        },
+        {
+          "path": "runtime/browser/browser-chrome-mobile-dpr2.trace",
+          "sha256": "8a5af1f9500f6c783adb6dc122e78ed75b8ad280f79acb5293875d8002aa27ba"
+        },
+        {
+          "path": "runtime/browser/browser-edge-desktop-clean.png",
+          "sha256": "684e924427ec0e2d24f3ef916a57df431d09736aab67876868cd31f76c314513"
+        },
+        {
+          "path": "runtime/browser/browser-edge-desktop-conflict-confirm.png",
+          "sha256": "0dbd7c49e253335b61af5b27fa97ba7e3aa8840998b655e3c0ad049c340826a3"
+        },
+        {
+          "path": "runtime/browser/browser-edge-desktop-conflict.png",
+          "sha256": "11458e34427aeab9b9e2b93c0872e068b7f716f58689cace6d3abdee50e6f6be"
+        },
+        {
+          "path": "runtime/browser/browser-edge-desktop-fixture.png",
+          "sha256": "a428f59835730547f0e31e072c26993723127eedc14a8f035a90457160762613"
+        },
+        {
+          "path": "runtime/browser/browser-edge-desktop-lifecycle-reopened.png",
+          "sha256": "4516d0200167403e3b3b383ee3efa72b82c033ffd8bd1fd84c05d7facd966456"
+        },
+        {
+          "path": "runtime/browser/browser-edge-desktop-lifecycle-saved.png",
+          "sha256": "295e22d775202f7dc83e8118dc8ee5e3d3778c909ea1cd2ca595606427358883"
+        },
+        {
+          "path": "runtime/browser/browser-edge-desktop.network",
+          "sha256": "fbf8e6c5a32952d3102e91e99a9947e78200a09e3f6938716dbaa96a6b7a19d2"
+        },
+        {
+          "path": "runtime/browser/browser-edge-desktop.trace",
+          "sha256": "ed717a332b4ed23114ad7c71a989ec5917c66d2d2f1d5b7dfeef636b50cae06b"
+        },
+        {
+          "path": "runtime/browser/browser-edge-mobile-dpr1.network",
+          "sha256": "da2a97220623b6f8f17a52900f091e3440bcb5290f1e7dfffb4fc0689292ad2c"
+        },
+        {
+          "path": "runtime/browser/browser-edge-mobile-dpr1.png",
+          "sha256": "74819694915e756cd2f8666dc01168b392d384a434ada582e04ea6b74e597ea9"
+        },
+        {
+          "path": "runtime/browser/browser-edge-mobile-dpr1.trace",
+          "sha256": "fb49c06babcfd2d4c0561ac47e0e5860bdeab80dd8f6a11e21ce9533c56d3a21"
+        },
+        {
+          "path": "runtime/browser/browser-edge-mobile-dpr2.png",
+          "sha256": "605e01af19f6529c4bc051a55baebb9417583b663a81c0c3bd7c1942c03fab3c"
+        },
+        {
+          "path": "runtime/browser/browser-matrix.json",
+          "sha256": "2f4370e36ea2f4e9841db300e63e665801def2915e057958aa9f3114b3c63609"
+        },
+        {
+          "path": "runtime/browser/console-matrix.json",
+          "sha256": "0e4789a5283a74232ba15422142a94be36a97d951e2aa51e230b56bf4064ce30"
+        }
+      ],
+      "command_keys": [],
+      "command_results_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+      "limitation": null,
+      "matrix_id": "M3-UI07",
+      "sha256": "e1818d51f3073c190ad2d9e575e5579c6f676e2cbd5948f3d336383cdf19985a",
+      "status": "pass"
+    },
+    {
+      "artifact": "ui-loading-success-empty.json",
+      "artifact_files": [
+        {
+          "path": "ui-loading-success-empty.json",
+          "sha256": "9e73ff6c1622c04a00b31d4c5b85b992562f170051da6c876bd6a5957500e5e4"
+        }
+      ],
+      "command_keys": [],
+      "command_results_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+      "limitation": "Structured runtime evidence was not provided for this acceptance item.",
+      "matrix_id": "M3-UI08",
+      "sha256": "7879e66a11714a8aa2ef90d2624bf2e04d56289f36c72cec3e558bd8b7085bae",
+      "status": "missing"
+    },
+    {
+      "artifact": "ui-error-forbidden-timeout-truncated.json",
+      "artifact_files": [
+        {
+          "path": "ui-error-forbidden-timeout-truncated.json",
+          "sha256": "3d7025d8fe6ffd77ee985677e7ff868072852e72659786c075087c0181c19d92"
+        },
+        {
+          "path": "runtime/browser/accessibility-matrix.json",
+          "sha256": "f55041c5a2ff62e2aa129ae15be51a5d722d3c758f9669c884e0fba2619f8999"
+        },
+        {
+          "path": "runtime/browser/browser-chrome-desktop-clean.png",
+          "sha256": "aed4cd9e6a8647eea08d3c6a175e532c38731d05a85bf30df38a747da05599cb"
+        },
+        {
+          "path": "runtime/browser/browser-chrome-desktop-conflict-confirm.png",
+          "sha256": "98fc53eb6f3e98417c733d5c567297b7ab16236a3f1c1b2ca4c6b8266e0c5e88"
+        },
+        {
+          "path": "runtime/browser/browser-chrome-desktop-conflict.png",
+          "sha256": "efd9950512e4b4b76393dd026f73440164bf987b380ea5197de67f7f93cd2cda"
+        },
+        {
+          "path": "runtime/browser/browser-chrome-desktop-failed.network",
+          "sha256": "6064f998e6ea0b8db7ff7269f25871768985da509e2b96777406462af5d156f7"
+        },
+        {
+          "path": "runtime/browser/browser-chrome-desktop-failed.trace",
+          "sha256": "ce1d14800058328c248b5198536ee751ffa7659856a56d0529e289efa6775920"
+        },
+        {
+          "path": "runtime/browser/browser-chrome-desktop.network",
+          "sha256": "b933af646d610c8b9041c70a5abd5b8ddcadb672c1fd2a940dd00d7f6f12e17a"
+        },
+        {
+          "path": "runtime/browser/browser-chrome-desktop.trace",
+          "sha256": "6b387a89691bb5d5ada337552d7dfbf84984c3b6fb1fdaaf1d08fe2305f4b0e2"
+        },
+        {
+          "path": "runtime/browser/browser-chrome-mobile-dpr2.network",
+          "sha256": "e4b65138dd021329bfab6a6bd06a8090716afdf53ec871d9df819cc94fb19734"
+        },
+        {
+          "path": "runtime/browser/browser-chrome-mobile-dpr2.png",
+          "sha256": "605e01af19f6529c4bc051a55baebb9417583b663a81c0c3bd7c1942c03fab3c"
+        },
+        {
+          "path": "runtime/browser/browser-chrome-mobile-dpr2.trace",
+          "sha256": "8a5af1f9500f6c783adb6dc122e78ed75b8ad280f79acb5293875d8002aa27ba"
+        },
+        {
+          "path": "runtime/browser/browser-edge-desktop-clean.png",
+          "sha256": "684e924427ec0e2d24f3ef916a57df431d09736aab67876868cd31f76c314513"
+        },
+        {
+          "path": "runtime/browser/browser-edge-desktop-conflict-confirm.png",
+          "sha256": "0dbd7c49e253335b61af5b27fa97ba7e3aa8840998b655e3c0ad049c340826a3"
+        },
+        {
+          "path": "runtime/browser/browser-edge-desktop-conflict.png",
+          "sha256": "11458e34427aeab9b9e2b93c0872e068b7f716f58689cace6d3abdee50e6f6be"
+        },
+        {
+          "path": "runtime/browser/browser-edge-desktop-fixture.png",
+          "sha256": "a428f59835730547f0e31e072c26993723127eedc14a8f035a90457160762613"
+        },
+        {
+          "path": "runtime/browser/browser-edge-desktop-lifecycle-reopened.png",
+          "sha256": "4516d0200167403e3b3b383ee3efa72b82c033ffd8bd1fd84c05d7facd966456"
+        },
+        {
+          "path": "runtime/browser/browser-edge-desktop-lifecycle-saved.png",
+          "sha256": "295e22d775202f7dc83e8118dc8ee5e3d3778c909ea1cd2ca595606427358883"
+        },
+        {
+          "path": "runtime/browser/browser-edge-desktop.network",
+          "sha256": "fbf8e6c5a32952d3102e91e99a9947e78200a09e3f6938716dbaa96a6b7a19d2"
+        },
+        {
+          "path": "runtime/browser/browser-edge-desktop.trace",
+          "sha256": "ed717a332b4ed23114ad7c71a989ec5917c66d2d2f1d5b7dfeef636b50cae06b"
+        },
+        {
+          "path": "runtime/browser/browser-edge-mobile-dpr1.network",
+          "sha256": "da2a97220623b6f8f17a52900f091e3440bcb5290f1e7dfffb4fc0689292ad2c"
+        },
+        {
+          "path": "runtime/browser/browser-edge-mobile-dpr1.png",
+          "sha256": "74819694915e756cd2f8666dc01168b392d384a434ada582e04ea6b74e597ea9"
+        },
+        {
+          "path": "runtime/browser/browser-edge-mobile-dpr1.trace",
+          "sha256": "fb49c06babcfd2d4c0561ac47e0e5860bdeab80dd8f6a11e21ce9533c56d3a21"
+        },
+        {
+          "path": "runtime/browser/browser-edge-mobile-dpr2.png",
+          "sha256": "605e01af19f6529c4bc051a55baebb9417583b663a81c0c3bd7c1942c03fab3c"
+        },
+        {
+          "path": "runtime/browser/browser-matrix.json",
+          "sha256": "2f4370e36ea2f4e9841db300e63e665801def2915e057958aa9f3114b3c63609"
+        },
+        {
+          "path": "runtime/browser/console-matrix.json",
+          "sha256": "0e4789a5283a74232ba15422142a94be36a97d951e2aa51e230b56bf4064ce30"
+        }
+      ],
+      "command_keys": [],
+      "command_results_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+      "limitation": "Runtime evidence is incomplete; missing or partial checks: checks.desktop_stress_profiles_complete, checks.chart_golden_complete, checks.fixed_dimensions_complete, checks.view_states_complete, checks.full_lifecycle_both_browsers.",
+      "matrix_id": "M3-UI09",
+      "sha256": "11953306057a9f03204e4df379fa1f93ef2e5db30059d4c32b0f923854fd2f96",
+      "status": "partial"
+    },
+    {
+      "artifact": "ui-error-recovery.json",
+      "artifact_files": [
+        {
+          "path": "ui-error-recovery.json",
+          "sha256": "36ebe0d08e43c8022bdec9637246905c80d434c27d079570d5f43a87e97900f5"
+        },
+        {
+          "path": "runtime/browser/accessibility-matrix.json",
+          "sha256": "f55041c5a2ff62e2aa129ae15be51a5d722d3c758f9669c884e0fba2619f8999"
+        },
+        {
+          "path": "runtime/browser/browser-chrome-desktop-clean.png",
+          "sha256": "aed4cd9e6a8647eea08d3c6a175e532c38731d05a85bf30df38a747da05599cb"
+        },
+        {
+          "path": "runtime/browser/browser-chrome-desktop-conflict-confirm.png",
+          "sha256": "98fc53eb6f3e98417c733d5c567297b7ab16236a3f1c1b2ca4c6b8266e0c5e88"
+        },
+        {
+          "path": "runtime/browser/browser-chrome-desktop-conflict.png",
+          "sha256": "efd9950512e4b4b76393dd026f73440164bf987b380ea5197de67f7f93cd2cda"
+        },
+        {
+          "path": "runtime/browser/browser-chrome-desktop-failed.network",
+          "sha256": "6064f998e6ea0b8db7ff7269f25871768985da509e2b96777406462af5d156f7"
+        },
+        {
+          "path": "runtime/browser/browser-chrome-desktop-failed.trace",
+          "sha256": "ce1d14800058328c248b5198536ee751ffa7659856a56d0529e289efa6775920"
+        },
+        {
+          "path": "runtime/browser/browser-chrome-desktop.network",
+          "sha256": "b933af646d610c8b9041c70a5abd5b8ddcadb672c1fd2a940dd00d7f6f12e17a"
+        },
+        {
+          "path": "runtime/browser/browser-chrome-desktop.trace",
+          "sha256": "6b387a89691bb5d5ada337552d7dfbf84984c3b6fb1fdaaf1d08fe2305f4b0e2"
+        },
+        {
+          "path": "runtime/browser/browser-chrome-mobile-dpr2.network",
+          "sha256": "e4b65138dd021329bfab6a6bd06a8090716afdf53ec871d9df819cc94fb19734"
+        },
+        {
+          "path": "runtime/browser/browser-chrome-mobile-dpr2.png",
+          "sha256": "605e01af19f6529c4bc051a55baebb9417583b663a81c0c3bd7c1942c03fab3c"
+        },
+        {
+          "path": "runtime/browser/browser-chrome-mobile-dpr2.trace",
+          "sha256": "8a5af1f9500f6c783adb6dc122e78ed75b8ad280f79acb5293875d8002aa27ba"
+        },
+        {
+          "path": "runtime/browser/browser-edge-desktop-clean.png",
+          "sha256": "684e924427ec0e2d24f3ef916a57df431d09736aab67876868cd31f76c314513"
+        },
+        {
+          "path": "runtime/browser/browser-edge-desktop-conflict-confirm.png",
+          "sha256": "0dbd7c49e253335b61af5b27fa97ba7e3aa8840998b655e3c0ad049c340826a3"
+        },
+        {
+          "path": "runtime/browser/browser-edge-desktop-conflict.png",
+          "sha256": "11458e34427aeab9b9e2b93c0872e068b7f716f58689cace6d3abdee50e6f6be"
+        },
+        {
+          "path": "runtime/browser/browser-edge-desktop-fixture.png",
+          "sha256": "a428f59835730547f0e31e072c26993723127eedc14a8f035a90457160762613"
+        },
+        {
+          "path": "runtime/browser/browser-edge-desktop-lifecycle-reopened.png",
+          "sha256": "4516d0200167403e3b3b383ee3efa72b82c033ffd8bd1fd84c05d7facd966456"
+        },
+        {
+          "path": "runtime/browser/browser-edge-desktop-lifecycle-saved.png",
+          "sha256": "295e22d775202f7dc83e8118dc8ee5e3d3778c909ea1cd2ca595606427358883"
+        },
+        {
+          "path": "runtime/browser/browser-edge-desktop.network",
+          "sha256": "fbf8e6c5a32952d3102e91e99a9947e78200a09e3f6938716dbaa96a6b7a19d2"
+        },
+        {
+          "path": "runtime/browser/browser-edge-desktop.trace",
+          "sha256": "ed717a332b4ed23114ad7c71a989ec5917c66d2d2f1d5b7dfeef636b50cae06b"
+        },
+        {
+          "path": "runtime/browser/browser-edge-mobile-dpr1.network",
+          "sha256": "da2a97220623b6f8f17a52900f091e3440bcb5290f1e7dfffb4fc0689292ad2c"
+        },
+        {
+          "path": "runtime/browser/browser-edge-mobile-dpr1.png",
+          "sha256": "74819694915e756cd2f8666dc01168b392d384a434ada582e04ea6b74e597ea9"
+        },
+        {
+          "path": "runtime/browser/browser-edge-mobile-dpr1.trace",
+          "sha256": "fb49c06babcfd2d4c0561ac47e0e5860bdeab80dd8f6a11e21ce9533c56d3a21"
+        },
+        {
+          "path": "runtime/browser/browser-edge-mobile-dpr2.png",
+          "sha256": "605e01af19f6529c4bc051a55baebb9417583b663a81c0c3bd7c1942c03fab3c"
+        },
+        {
+          "path": "runtime/browser/browser-matrix.json",
+          "sha256": "2f4370e36ea2f4e9841db300e63e665801def2915e057958aa9f3114b3c63609"
+        },
+        {
+          "path": "runtime/browser/console-matrix.json",
+          "sha256": "0e4789a5283a74232ba15422142a94be36a97d951e2aa51e230b56bf4064ce30"
+        }
+      ],
+      "command_keys": [],
+      "command_results_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+      "limitation": "Runtime evidence is incomplete; missing or partial checks: checks.desktop_stress_profiles_complete, checks.chart_golden_complete, checks.fixed_dimensions_complete, checks.view_states_complete, checks.full_lifecycle_both_browsers.",
+      "matrix_id": "M3-UI10",
+      "sha256": "2d964804c021a3c93350a2f814b8a0a88965aa1f90393075c283238515b58381",
+      "status": "partial"
+    },
+    {
+      "artifact": "ui-full-browser-workflow.json",
+      "artifact_files": [
+        {
+          "path": "ui-full-browser-workflow.json",
+          "sha256": "ee4ef09c424cccd33363e85e4e658739bdecc283ad094997bce20114a99c86fa"
+        },
+        {
+          "path": "runtime/browser/accessibility-matrix.json",
+          "sha256": "f55041c5a2ff62e2aa129ae15be51a5d722d3c758f9669c884e0fba2619f8999"
+        },
+        {
+          "path": "runtime/browser/browser-chrome-desktop-clean.png",
+          "sha256": "aed4cd9e6a8647eea08d3c6a175e532c38731d05a85bf30df38a747da05599cb"
+        },
+        {
+          "path": "runtime/browser/browser-chrome-desktop-conflict-confirm.png",
+          "sha256": "98fc53eb6f3e98417c733d5c567297b7ab16236a3f1c1b2ca4c6b8266e0c5e88"
+        },
+        {
+          "path": "runtime/browser/browser-chrome-desktop-conflict.png",
+          "sha256": "efd9950512e4b4b76393dd026f73440164bf987b380ea5197de67f7f93cd2cda"
+        },
+        {
+          "path": "runtime/browser/browser-chrome-desktop-failed.network",
+          "sha256": "6064f998e6ea0b8db7ff7269f25871768985da509e2b96777406462af5d156f7"
+        },
+        {
+          "path": "runtime/browser/browser-chrome-desktop-failed.trace",
+          "sha256": "ce1d14800058328c248b5198536ee751ffa7659856a56d0529e289efa6775920"
+        },
+        {
+          "path": "runtime/browser/browser-chrome-desktop.network",
+          "sha256": "b933af646d610c8b9041c70a5abd5b8ddcadb672c1fd2a940dd00d7f6f12e17a"
+        },
+        {
+          "path": "runtime/browser/browser-chrome-desktop.trace",
+          "sha256": "6b387a89691bb5d5ada337552d7dfbf84984c3b6fb1fdaaf1d08fe2305f4b0e2"
+        },
+        {
+          "path": "runtime/browser/browser-chrome-mobile-dpr2.network",
+          "sha256": "e4b65138dd021329bfab6a6bd06a8090716afdf53ec871d9df819cc94fb19734"
+        },
+        {
+          "path": "runtime/browser/browser-chrome-mobile-dpr2.png",
+          "sha256": "605e01af19f6529c4bc051a55baebb9417583b663a81c0c3bd7c1942c03fab3c"
+        },
+        {
+          "path": "runtime/browser/browser-chrome-mobile-dpr2.trace",
+          "sha256": "8a5af1f9500f6c783adb6dc122e78ed75b8ad280f79acb5293875d8002aa27ba"
+        },
+        {
+          "path": "runtime/browser/browser-edge-desktop-clean.png",
+          "sha256": "684e924427ec0e2d24f3ef916a57df431d09736aab67876868cd31f76c314513"
+        },
+        {
+          "path": "runtime/browser/browser-edge-desktop-conflict-confirm.png",
+          "sha256": "0dbd7c49e253335b61af5b27fa97ba7e3aa8840998b655e3c0ad049c340826a3"
+        },
+        {
+          "path": "runtime/browser/browser-edge-desktop-conflict.png",
+          "sha256": "11458e34427aeab9b9e2b93c0872e068b7f716f58689cace6d3abdee50e6f6be"
+        },
+        {
+          "path": "runtime/browser/browser-edge-desktop-fixture.png",
+          "sha256": "a428f59835730547f0e31e072c26993723127eedc14a8f035a90457160762613"
+        },
+        {
+          "path": "runtime/browser/browser-edge-desktop-lifecycle-reopened.png",
+          "sha256": "4516d0200167403e3b3b383ee3efa72b82c033ffd8bd1fd84c05d7facd966456"
+        },
+        {
+          "path": "runtime/browser/browser-edge-desktop-lifecycle-saved.png",
+          "sha256": "295e22d775202f7dc83e8118dc8ee5e3d3778c909ea1cd2ca595606427358883"
+        },
+        {
+          "path": "runtime/browser/browser-edge-desktop.network",
+          "sha256": "fbf8e6c5a32952d3102e91e99a9947e78200a09e3f6938716dbaa96a6b7a19d2"
+        },
+        {
+          "path": "runtime/browser/browser-edge-desktop.trace",
+          "sha256": "ed717a332b4ed23114ad7c71a989ec5917c66d2d2f1d5b7dfeef636b50cae06b"
+        },
+        {
+          "path": "runtime/browser/browser-edge-mobile-dpr1.network",
+          "sha256": "da2a97220623b6f8f17a52900f091e3440bcb5290f1e7dfffb4fc0689292ad2c"
+        },
+        {
+          "path": "runtime/browser/browser-edge-mobile-dpr1.png",
+          "sha256": "74819694915e756cd2f8666dc01168b392d384a434ada582e04ea6b74e597ea9"
+        },
+        {
+          "path": "runtime/browser/browser-edge-mobile-dpr1.trace",
+          "sha256": "fb49c06babcfd2d4c0561ac47e0e5860bdeab80dd8f6a11e21ce9533c56d3a21"
+        },
+        {
+          "path": "runtime/browser/browser-edge-mobile-dpr2.png",
+          "sha256": "605e01af19f6529c4bc051a55baebb9417583b663a81c0c3bd7c1942c03fab3c"
+        },
+        {
+          "path": "runtime/browser/browser-matrix.json",
+          "sha256": "2f4370e36ea2f4e9841db300e63e665801def2915e057958aa9f3114b3c63609"
+        },
+        {
+          "path": "runtime/browser/console-matrix.json",
+          "sha256": "0e4789a5283a74232ba15422142a94be36a97d951e2aa51e230b56bf4064ce30"
+        }
+      ],
+      "command_keys": [],
+      "command_results_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+      "limitation": "Runtime evidence is incomplete; missing or partial checks: checks.desktop_stress_profiles_complete, checks.chart_golden_complete, checks.fixed_dimensions_complete, checks.view_states_complete, checks.full_lifecycle_both_browsers.",
+      "matrix_id": "M3-UI11",
+      "sha256": "38e5b01b61b7422bfcb4572492beea71e4204edb4b2ecf9de8e169d1bfd60579",
+      "status": "partial"
+    },
+    {
+      "artifact": "licenses-m3.csv",
+      "artifact_files": [
+        {
+          "path": "licenses-m3.csv",
+          "sha256": "c6705f35b0bf03202df9881f5ae943cf26e9c5b17157e9de1e1da20eb13c8888"
+        }
+      ],
+      "command_keys": [],
+      "command_results_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+      "limitation": null,
+      "matrix_id": "M3-D01",
+      "sha256": "1d062d7bbcb3b70bc45bcead65708f6905d2b963d2784a8417f8d7088a55e395",
+      "status": "pass"
+    },
+    {
+      "artifact": "bundle-m3.json",
+      "artifact_files": [
+        {
+          "path": "bundle-m3.json",
+          "sha256": "5bd08c6bd39f1339dd9b0c46904c7d08ac466833bf8203b1bdf4d880190c7257"
+        },
+        {
+          "path": "bundle-build.log",
+          "sha256": "1f77a87900ed3103a6ec2549e1b6698b481811407151a9e42ec183b41144190e"
+        }
+      ],
+      "command_keys": [],
+      "command_results_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+      "limitation": null,
+      "matrix_id": "M3-D02",
+      "sha256": "2b48cc79edf4f29bde7857cc3e4d28102ba9898a67013093d9f9c04a137fab6a",
+      "status": "pass"
+    },
+    {
+      "artifact": "dependency-lock-admission.json",
+      "artifact_files": [
+        {
+          "path": "dependency-lock-admission.json",
+          "sha256": "f79e934efa10fb1665e79dc932f59964df36f4f9d8aa447b94c3a9f877f597e8"
+        }
+      ],
+      "command_keys": [],
+      "command_results_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+      "limitation": null,
+      "matrix_id": "M3-D03",
+      "sha256": "2bb361e4a17bfeffd152a396513b2e3d221302b8472a9598d883a403cd5258d1",
+      "status": "pass"
+    },
+    {
+      "artifact": "regression-m0.log",
+      "artifact_files": [
+        {
+          "path": "regression-m0.log",
+          "sha256": "9846d0b79e78f35c766af2ffe72087b45175684c3c5bb6aefd6afa585bd41723"
+        }
+      ],
+      "command_keys": [
+        "backend_pytest",
+        "backend_ruff",
+        "backend_format",
+        "backend_pyright",
+        "frontend_node24",
+        "frontend_lint",
+        "frontend_format",
+        "frontend_typecheck",
+        "frontend_tests",
+        "frontend_build"
+      ],
+      "command_results_sha256": "3d87eeee205e01ea31d87284353a5ccbf7f6dc8fdcf99a93530cb0ab811cd3de",
+      "limitation": null,
+      "matrix_id": "M3-R01",
+      "sha256": "a6435a30178937b1b4cfa5ee177406a601f7cb414bf800bfb4510368b1b53c84",
+      "status": "pass"
+    },
+    {
+      "artifact": "regression-m1.log",
+      "artifact_files": [
+        {
+          "path": "regression-m1.log",
+          "sha256": "9846d0b79e78f35c766af2ffe72087b45175684c3c5bb6aefd6afa585bd41723"
+        }
+      ],
+      "command_keys": [
+        "backend_pytest",
+        "backend_ruff",
+        "backend_format",
+        "backend_pyright",
+        "frontend_node24",
+        "frontend_lint",
+        "frontend_format",
+        "frontend_typecheck",
+        "frontend_tests",
+        "frontend_build"
+      ],
+      "command_results_sha256": "3d87eeee205e01ea31d87284353a5ccbf7f6dc8fdcf99a93530cb0ab811cd3de",
+      "limitation": null,
+      "matrix_id": "M3-R02",
+      "sha256": "486d3928eae4b47b1b6eaa69b7aa2778e13ca51806b6c718f4afc9eb26b505fc",
+      "status": "pass"
+    },
+    {
+      "artifact": "regression-m2.log",
+      "artifact_files": [
+        {
+          "path": "regression-m2.log",
+          "sha256": "235620e6c51ea8d4bf1d41aa0d3c2840beba4aeff62d126b2fb5d7fea4760d6b"
+        }
+      ],
+      "command_keys": [
+        "backend_pytest",
+        "backend_ruff",
+        "backend_format",
+        "backend_pyright",
+        "postgresql_runner"
+      ],
+      "command_results_sha256": "1010f578f8dc8fcdd72de9c265077da576846dc33439187d446cfa609d6a407c",
+      "limitation": null,
+      "matrix_id": "M3-R03",
+      "sha256": "395c4314162b650757e92c6e6ca12a15edb5d27eca4def043fa108b1e1890b33",
+      "status": "pass"
+    },
+    {
+      "artifact": "quality-backend.log",
+      "artifact_files": [
+        {
+          "path": "quality-backend.log",
+          "sha256": "c43b70d2247792a8ace729738077293f5171effb596ff10b33754a872bc2beb2"
+        }
+      ],
+      "command_keys": [
+        "backend_pytest",
+        "backend_ruff",
+        "backend_format",
+        "backend_pyright"
+      ],
+      "command_results_sha256": "891f6f643e80261500e2398848e1dfbb4840ab666e94aeb731840993a4540229",
+      "limitation": null,
+      "matrix_id": "M3-R04",
+      "sha256": "7cb0d83701283397e08f53f9285d8539e339ef3f79de20e436908f9375d10181",
+      "status": "pass"
+    },
+    {
+      "artifact": "quality-frontend.log",
+      "artifact_files": [
+        {
+          "path": "quality-frontend.log",
+          "sha256": "6ea7f79ab463eb64142a3b6d4e6feee1f4e543b2b8094488aada4027d98d6ec7"
+        }
+      ],
+      "command_keys": [
+        "frontend_node24",
+        "frontend_lint",
+        "frontend_format",
+        "frontend_typecheck",
+        "frontend_tests",
+        "frontend_build"
+      ],
+      "command_results_sha256": "0324911a63fe49f802240abb466c2f5833217943d510e7b8c47a39eeff13c044",
+      "limitation": null,
+      "matrix_id": "M3-R05",
+      "sha256": "d5d103c2ecc9c18a6b939e09a6ca493743d1dd076d47f533a780eb1870f4a45b",
+      "status": "pass"
+    },
+    {
+      "artifact": "quality-postgresql.log",
+      "artifact_files": [
+        {
+          "path": "quality-postgresql.log",
+          "sha256": "e43bf645bf514d76619a81c7c4f0a6790ccf872e66f6c91c59b225adf7148ca4"
+        }
+      ],
+      "command_keys": [
+        "postgresql_runner"
+      ],
+      "command_results_sha256": "2e78443c187a8d29d02f6248e5dcb1c3895829d492de15ca85e27ede670d42d3",
+      "limitation": null,
+      "matrix_id": "M3-R06",
+      "sha256": "ae65b5274d26cd993ee80a18df90eb8c14111f3fea0f28e31b51e08b9f6708fb",
+      "status": "pass"
+    }
+  ],
+  "counts": {
+    "fail": 0,
+    "missing": 4,
+    "partial": 18,
+    "pass": 18
+  },
+  "fixture_manifest_sha256": "015df74d59fb6e70c04c0f05da1392a57a1e8acd919d851d51fff0394f123c8c",
+  "fixture_version": "m3-star-v2",
+  "generated_at": "2026-07-19T13:57:13.086054+00:00",
+  "git_sha": "7fff5b1e35674708a08490ab35d941f8aa5924a1",
+  "overall_status": "incomplete",
+  "provenance": {
+    "git_sha": "7fff5b1e35674708a08490ab35d941f8aa5924a1",
+    "git_sha_override": false,
+    "head_sha": "7fff5b1e35674708a08490ab35d941f8aa5924a1",
+    "worktree_diff_sha256": "f53e2f306d5fb611a6492d198842134c1711038502b9cc93e3251dc347cc6ced",
+    "worktree_state": "dirty"
+  },
+  "schema_version": 1,
+  "security": {
+    "credentials_exported": false,
+    "files_with_findings": 0,
+    "output_redaction": true,
+    "scanned_files": 64
+  },
+  "supporting_artifacts": [
+    {
+      "path": "environment.json",
+      "sha256": "6b0ba404303b74caee644e6858798abc360e112eef82600e0479deba32ba60dd"
+    },
+    {
+      "path": "fixture-manifest.json",
+      "sha256": "218c7869156474e0138d6d4794d03803303e5026bb3d8e4d0ea7ec74d8be9648"
+    },
+    {
+      "path": "commands.log",
+      "sha256": "868981c824d940aaeb6a775e92c36b09d9aa23fc04a9ef9b9488b8e9f2427b26"
+    }
+  ]
+}

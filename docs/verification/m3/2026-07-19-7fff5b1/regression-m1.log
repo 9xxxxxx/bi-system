@@ -1,0 +1,316 @@
+command_key=backend_pytest
+command=uv run pytest backend/tests -q --cov=bi_system
+cwd=.
+started_at=2026-07-19T13:52:57.389973+00:00
+duration_seconds=138.017
+exit_code=0
+stdout:
+....ss....................................................s.......ss.... [ 18%]
+..s..................................................................... [ 36%]
+........................................................................ [ 54%]
+........................................................................ [ 72%]
+........................................................................ [ 90%]
+.......................................                                  [100%]
+============================== warnings summary ===============================
+.venv\Lib\site-packages\fastapi\testclient.py:1
+  C:\Dev\bi-system\.venv\Lib\site-packages\fastapi\testclient.py:1: StarletteDeprecationWarning: Using `httpx` with `starlette.testclient` is deprecated; install `httpx2` instead.
+    from starlette.testclient import TestClient as TestClient  # noqa
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=============================== tests coverage ================================
+_______________ coverage: platform win32, python 3.13.8-final-0 _______________
+
+Name                                                           Stmts   Miss  Cover
+----------------------------------------------------------------------------------
+backend\src\bi_system\__init__.py                                  0      0   100%
+backend\src\bi_system\api\__init__.py                              0      0   100%
+backend\src\bi_system\api\dependencies.py                         23      0   100%
+backend\src\bi_system\api\router.py                               19      0   100%
+backend\src\bi_system\api\routes\__init__.py                       0      0   100%
+backend\src\bi_system\api\routes\auth.py                          49      2    96%
+backend\src\bi_system\api\routes\dashboard_assets.py              55      7    87%
+backend\src\bi_system\api\routes\dashboard_chart_queries.py       83      5    94%
+backend\src\bi_system\api\routes\dashboards.py                   223     31    86%
+backend\src\bi_system\api\routes\data_sources.py                  37      0   100%
+backend\src\bi_system\api\routes\dataset_queries.py               48      3    94%
+backend\src\bi_system\api\routes\datasets.py                     105      6    94%
+backend\src\bi_system\api\routes\health.py                        25      0   100%
+backend\src\bi_system\api\routes\identity.py                      32      0   100%
+backend\src\bi_system\api\routes\import_batches.py               136     25    82%
+backend\src\bi_system\api\routes\import_templates.py              35      0   100%
+backend\src\bi_system\api\routes\metrics.py                       78      6    92%
+backend\src\bi_system\api\routes\row_policies.py                 101     11    89%
+backend\src\bi_system\api\routes\semantic_models.py              103      5    95%
+backend\src\bi_system\api\routes\source_files.py                  86      5    94%
+backend\src\bi_system\core\__init__.py                             0      0   100%
+backend\src\bi_system\core\config.py                              70      5    93%
+backend\src\bi_system\dashboards\__init__.py                       3      0   100%
+backend\src\bi_system\dashboards\assets.py                       155     17    89%
+backend\src\bi_system\dashboards\chart_contracts.py              165     16    90%
+backend\src\bi_system\dashboards\chart_query.py                  323     39    88%
+backend\src\bi_system\dashboards\contracts.py                    188     19    90%
+backend\src\bi_system\dashboards\errors.py                        24      0   100%
+backend\src\bi_system\dashboards\filters.py                      232     19    92%
+backend\src\bi_system\dashboards\service.py                      503     36    93%
+backend\src\bi_system\db\__init__.py                               0      0   100%
+backend\src\bi_system\db\base.py                                   3      0   100%
+backend\src\bi_system\db\models\__init__.py                        5      0   100%
+backend\src\bi_system\db\models\dashboards.py                    110      0   100%
+backend\src\bi_system\db\models\identity.py                       47      0   100%
+backend\src\bi_system\db\models\ingestion.py                     114      0   100%
+backend\src\bi_system\db\models\modeling.py                      133      0   100%
+backend\src\bi_system\db\session.py                               20      4    80%
+backend\src\bi_system\identity\__init__.py                         3      0   100%
+backend\src\bi_system\identity\authentication.py                  96      3    97%
+backend\src\bi_system\identity\principal.py                       11      0   100%
+backend\src\bi_system\ingestion\__init__.py                        0      0   100%
+backend\src\bi_system\ingestion\batch_contracts.py                32      3    91%
+backend\src\bi_system\ingestion\batches.py                       181     19    90%
+backend\src\bi_system\ingestion\cleanup.py                        54      4    93%
+backend\src\bi_system\ingestion\data_sources.py                   42      1    98%
+backend\src\bi_system\ingestion\domain.py                         43      0   100%
+backend\src\bi_system\ingestion\duplicate_tracking.py             45      2    96%
+backend\src\bi_system\ingestion\files.py                         105     10    90%
+backend\src\bi_system\ingestion\preview.py                       120     16    87%
+backend\src\bi_system\ingestion\readers.py                        52      0   100%
+backend\src\bi_system\ingestion\reports.py                        46      1    98%
+backend\src\bi_system\ingestion\storage.py                        88      3    97%
+backend\src\bi_system\ingestion\target_tables.py                  56      6    89%
+backend\src\bi_system\ingestion\template_contracts.py            138     15    89%
+backend\src\bi_system\ingestion\templates.py                      33      0   100%
+backend\src\bi_system\ingestion\validation.py                    155     38    75%
+backend\src\bi_system\ingestion\worker.py                        229     26    89%
+backend\src\bi_system\main.py                                     25      0   100%
+backend\src\bi_system\modeling\__init__.py                         3      0   100%
+backend\src\bi_system\modeling\calculated_field_contracts.py     121      5    96%
+backend\src\bi_system\modeling\compiler.py                       353     38    89%
+backend\src\bi_system\modeling\contracts.py                      138     12    91%
+backend\src\bi_system\modeling\dataset_contracts.py               59      3    95%
+backend\src\bi_system\modeling\datasets.py                       377     58    85%
+backend\src\bi_system\modeling\dialect.py                         34      8    76%
+backend\src\bi_system\modeling\expression.py                      64      1    98%
+backend\src\bi_system\modeling\metric_contracts.py               137     13    91%
+backend\src\bi_system\modeling\metrics.py                        158     10    94%
+backend\src\bi_system\modeling\model_contracts.py                 90      8    91%
+backend\src\bi_system\modeling\query_service.py                  295     36    88%
+backend\src\bi_system\modeling\query_timeout.py                   36      7    81%
+backend\src\bi_system\modeling\row_policies.py                   219     14    94%
+backend\src\bi_system\modeling\row_policy_contracts.py            41      3    93%
+backend\src\bi_system\modeling\semantic_models.py                159     12    92%
+----------------------------------------------------------------------------------
+TOTAL                                                           7171    636    91%
+=========================== short test summary info ===========================
+SKIPPED [1] backend\tests\integration\test_batch_portability.py:24: BI_DATABASE_URL is required for database portability checks
+SKIPPED [1] backend\tests\integration\test_batch_portability.py:94: BI_DATABASE_URL is required for worker portability checks
+SKIPPED [1] backend\tests\integration\test_m2_benchmark_postgres.py:16: BI_DATABASE_URL is required for PostgreSQL benchmark verification
+SKIPPED [1] backend\tests\integration\test_migrations.py:21: BI_DATABASE_URL is required for migration state checks
+SKIPPED [1] backend\tests\integration\test_query_timeout_portability.py:13: PostgreSQL-only timeout verification
+SKIPPED [1] backend\tests\integration\test_row_policy_portability.py:34: BI_DATABASE_URL is required for row policy portability checks
+393 passed, 6 skipped, 1 warning in 136.53s (0:02:16)
+stderr:
+
+
+command_key=backend_ruff
+command=uv run ruff check backend scripts
+cwd=.
+started_at=2026-07-19T13:55:15.409464+00:00
+duration_seconds=0.086
+exit_code=0
+stdout:
+All checks passed!
+stderr:
+
+
+command_key=backend_format
+command=uv run ruff format --check backend scripts
+cwd=.
+started_at=2026-07-19T13:55:15.495143+00:00
+duration_seconds=0.084
+exit_code=0
+stdout:
+166 files already formatted
+stderr:
+
+
+command_key=backend_pyright
+command=uv run basedpyright backend/src backend/tests scripts
+cwd=.
+started_at=2026-07-19T13:55:15.579495+00:00
+duration_seconds=5.868
+exit_code=0
+stdout:
+0 errors, 0 warnings, 0 notes
+stderr:
+
+
+command_key=frontend_node24
+command=C:\Dev\bi-system\.tmp\m3-node24-npm11\node_modules\node\bin\node.exe -e "if (process.versions.node.split('.')[0] !== '24') process.exit(1)"
+cwd=.
+started_at=2026-07-19T13:55:21.447222+00:00
+duration_seconds=0.057
+exit_code=0
+stdout:
+
+stderr:
+
+
+command_key=frontend_lint
+command=C:\Dev\bi-system\.tmp\m3-node24-npm11\node_modules\node\bin\node.exe C:\Dev\bi-system\.tmp\m3-node24-npm11\node_modules\npm\bin\npm-cli.js --prefix frontend run lint
+cwd=.
+started_at=2026-07-19T13:55:21.504720+00:00
+duration_seconds=0.33
+exit_code=0
+stdout:
+
+> frontend@0.0.0 lint
+> oxlint
+stderr:
+
+
+command_key=frontend_format
+command=C:\Dev\bi-system\.tmp\m3-node24-npm11\node_modules\node\bin\node.exe C:\Dev\bi-system\.tmp\m3-node24-npm11\node_modules\npm\bin\npm-cli.js --prefix frontend run format:check
+cwd=.
+started_at=2026-07-19T13:55:21.835146+00:00
+duration_seconds=1.579
+exit_code=0
+stdout:
+
+> frontend@0.0.0 format:check
+> prettier . --check
+
+Checking formatting...
+All matched files use Prettier code style!
+stderr:
+
+
+command_key=frontend_typecheck
+command=C:\Dev\bi-system\.tmp\m3-node24-npm11\node_modules\node\bin\node.exe C:\Dev\bi-system\.tmp\m3-node24-npm11\node_modules\npm\bin\npm-cli.js --prefix frontend run typecheck
+cwd=.
+started_at=2026-07-19T13:55:23.414257+00:00
+duration_seconds=4.567
+exit_code=0
+stdout:
+
+> frontend@0.0.0 typecheck
+> tsc -b
+stderr:
+
+
+command_key=frontend_tests
+command=C:\Dev\bi-system\.tmp\m3-node24-npm11\node_modules\node\bin\node.exe C:\Dev\bi-system\.tmp\m3-node24-npm11\node_modules\npm\bin\npm-cli.js --prefix frontend run test -- --run --maxWorkers=1 --no-file-parallelism
+cwd=.
+started_at=2026-07-19T13:55:27.981634+00:00
+duration_seconds=93.949
+exit_code=0
+stdout:
+
+> frontend@0.0.0 test
+> vitest --run --maxWorkers=1 --no-file-parallelism
+
+
+ RUN  v4.1.10 C:/Dev/bi-system/frontend
+
+
+ Test Files  22 passed (22)
+      Tests  98 passed (98)
+   Start at  21:55:28
+   Duration  93.23s (transform 593ms, setup 3.81s, import 41.71s, tests 23.15s, environment 20.85s)
+stderr:
+Not implemented: Window's getComputedStyle() method: with pseudo-elements
+Not implemented: Window's getComputedStyle() method: with pseudo-elements
+Not implemented: Window's getComputedStyle() method: with pseudo-elements
+Not implemented: Window's getComputedStyle() method: with pseudo-elements
+Not implemented: Window's getComputedStyle() method: with pseudo-elements
+Not implemented: Window's getComputedStyle() method: with pseudo-elements
+Not implemented: Window's getComputedStyle() method: with pseudo-elements
+Not implemented: Window's getComputedStyle() method: with pseudo-elements
+Not implemented: Window's getComputedStyle() method: with pseudo-elements
+Not implemented: Window's getComputedStyle() method: with pseudo-elements
+Not implemented: Window's getComputedStyle() method: with pseudo-elements
+Not implemented: Window's getComputedStyle() method: with pseudo-elements
+Not implemented: Window's getComputedStyle() method: with pseudo-elements
+Not implemented: Window's getComputedStyle() method: with pseudo-elements
+Not implemented: Window's getComputedStyle() method: with pseudo-elements
+Not implemented: Window's getComputedStyle() method: with pseudo-elements
+Not implemented: Window's getComputedStyle() method: with pseudo-elements
+Not implemented: Window's getComputedStyle() method: with pseudo-elements
+Not implemented: Window's getComputedStyle() method: with pseudo-elements
+Not implemented: Window's getComputedStyle() method: with pseudo-elements
+Not implemented: Window's getComputedStyle() method: with pseudo-elements
+Not implemented: Window's getComputedStyle() method: with pseudo-elements
+Not implemented: Window's getComputedStyle() method: with pseudo-elements
+
+command_key=frontend_build
+command=C:\Dev\bi-system\.tmp\m3-node24-npm11\node_modules\node\bin\node.exe C:\Dev\bi-system\.tmp\m3-node24-npm11\node_modules\npm\bin\npm-cli.js --prefix frontend run build
+cwd=.
+started_at=2026-07-19T13:57:01.931191+00:00
+duration_seconds=4.682
+exit_code=0
+stdout:
+
+> frontend@0.0.0 build
+> npm run typecheck && vite build
+
+
+> frontend@0.0.0 typecheck
+> tsc -b
+
+[36mvite v8.1.4 [32mbuilding client environment for production...[36m[39m
+[2K
+transforming...✓ 3774 modules transformed.
+rendering chunks...
+computing gzip size...
+dist/index.html                                 1.48 kB │ gzip:   0.51 kB
+dist/assets/DashboardEditorPage-kzrx2K5g.css    2.31 kB │ gzip:   0.56 kB
+dist/assets/dashboards-Bq-bp8e0.css             9.57 kB │ gzip:   2.28 kB
+dist/assets/index-Ckch0aNc.css                 10.88 kB │ gzip:   2.75 kB
+dist/assets/queryKeys-D-NYFDD7.js               0.17 kB │ gzip:   0.14 kB
+dist/assets/api-CbX1m5P3.js                     0.78 kB │ gzip:   0.31 kB
+dist/assets/context-HhqkheWD.js                 0.78 kB │ gzip:   0.48 kB
+dist/assets/PlusOutlined-Bw__7koL.js            0.79 kB │ gzip:   0.52 kB
+dist/assets/ArrowLeftOutlined-DM672321.js       0.87 kB │ gzip:   0.61 kB
+dist/assets/DatabaseOutlined-BAZ4D-Tq.js        0.95 kB │ gzip:   0.59 kB
+dist/assets/DeleteOutlined-U3-Z57ky.js          0.99 kB │ gzip:   0.66 kB
+dist/assets/CheckCircleOutlined-TCo3Bq9_.js     1.04 kB │ gzip:   0.67 kB
+dist/assets/AppstoreAddOutlined-CViQgs3D.js     1.22 kB │ gzip:   0.65 kB
+dist/assets/style-B-a9Itbe.js                   1.97 kB │ gzip:   0.82 kB
+dist/assets/LockOutlined-C0lTExUY.js            1.98 kB │ gzip:   0.81 kB
+dist/assets/row-B57nwRbC.js                     2.45 kB │ gzip:   1.29 kB
+dist/assets/modal-CfBjroT6.js                   3.66 kB │ gzip:   1.78 kB
+dist/assets/DashboardCreatePage-Cw34fKRx.js     3.97 kB │ gzip:   1.86 kB
+dist/assets/DatasetListPage-PkhP_tiz.js         4.00 kB │ gzip:   1.93 kB
+dist/assets/DashboardQueryState-NvqnZwqc.js     4.03 kB │ gzip:   1.89 kB
+dist/assets/popover-DmshZ1Sw.js                 4.46 kB │ gzip:   1.99 kB
+dist/assets/dashboards-Cpqn9I1N.js              4.73 kB │ gzip:   2.06 kB
+dist/assets/useMutation-SE-VM0Wa.js             5.57 kB │ gzip:   1.78 kB
+dist/assets/DashboardListPage-DVC67ylI.js       6.38 kB │ gzip:   2.94 kB
+dist/assets/SystemStatusPage-B2uZoXSl.js        7.08 kB │ gzip:   3.40 kB
+dist/assets/jsx-runtime-n5LQ9ujS.js             8.53 kB │ gzip:   3.26 kB
+dist/assets/segmented-D_cZxMXw.js               9.11 kB │ gzip:   3.49 kB
+dist/assets/skeleton-m6snb9TQ.js                9.35 kB │ gzip:   3.16 kB
+dist/assets/descriptions-DQgh9QZo.js           12.01 kB │ gzip:   3.95 kB
+dist/assets/api-BbFvl1AK.js                    14.94 kB │ gzip:   5.73 kB
+dist/assets/radio-DKT_qrip.js                  21.16 kB │ gzip:   7.80 kB
+dist/assets/form-DP1o5sBH.js                   21.60 kB │ gzip:   8.45 kB
+dist/assets/DatasetWorkbenchPage-C3AB6R12.js   23.97 kB │ gzip:   7.82 kB
+dist/assets/useModal-BdLx6T8h.js               24.88 kB │ gzip:   8.58 kB
+dist/assets/result-WzLaJYEA.js                 35.27 kB │ gzip:  11.24 kB
+dist/assets/chunk-KS7C4IRE-Cp-rykcz.js         42.58 kB │ gzip:  15.22 kB
+dist/assets/GovernancePage-DRlH9F5t.js         49.78 kB │ gzip:  16.13 kB
+dist/assets/spin-Ba92FRMo.js                   50.50 kB │ gzip:  17.00 kB
+dist/assets/upload-BvQopTYf.js                 53.89 kB │ gzip:  18.13 kB
+dist/assets/DataIngestionPage-ChRYXKAv.js      54.23 kB │ gzip:  16.80 kB
+dist/assets/index-BFQx7FBf.js                  63.44 kB │ gzip:  22.62 kB
+dist/assets/menu-B3YfMhBC.js                   65.38 kB │ gzip:  20.87 kB
+dist/assets/DashboardEditorPage-iAArV0Nu.js   144.11 kB │ gzip:  41.64 kB
+dist/assets/tag-C-J2WlGH.js                   261.89 kB │ gzip:  81.45 kB
+dist/assets/client-DjpU8ZC-.js                458.77 kB │ gzip: 151.57 kB
+dist/assets/EChartRenderer-CmgePQdN.js        556.24 kB │ gzip: 188.93 kB
+
+[32m✓ built in 438ms[39m
+stderr:
+[33m[plugin builtin:vite-reporter] 
+(!) Some chunks are larger than 500 kB after minification. Consider:
+- Using dynamic import() to code-split the application
+- Use build.rolldownOptions.output.codeSplitting to improve chunking: https://rolldown.rs/reference/OutputOptions.codeSplitting
+- Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.[39m

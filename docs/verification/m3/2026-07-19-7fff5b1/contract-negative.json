@@ -1,0 +1,36 @@
+{
+  "case_ids": [
+    "physical-name",
+    "raw-sql",
+    "function",
+    "unknown-uuid",
+    "bound-filter"
+  ],
+  "commands": [
+    {
+      "command": "uv run pytest spikes/m3/backend/test_chart_query_compiler.py -q",
+      "cwd": ".",
+      "duration_seconds": 0.846,
+      "exit_code": 0,
+      "key": "compiler_negative",
+      "started_at": "2026-07-19T13:51:17.820625+00:00",
+      "stderr": "",
+      "stdout": "........................                                                 [100%]\n24 passed in 0.40s\n"
+    }
+  ],
+  "contains_exported_rows_or_values": false,
+  "fixture_manifest_sha256": "015df74d59fb6e70c04c0f05da1392a57a1e8acd919d851d51fff0394f123c8c",
+  "fixture_version": "m3-star-v2",
+  "git_sha": "7fff5b1e35674708a08490ab35d941f8aa5924a1",
+  "limitation": "Pytest proves rejection but does not emit each error payload or leakage scan.",
+  "matrix_id": "M3-C02",
+  "provenance": {
+    "git_sha": "7fff5b1e35674708a08490ab35d941f8aa5924a1",
+    "git_sha_override": false,
+    "head_sha": "7fff5b1e35674708a08490ab35d941f8aa5924a1",
+    "worktree_diff_sha256": "f53e2f306d5fb611a6492d198842134c1711038502b9cc93e3251dc347cc6ced",
+    "worktree_state": "dirty"
+  },
+  "schema_version": 1,
+  "status": "partial"
+}

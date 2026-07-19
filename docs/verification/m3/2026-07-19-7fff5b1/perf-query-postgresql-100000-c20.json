@@ -1,0 +1,70 @@
+{
+  "case_ids": [],
+  "commands": [],
+  "contains_exported_rows_or_values": false,
+  "fixture_manifest_sha256": "015df74d59fb6e70c04c0f05da1392a57a1e8acd919d851d51fff0394f123c8c",
+  "fixture_version": "m3-star-v2",
+  "git_sha": "7fff5b1e35674708a08490ab35d941f8aa5924a1",
+  "limitation": null,
+  "matrix_id": "M3-PERF04",
+  "provenance": {
+    "git_sha": "7fff5b1e35674708a08490ab35d941f8aa5924a1",
+    "git_sha_override": false,
+    "head_sha": "7fff5b1e35674708a08490ab35d941f8aa5924a1",
+    "worktree_diff_sha256": "f53e2f306d5fb611a6492d198842134c1711038502b9cc93e3251dc347cc6ced",
+    "worktree_state": "dirty"
+  },
+  "runtime_evidence": {
+    "checks": {
+      "common_contract_complete": true,
+      "execution_passed": true,
+      "max_scenario_client_p95_ms": 1778.729,
+      "producer_provenance_complete": true,
+      "rounds_complete": true,
+      "scenario_fingerprints": {
+        "category_bar": "f7b14e1eb1bb83c1b56ac642616a04c31114a4ac699ba0a443727ac8dccbf64c",
+        "category_region_stacked": "1952e1d87205a27fe77d2e28a0d1e81b62a1b98bb7ee8b98df1ee0f364cff173",
+        "full_kpi": "a1fb3722e2eeee1ba619cdc6687b189627984c03bb81a6a5d11a7ad5744a3ec3",
+        "global_page_component_filters": "bc8fa7e27ca071dab48b2dd3c417675f437881824d3dac45c6a0c70701e44b33",
+        "month_trend": "28a4490f35ae97ae6a30aec0f4882e3cee77b5bb37f84345e1050816a33c2ff0",
+        "restricted_viewer_same_group": "b7a44cc482fbb2c22fc9db511af4c4faa6b6de17695130717b67cf2b5e6b252a",
+        "top_2": "be85b5521873431d8512d40fc471b957da45c8e1a1c132c7600895b6418939ff"
+      },
+      "scenario_gate_complete": true,
+      "scenario_results_status": "pass",
+      "threshold_ms": 5000,
+      "threshold_passed": true,
+      "top_level_mix_p95_is_gate": false,
+      "top_level_mix_p95_ms": 6156.158
+    },
+    "limitation": null,
+    "source_artifacts": [
+      {
+        "copied_path": "runtime/performance/perf-query-postgresql-100000-c20-final.json",
+        "copied_sha256": "43d58596d9d5bb42f0208c947441c26d07da93305bd0b424e0ee122ca608fe30",
+        "producer_provenance": {
+          "dirty": true,
+          "head_sha": "97c3daf630add19113a632a438ea9ef320436f78",
+          "producer_sources_dirty": false,
+          "snapshot_scope": "HEAD plus targeted producer tracked diff and untracked producer source content",
+          "source_content_sha256": {
+            "benchmark_m2_queries": "20e0996cdcd12abf800bd9ad1309736dd7086b092c0836b20f2f3d011b27fb99",
+            "benchmark_m3_chart_queries": "c25d2d71822b089d500b3964529683c642da73643e53efa71777249e1a355107",
+            "fixture_tool": "88c771ab491e6950174fa364bb3447d652346ac6f6572d55ad6cb34963bf4dbd",
+            "fixture_v2_manifest": "015df74d59fb6e70c04c0f05da1392a57a1e8acd919d851d51fff0394f123c8c"
+          },
+          "tracked_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "untracked_target_source_count": 0,
+          "worktree_snapshot_sha256": "8efeea4d14ac1f5b77f358ade6932e97086cbdf86efa99876c9ca8b2b31da7c9",
+          "worktree_state": "dirty"
+        },
+        "source_git_sha": "97c3daf630add19113a632a438ea9ef320436f78",
+        "source_path": "performance/perf-query-postgresql-100000-c20-final.json",
+        "source_sha256": "43d58596d9d5bb42f0208c947441c26d07da93305bd0b424e0ee122ca608fe30"
+      }
+    ],
+    "status": "pass"
+  },
+  "schema_version": 1,
+  "status": "pass"
+}

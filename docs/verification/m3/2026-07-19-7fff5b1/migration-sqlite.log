@@ -1,0 +1,11 @@
+command_key=sqlite_migrations
+command=uv run pytest backend/tests/integration/test_dashboard_migrations.py backend/tests/integration/test_dashboard_assets_migration.py -q
+cwd=.
+started_at=2026-07-19T13:51:38.646347+00:00
+duration_seconds=3.682
+exit_code=0
+stdout:
+..                                                                       [100%]
+2 passed in 3.18s
+stderr:
+

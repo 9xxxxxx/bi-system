@@ -1,0 +1,39 @@
+{
+  "case_ids": [],
+  "commands": [],
+  "contains_exported_rows_or_values": false,
+  "fixture_manifest_sha256": "015df74d59fb6e70c04c0f05da1392a57a1e8acd919d851d51fff0394f123c8c",
+  "fixture_version": "m3-star-v2",
+  "git_sha": "7fff5b1e35674708a08490ab35d941f8aa5924a1",
+  "limitation": "Runtime evidence is incomplete; missing or partial checks: checks.sample_contract_complete, checks.server_result_cache_observed.",
+  "matrix_id": "M3-PERF02",
+  "provenance": {
+    "git_sha": "7fff5b1e35674708a08490ab35d941f8aa5924a1",
+    "git_sha_override": false,
+    "head_sha": "7fff5b1e35674708a08490ab35d941f8aa5924a1",
+    "worktree_diff_sha256": "f53e2f306d5fb611a6492d198842134c1711038502b9cc93e3251dc347cc6ced",
+    "worktree_state": "dirty"
+  },
+  "runtime_evidence": {
+    "checks": {
+      "reported_p95_matches_raw_samples": true,
+      "sample_contract_complete": false,
+      "server_result_cache_observed": false,
+      "threshold_ms": 3000
+    },
+    "limitation": "Runtime evidence is incomplete; missing or partial checks: checks.sample_contract_complete, checks.server_result_cache_observed.",
+    "source_artifacts": [
+      {
+        "copied_path": "runtime/performance/perf-dashboard-cached-chrome.json",
+        "copied_sha256": "06e4f0c43f436add754c54117b952d6311ba3f64d7c2ebabc1ab3d580597cfac",
+        "producer_provenance": null,
+        "source_git_sha": "4a932a5",
+        "source_path": "performance/perf-dashboard-cached-chrome.json",
+        "source_sha256": "25392aedb5e0f9670c61434c15ea412b86bb658ea480417e0e4b4340116bb103"
+      }
+    ],
+    "status": "partial"
+  },
+  "schema_version": 1,
+  "status": "partial"
+}

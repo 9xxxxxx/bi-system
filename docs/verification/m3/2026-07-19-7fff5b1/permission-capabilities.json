@@ -1,0 +1,43 @@
+{
+  "case_ids": [
+    "editor-dataset-manage",
+    "viewer-dashboard-edit"
+  ],
+  "commands": [
+    {
+      "command": "uv run pytest backend/tests/integration/test_dashboard_api.py backend/tests/integration/test_datasets_api.py backend/tests/unit/test_dashboard_chart_query_service.py -q",
+      "cwd": ".",
+      "duration_seconds": 15.348,
+      "exit_code": 0,
+      "key": "sqlite_permissions",
+      "started_at": "2026-07-19T13:51:23.298400+00:00",
+      "stderr": "",
+      "stdout": "............................                                             [100%]\n============================== warnings summary ===============================\n.venv\\Lib\\site-packages\\fastapi\\testclient.py:1\n  C:\\Dev\\bi-system\\.venv\\Lib\\site-packages\\fastapi\\testclient.py:1: StarletteDeprecationWarning: Using `httpx` with `starlette.testclient` is deprecated; install `httpx2` instead.\n    from starlette.testclient import TestClient as TestClient  # noqa\n\n-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html\n28 passed, 1 warning in 14.68s\n"
+    },
+    {
+      "command": "uv run python scripts/run_postgres_tests.py",
+      "cwd": ".",
+      "duration_seconds": 75.06,
+      "exit_code": 0,
+      "key": "postgresql_runner",
+      "started_at": "2026-07-19T13:51:42.328534+00:00",
+      "stderr": "initdb: could not find suitable text search configuration for locale \"Chinese (Simplified)_China.936\"\nINFO  [alembic.runtime.migration] Context impl PostgresqlImpl.\nINFO  [alembic.runtime.migration] Will assume transactional DDL.\nINFO  [alembic.runtime.migration] Running upgrade  -> 0001_baseline, baseline\nINFO  [alembic.runtime.migration] Running upgrade 0001_baseline -> 0002_ingestion_foundation, ingestion foundation\nINFO  [alembic.runtime.migration] Running upgrade 0002_ingestion_foundation -> 0003_modeling_foundation, modeling foundation\nINFO  [alembic.runtime.migration] Running upgrade 0003_modeling_foundation -> 0004_identity_sessions, identity sessions\nINFO  [alembic.runtime.migration] Running upgrade 0004_identity_sessions -> 0005_dashboard_foundation, dashboard foundation\nINFO  [alembic.runtime.migration] Running upgrade 0005_dashboard_foundation -> 0006_dashboard_assets, dashboard image assets\nINFO  [alembic.runtime.migration] Context impl PostgresqlImpl.\nINFO  [alembic.runtime.migration] Will assume transactional DDL.\nINFO  [alembic.runtime.migration] Running downgrade 0006_dashboard_assets -> 0005_dashboard_foundation, dashboard image assets\nINFO  [alembic.runtime.migration] Running downgrade 0005_dashboard_foundation -> 0004_identity_sessions, dashboard foundation\nINFO  [alembic.runtime.migration] Running downgrade 0004_identity_sessions -> 0003_modeling_foundation, identity sessions\nINFO  [alembic.runtime.migration] Running downgrade 0003_modeling_foundation -> 0002_ingestion_foundation, modeling foundation\nINFO  [alembic.runtime.migration] Running downgrade 0002_ingestion_foundation -> 0001_baseline, ingestion foundation\nINFO  [alembic.runtime.migration] Running downgrade 0001_baseline -> , baseline\nINFO  [alembic.runtime.migration] Context impl PostgresqlImpl.\nINFO  [alembic.runtime.migration] Will assume transactional DDL.\nINFO  [alembic.runtime.migration] Running upgrade  -> 0001_baseline, baseline\nINFO  [alembic.runtime.migration] Running upgrade 0001_baseline -> 0002_ingestion_foundation, ingestion foundation\nINFO  [alembic.runtime.migration] Running upgrade 0002_ingestion_foundation -> 0003_modeling_foundation, modeling foundation\nINFO  [alembic.runtime.migration] Running upgrade 0003_modeling_foundation -> 0004_identity_sessions, identity sessions\nINFO  [alembic.runtime.migration] Running upgrade 0004_identity_sessions -> 0005_dashboard_foundation, dashboard foundation\nINFO  [alembic.runtime.migration] Running upgrade 0005_dashboard_foundation -> 0006_dashboard_assets, dashboard image assets\n",
+      "stdout": "+ C:\\Program Files\\PostgreSQL\\18\\bin\\initdb.exe --auth=trust --encoding=UTF8 --username=bi_system -D C:\\Dev\\bi-system\\.tmp\\postgres-m0\nThe files belonging to this database system will be owned by user \"Garry\".\nThis user must also own the server process.\n\nThe database cluster will be initialized with locale \"Chinese (Simplified)_China.936\".\nThe default text search configuration will be set to \"simple\".\n\nData page checksums are enabled.\n\ncreating directory C:/Dev/bi-system/.tmp/postgres-m0 ... ok\ncreating subdirectories ... ok\nselecting dynamic shared memory implementation ... windows\nselecting default \"max_connections\" ... 100\nselecting default \"shared_buffers\" ... 128MB\nselecting default time zone ... Asia/Shanghai\ncreating configuration files ... ok\nrunning bootstrap script ... ok\nperforming post-bootstrap initialization ... ok\nsyncing data to disk ... ok\n\nSuccess. You can now start the database server using:\n\n    ^\"C^:^\\Program^ Files^\\PostgreSQL^\\18^\\bin^\\pg^_ctl^\" -D ^\"C^:^\\Dev^\\bi^-system^\\^.tmp^\\postgres^-m0^\" -l logfile start\n\n+ C:\\Program Files\\PostgreSQL\\18\\bin\\pg_ctl.exe -D C:\\Dev\\bi-system\\.tmp\\postgres-m0 -l C:\\Dev\\bi-system\\.tmp\\postgres-m0.log -o -h 127.0.0.1 -p 55432 -w start\nwaiting for server to start.... done\nserver started\n+ C:\\Program Files\\PostgreSQL\\18\\bin\\createdb.exe --host=127.0.0.1 --port=55432 --username=bi_system bi_system_test\n+ uv run alembic -c backend/alembic.ini upgrade head\n+ uv run pytest backend/tests/integration -q\n........................................................................ [ 84%]\n.............                                                            [100%]\n============================== warnings summary ===============================\n.venv\\Lib\\site-packages\\fastapi\\testclient.py:1\n  C:\\Dev\\bi-system\\.venv\\Lib\\site-packages\\fastapi\\testclient.py:1: StarletteDeprecationWarning: Using `httpx` with `starlette.testclient` is deprecated; install `httpx2` instead.\n    from starlette.testclient import TestClient as TestClient  # noqa\n\n-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html\n85 passed, 1 warning in 62.98s (0:01:02)\n+ uv run alembic -c backend/alembic.ini downgrade base\n+ uv run alembic -c backend/alembic.ini upgrade head\nwaiting for server to shut down..... done\nserver stopped\n"
+    }
+  ],
+  "contains_exported_rows_or_values": false,
+  "fixture_manifest_sha256": "015df74d59fb6e70c04c0f05da1392a57a1e8acd919d851d51fff0394f123c8c",
+  "fixture_version": "m3-star-v2",
+  "git_sha": "7fff5b1e35674708a08490ab35d941f8aa5924a1",
+  "limitation": "403 behavior is asserted separately; atomic no-partial-write state is not exported.",
+  "matrix_id": "M3-P05",
+  "provenance": {
+    "git_sha": "7fff5b1e35674708a08490ab35d941f8aa5924a1",
+    "git_sha_override": false,
+    "head_sha": "7fff5b1e35674708a08490ab35d941f8aa5924a1",
+    "worktree_diff_sha256": "f53e2f306d5fb611a6492d198842134c1711038502b9cc93e3251dc347cc6ced",
+    "worktree_state": "dirty"
+  },
+  "schema_version": 1,
+  "status": "partial"
+}

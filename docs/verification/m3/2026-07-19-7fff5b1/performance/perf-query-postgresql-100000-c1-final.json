@@ -1,0 +1,3734 @@
+{
+  "git_sha": "97c3daf630add19113a632a438ea9ef320436f78",
+  "producer_provenance": {
+    "head_sha": "97c3daf630add19113a632a438ea9ef320436f78",
+    "worktree_state": "dirty",
+    "dirty": true,
+    "producer_sources_dirty": false,
+    "worktree_snapshot_sha256": "8efeea4d14ac1f5b77f358ade6932e97086cbdf86efa99876c9ca8b2b31da7c9",
+    "tracked_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "untracked_target_source_count": 0,
+    "source_content_sha256": {
+      "benchmark_m2_queries": "20e0996cdcd12abf800bd9ad1309736dd7086b092c0836b20f2f3d011b27fb99",
+      "benchmark_m3_chart_queries": "c25d2d71822b089d500b3964529683c642da73643e53efa71777249e1a355107",
+      "fixture_tool": "88c771ab491e6950174fa364bb3447d652346ac6f6572d55ad6cb34963bf4dbd",
+      "fixture_v2_manifest": "015df74d59fb6e70c04c0f05da1392a57a1e8acd919d851d51fff0394f123c8c"
+    },
+    "snapshot_scope": "HEAD plus targeted producer tracked diff and untracked producer source content"
+  },
+  "dialect": "postgresql",
+  "rows": 100000,
+  "concurrency": 1,
+  "iterations": 30,
+  "warmups": 5,
+  "warmups_completed": 5,
+  "requests": 30,
+  "queries_per_request": 7,
+  "completed": 30,
+  "errors": {},
+  "error_count": 0,
+  "timeouts": 0,
+  "truncated_results": 30,
+  "p50_ms": 1740.279,
+  "p95_ms": 2013.806,
+  "max_ms": 2178.627,
+  "sample_duration_semantics": {
+    "scope": "seven_query_serial_worker_round",
+    "purpose": "throughput_and_worker_round_only",
+    "used_for_single_query_gate": false,
+    "single_query_gate_source": "scenario_results.client_duration_ms.p95"
+  },
+  "cache": {
+    "state": "not_applicable",
+    "application_cache_observed": false,
+    "application_result_cache": "not_present_in_direct_service_execution_path",
+    "cross_principal_cache_isolation": "not_evaluated",
+    "warmup_scope": "database_and_os_page_cache_only"
+  },
+  "percentile_method": "nearest-rank",
+  "throughput_rps": 0.573,
+  "wall_seconds": 52.377,
+  "principal_names": [
+    "administrator",
+    "editor",
+    "restricted_viewer"
+  ],
+  "expected_principal_names": [
+    "administrator",
+    "editor",
+    "restricted_viewer"
+  ],
+  "scenario_names": [
+    "full_kpi",
+    "category_bar",
+    "category_region_stacked",
+    "month_trend",
+    "top_2",
+    "global_page_component_filters",
+    "restricted_viewer_same_group"
+  ],
+  "expected_scenario_names": [
+    "full_kpi",
+    "category_bar",
+    "category_region_stacked",
+    "month_trend",
+    "top_2",
+    "global_page_component_filters",
+    "restricted_viewer_same_group"
+  ],
+  "scenario_results": [
+    {
+      "scenario_name": "full_kpi",
+      "principal_name": "administrator",
+      "sample_count": 30,
+      "row_counts": [
+        1
+      ],
+      "fingerprints": [
+        "a1fb3722e2eeee1ba619cdc6687b189627984c03bb81a6a5d11a7ad5744a3ec3"
+      ],
+      "truncated_values": [
+        false
+      ],
+      "client_duration_ms": {
+        "p50": 208.135,
+        "p95": 315.903,
+        "max": 319.417
+      },
+      "server_elapsed_ms": {
+        "p50": 201.802,
+        "p95": 309.581,
+        "max": 312.762
+      },
+      "stable": true
+    },
+    {
+      "scenario_name": "category_bar",
+      "principal_name": "administrator",
+      "sample_count": 30,
+      "row_counts": [
+        3
+      ],
+      "fingerprints": [
+        "f7b14e1eb1bb83c1b56ac642616a04c31114a4ac699ba0a443727ac8dccbf64c"
+      ],
+      "truncated_values": [
+        false
+      ],
+      "client_duration_ms": {
+        "p50": 211.497,
+        "p95": 327.552,
+        "max": 344.801
+      },
+      "server_elapsed_ms": {
+        "p50": 205.022,
+        "p95": 320.781,
+        "max": 334.891
+      },
+      "stable": true
+    },
+    {
+      "scenario_name": "category_region_stacked",
+      "principal_name": "administrator",
+      "sample_count": 30,
+      "row_counts": [
+        3
+      ],
+      "fingerprints": [
+        "1952e1d87205a27fe77d2e28a0d1e81b62a1b98bb7ee8b98df1ee0f364cff173"
+      ],
+      "truncated_values": [
+        false
+      ],
+      "client_duration_ms": {
+        "p50": 501.717,
+        "p95": 637.112,
+        "max": 641.214
+      },
+      "server_elapsed_ms": {
+        "p50": 162.31,
+        "p95": 255.045,
+        "max": 289.662
+      },
+      "stable": true
+    },
+    {
+      "scenario_name": "month_trend",
+      "principal_name": "editor",
+      "sample_count": 30,
+      "row_counts": [
+        2
+      ],
+      "fingerprints": [
+        "28a4490f35ae97ae6a30aec0f4882e3cee77b5bb37f84345e1050816a33c2ff0"
+      ],
+      "truncated_values": [
+        false
+      ],
+      "client_duration_ms": {
+        "p50": 212.82,
+        "p95": 290.188,
+        "max": 329.344
+      },
+      "server_elapsed_ms": {
+        "p50": 205.369,
+        "p95": 283.033,
+        "max": 318.935
+      },
+      "stable": true
+    },
+    {
+      "scenario_name": "top_2",
+      "principal_name": "editor",
+      "sample_count": 30,
+      "row_counts": [
+        2
+      ],
+      "fingerprints": [
+        "be85b5521873431d8512d40fc471b957da45c8e1a1c132c7600895b6418939ff"
+      ],
+      "truncated_values": [
+        true
+      ],
+      "client_duration_ms": {
+        "p50": 211.893,
+        "p95": 309.826,
+        "max": 326.442
+      },
+      "server_elapsed_ms": {
+        "p50": 203.752,
+        "p95": 298.945,
+        "max": 319.687
+      },
+      "stable": true
+    },
+    {
+      "scenario_name": "global_page_component_filters",
+      "principal_name": "editor",
+      "sample_count": 30,
+      "row_counts": [
+        1
+      ],
+      "fingerprints": [
+        "bc8fa7e27ca071dab48b2dd3c417675f437881824d3dac45c6a0c70701e44b33"
+      ],
+      "truncated_values": [
+        false
+      ],
+      "client_duration_ms": {
+        "p50": 187.257,
+        "p95": 282.779,
+        "max": 291.85
+      },
+      "server_elapsed_ms": {
+        "p50": 177.253,
+        "p95": 274.966,
+        "max": 279.027
+      },
+      "stable": true
+    },
+    {
+      "scenario_name": "restricted_viewer_same_group",
+      "principal_name": "restricted_viewer",
+      "sample_count": 30,
+      "row_counts": [
+        3
+      ],
+      "fingerprints": [
+        "b7a44cc482fbb2c22fc9db511af4c4faa6b6de17695130717b67cf2b5e6b252a"
+      ],
+      "truncated_values": [
+        false
+      ],
+      "client_duration_ms": {
+        "p50": 160.659,
+        "p95": 257.562,
+        "max": 276.603
+      },
+      "server_elapsed_ms": {
+        "p50": 152.529,
+        "p95": 250.952,
+        "max": 267.454
+      },
+      "stable": true
+    }
+  ],
+  "performance_gate": {
+    "metric": "maximum_representative_scenario_client_p95_ms",
+    "threshold_ms": 5000.0,
+    "observed_ms": 637.112,
+    "representative_scenario_count": 7,
+    "evaluated_scenario_count": 7,
+    "missing_scenarios": [],
+    "passed": true
+  },
+  "rls_isolation": {
+    "unrestricted_scenario": "category_bar",
+    "restricted_scenario": "restricted_viewer_same_group",
+    "fingerprints_distinct": true,
+    "evaluated": true,
+    "unrestricted_row_counts": [
+      3
+    ],
+    "restricted_row_counts": [
+      3
+    ],
+    "expected_unrestricted_row_count": 3,
+    "expected_restricted_row_count": 3,
+    "expected_rows_match": true,
+    "expected_unrestricted_source_row_count": 100000,
+    "expected_restricted_source_row_count": 49999,
+    "restricted_subset": true,
+    "fixture_oracle": {
+      "trusted": true,
+      "status": "pass",
+      "source": "verified fixture fact_sales.csv joined to dim_product.csv and filtered to R-NORTH",
+      "expected_canonical_rows": [
+        {
+          "dimension": "Hardware",
+          "value_1": "3932021.50"
+        },
+        {
+          "dimension": "Services",
+          "value_1": "714228.57"
+        },
+        {
+          "dimension": null,
+          "value_1": "1108950.75"
+        }
+      ],
+      "actual_canonical_rows": [
+        [
+          {
+            "dimension": "Hardware",
+            "value_1": "3932021.50"
+          },
+          {
+            "dimension": "Services",
+            "value_1": "714228.57"
+          },
+          {
+            "dimension": null,
+            "value_1": "1108950.75"
+          }
+        ]
+      ],
+      "expected_canonical_row_fingerprint": "5da2b632646bae3868c01968bb994704332208c027ceecebbdb458b7714390e3",
+      "actual_canonical_row_fingerprints": [
+        "5da2b632646bae3868c01968bb994704332208c027ceecebbdb458b7714390e3"
+      ],
+      "canonical_rows_match": true
+    },
+    "isolated": true
+  },
+  "rounds": [
+    {
+      "round_index": 0,
+      "expected_workers": 1,
+      "completed_workers": [
+        0
+      ],
+      "failed_workers": [],
+      "sample_indices": [
+        0
+      ],
+      "complete": true
+    },
+    {
+      "round_index": 1,
+      "expected_workers": 1,
+      "completed_workers": [
+        0
+      ],
+      "failed_workers": [],
+      "sample_indices": [
+        1
+      ],
+      "complete": true
+    },
+    {
+      "round_index": 2,
+      "expected_workers": 1,
+      "completed_workers": [
+        0
+      ],
+      "failed_workers": [],
+      "sample_indices": [
+        2
+      ],
+      "complete": true
+    },
+    {
+      "round_index": 3,
+      "expected_workers": 1,
+      "completed_workers": [
+        0
+      ],
+      "failed_workers": [],
+      "sample_indices": [
+        3
+      ],
+      "complete": true
+    },
+    {
+      "round_index": 4,
+      "expected_workers": 1,
+      "completed_workers": [
+        0
+      ],
+      "failed_workers": [],
+      "sample_indices": [
+        4
+      ],
+      "complete": true
+    },
+    {
+      "round_index": 5,
+      "expected_workers": 1,
+      "completed_workers": [
+        0
+      ],
+      "failed_workers": [],
+      "sample_indices": [
+        5
+      ],
+      "complete": true
+    },
+    {
+      "round_index": 6,
+      "expected_workers": 1,
+      "completed_workers": [
+        0
+      ],
+      "failed_workers": [],
+      "sample_indices": [
+        6
+      ],
+      "complete": true
+    },
+    {
+      "round_index": 7,
+      "expected_workers": 1,
+      "completed_workers": [
+        0
+      ],
+      "failed_workers": [],
+      "sample_indices": [
+        7
+      ],
+      "complete": true
+    },
+    {
+      "round_index": 8,
+      "expected_workers": 1,
+      "completed_workers": [
+        0
+      ],
+      "failed_workers": [],
+      "sample_indices": [
+        8
+      ],
+      "complete": true
+    },
+    {
+      "round_index": 9,
+      "expected_workers": 1,
+      "completed_workers": [
+        0
+      ],
+      "failed_workers": [],
+      "sample_indices": [
+        9
+      ],
+      "complete": true
+    },
+    {
+      "round_index": 10,
+      "expected_workers": 1,
+      "completed_workers": [
+        0
+      ],
+      "failed_workers": [],
+      "sample_indices": [
+        10
+      ],
+      "complete": true
+    },
+    {
+      "round_index": 11,
+      "expected_workers": 1,
+      "completed_workers": [
+        0
+      ],
+      "failed_workers": [],
+      "sample_indices": [
+        11
+      ],
+      "complete": true
+    },
+    {
+      "round_index": 12,
+      "expected_workers": 1,
+      "completed_workers": [
+        0
+      ],
+      "failed_workers": [],
+      "sample_indices": [
+        12
+      ],
+      "complete": true
+    },
+    {
+      "round_index": 13,
+      "expected_workers": 1,
+      "completed_workers": [
+        0
+      ],
+      "failed_workers": [],
+      "sample_indices": [
+        13
+      ],
+      "complete": true
+    },
+    {
+      "round_index": 14,
+      "expected_workers": 1,
+      "completed_workers": [
+        0
+      ],
+      "failed_workers": [],
+      "sample_indices": [
+        14
+      ],
+      "complete": true
+    },
+    {
+      "round_index": 15,
+      "expected_workers": 1,
+      "completed_workers": [
+        0
+      ],
+      "failed_workers": [],
+      "sample_indices": [
+        15
+      ],
+      "complete": true
+    },
+    {
+      "round_index": 16,
+      "expected_workers": 1,
+      "completed_workers": [
+        0
+      ],
+      "failed_workers": [],
+      "sample_indices": [
+        16
+      ],
+      "complete": true
+    },
+    {
+      "round_index": 17,
+      "expected_workers": 1,
+      "completed_workers": [
+        0
+      ],
+      "failed_workers": [],
+      "sample_indices": [
+        17
+      ],
+      "complete": true
+    },
+    {
+      "round_index": 18,
+      "expected_workers": 1,
+      "completed_workers": [
+        0
+      ],
+      "failed_workers": [],
+      "sample_indices": [
+        18
+      ],
+      "complete": true
+    },
+    {
+      "round_index": 19,
+      "expected_workers": 1,
+      "completed_workers": [
+        0
+      ],
+      "failed_workers": [],
+      "sample_indices": [
+        19
+      ],
+      "complete": true
+    },
+    {
+      "round_index": 20,
+      "expected_workers": 1,
+      "completed_workers": [
+        0
+      ],
+      "failed_workers": [],
+      "sample_indices": [
+        20
+      ],
+      "complete": true
+    },
+    {
+      "round_index": 21,
+      "expected_workers": 1,
+      "completed_workers": [
+        0
+      ],
+      "failed_workers": [],
+      "sample_indices": [
+        21
+      ],
+      "complete": true
+    },
+    {
+      "round_index": 22,
+      "expected_workers": 1,
+      "completed_workers": [
+        0
+      ],
+      "failed_workers": [],
+      "sample_indices": [
+        22
+      ],
+      "complete": true
+    },
+    {
+      "round_index": 23,
+      "expected_workers": 1,
+      "completed_workers": [
+        0
+      ],
+      "failed_workers": [],
+      "sample_indices": [
+        23
+      ],
+      "complete": true
+    },
+    {
+      "round_index": 24,
+      "expected_workers": 1,
+      "completed_workers": [
+        0
+      ],
+      "failed_workers": [],
+      "sample_indices": [
+        24
+      ],
+      "complete": true
+    },
+    {
+      "round_index": 25,
+      "expected_workers": 1,
+      "completed_workers": [
+        0
+      ],
+      "failed_workers": [],
+      "sample_indices": [
+        25
+      ],
+      "complete": true
+    },
+    {
+      "round_index": 26,
+      "expected_workers": 1,
+      "completed_workers": [
+        0
+      ],
+      "failed_workers": [],
+      "sample_indices": [
+        26
+      ],
+      "complete": true
+    },
+    {
+      "round_index": 27,
+      "expected_workers": 1,
+      "completed_workers": [
+        0
+      ],
+      "failed_workers": [],
+      "sample_indices": [
+        27
+      ],
+      "complete": true
+    },
+    {
+      "round_index": 28,
+      "expected_workers": 1,
+      "completed_workers": [
+        0
+      ],
+      "failed_workers": [],
+      "sample_indices": [
+        28
+      ],
+      "complete": true
+    },
+    {
+      "round_index": 29,
+      "expected_workers": 1,
+      "completed_workers": [
+        0
+      ],
+      "failed_workers": [],
+      "sample_indices": [
+        29
+      ],
+      "complete": true
+    }
+  ],
+  "failures": [],
+  "samples": [
+    {
+      "round_index": 0,
+      "worker_index": 0,
+      "sample_index": 0,
+      "duration_ms": 1510.668299990357,
+      "truncated_results": 1,
+      "results": [
+        {
+          "scenario_name": "full_kpi",
+          "principal_name": "administrator",
+          "row_count": 1,
+          "fingerprint": "a1fb3722e2eeee1ba619cdc6687b189627984c03bb81a6a5d11a7ad5744a3ec3",
+          "truncated": false,
+          "canonical_rows": [],
+          "canonical_row_fingerprint": null,
+          "client_duration_ms": 169.678,
+          "elapsed_ms": 162.837
+        },
+        {
+          "scenario_name": "category_bar",
+          "principal_name": "administrator",
+          "row_count": 3,
+          "fingerprint": "f7b14e1eb1bb83c1b56ac642616a04c31114a4ac699ba0a443727ac8dccbf64c",
+          "truncated": false,
+          "canonical_rows": [],
+          "canonical_row_fingerprint": null,
+          "client_duration_ms": 185.141,
+          "elapsed_ms": 178.588
+        },
+        {
+          "scenario_name": "category_region_stacked",
+          "principal_name": "administrator",
+          "row_count": 3,
+          "fingerprint": "1952e1d87205a27fe77d2e28a0d1e81b62a1b98bb7ee8b98df1ee0f364cff173",
+          "truncated": false,
+          "canonical_rows": [],
+          "canonical_row_fingerprint": null,
+          "client_duration_ms": 446.103,
+          "elapsed_ms": 150.965
+        },
+        {
+          "scenario_name": "month_trend",
+          "principal_name": "editor",
+          "row_count": 2,
+          "fingerprint": "28a4490f35ae97ae6a30aec0f4882e3cee77b5bb37f84345e1050816a33c2ff0",
+          "truncated": false,
+          "canonical_rows": [],
+          "canonical_row_fingerprint": null,
+          "client_duration_ms": 183.858,
+          "elapsed_ms": 175.832
+        },
+        {
+          "scenario_name": "top_2",
+          "principal_name": "editor",
+          "row_count": 2,
+          "fingerprint": "be85b5521873431d8512d40fc471b957da45c8e1a1c132c7600895b6418939ff",
+          "truncated": true,
+          "canonical_rows": [],
+          "canonical_row_fingerprint": null,
+          "client_duration_ms": 181.68,
+          "elapsed_ms": 174.579
+        },
+        {
+          "scenario_name": "global_page_component_filters",
+          "principal_name": "editor",
+          "row_count": 1,
+          "fingerprint": "bc8fa7e27ca071dab48b2dd3c417675f437881824d3dac45c6a0c70701e44b33",
+          "truncated": false,
+          "canonical_rows": [],
+          "canonical_row_fingerprint": null,
+          "client_duration_ms": 190.73,
+          "elapsed_ms": 182.992
+        },
+        {
+          "scenario_name": "restricted_viewer_same_group",
+          "principal_name": "restricted_viewer",
+          "row_count": 3,
+          "fingerprint": "b7a44cc482fbb2c22fc9db511af4c4faa6b6de17695130717b67cf2b5e6b252a",
+          "truncated": false,
+          "canonical_rows": [
+            {
+              "dimension": "Hardware",
+              "value_1": "3932021.50"
+            },
+            {
+              "dimension": "Services",
+              "value_1": "714228.57"
+            },
+            {
+              "dimension": null,
+              "value_1": "1108950.75"
+            }
+          ],
+          "canonical_row_fingerprint": "5da2b632646bae3868c01968bb994704332208c027ceecebbdb458b7714390e3",
+          "client_duration_ms": 152.224,
+          "elapsed_ms": 143.771
+        }
+      ]
+    },
+    {
+      "round_index": 1,
+      "worker_index": 0,
+      "sample_index": 1,
+      "duration_ms": 1481.2098999973387,
+      "truncated_results": 1,
+      "results": [
+        {
+          "scenario_name": "full_kpi",
+          "principal_name": "administrator",
+          "row_count": 1,
+          "fingerprint": "a1fb3722e2eeee1ba619cdc6687b189627984c03bb81a6a5d11a7ad5744a3ec3",
+          "truncated": false,
+          "canonical_rows": [],
+          "canonical_row_fingerprint": null,
+          "client_duration_ms": 166.653,
+          "elapsed_ms": 159.745
+        },
+        {
+          "scenario_name": "category_bar",
+          "principal_name": "administrator",
+          "row_count": 3,
+          "fingerprint": "f7b14e1eb1bb83c1b56ac642616a04c31114a4ac699ba0a443727ac8dccbf64c",
+          "truncated": false,
+          "canonical_rows": [],
+          "canonical_row_fingerprint": null,
+          "client_duration_ms": 168.667,
+          "elapsed_ms": 162.139
+        },
+        {
+          "scenario_name": "category_region_stacked",
+          "principal_name": "administrator",
+          "row_count": 3,
+          "fingerprint": "1952e1d87205a27fe77d2e28a0d1e81b62a1b98bb7ee8b98df1ee0f364cff173",
+          "truncated": false,
+          "canonical_rows": [],
+          "canonical_row_fingerprint": null,
+          "client_duration_ms": 452.326,
+          "elapsed_ms": 152.673
+        },
+        {
+          "scenario_name": "month_trend",
+          "principal_name": "editor",
+          "row_count": 2,
+          "fingerprint": "28a4490f35ae97ae6a30aec0f4882e3cee77b5bb37f84345e1050816a33c2ff0",
+          "truncated": false,
+          "canonical_rows": [],
+          "canonical_row_fingerprint": null,
+          "client_duration_ms": 183.697,
+          "elapsed_ms": 175.684
+        },
+        {
+          "scenario_name": "top_2",
+          "principal_name": "editor",
+          "row_count": 2,
+          "fingerprint": "be85b5521873431d8512d40fc471b957da45c8e1a1c132c7600895b6418939ff",
+          "truncated": true,
+          "canonical_rows": [],
+          "canonical_row_fingerprint": null,
+          "client_duration_ms": 165.504,
+          "elapsed_ms": 158.815
+        },
+        {
+          "scenario_name": "global_page_component_filters",
+          "principal_name": "editor",
+          "row_count": 1,
+          "fingerprint": "bc8fa7e27ca071dab48b2dd3c417675f437881824d3dac45c6a0c70701e44b33",
+          "truncated": false,
+          "canonical_rows": [],
+          "canonical_row_fingerprint": null,
+          "client_duration_ms": 196.313,
+          "elapsed_ms": 187.976
+        },
+        {
+          "scenario_name": "restricted_viewer_same_group",
+          "principal_name": "restricted_viewer",
+          "row_count": 3,
+          "fingerprint": "b7a44cc482fbb2c22fc9db511af4c4faa6b6de17695130717b67cf2b5e6b252a",
+          "truncated": false,
+          "canonical_rows": [
+            {
+              "dimension": "Hardware",
+              "value_1": "3932021.50"
+            },
+            {
+              "dimension": "Services",
+              "value_1": "714228.57"
+            },
+            {
+              "dimension": null,
+              "value_1": "1108950.75"
+            }
+          ],
+          "canonical_row_fingerprint": "5da2b632646bae3868c01968bb994704332208c027ceecebbdb458b7714390e3",
+          "client_duration_ms": 146.807,
+          "elapsed_ms": 138.677
+        }
+      ]
+    },
+    {
+      "round_index": 2,
+      "worker_index": 0,
+      "sample_index": 2,
+      "duration_ms": 1583.718099995167,
+      "truncated_results": 1,
+      "results": [
+        {
+          "scenario_name": "full_kpi",
+          "principal_name": "administrator",
+          "row_count": 1,
+          "fingerprint": "a1fb3722e2eeee1ba619cdc6687b189627984c03bb81a6a5d11a7ad5744a3ec3",
+          "truncated": false,
+          "canonical_rows": [],
+          "canonical_row_fingerprint": null,
+          "client_duration_ms": 165.941,
+          "elapsed_ms": 159.312
+        },
+        {
+          "scenario_name": "category_bar",
+          "principal_name": "administrator",
+          "row_count": 3,
+          "fingerprint": "f7b14e1eb1bb83c1b56ac642616a04c31114a4ac699ba0a443727ac8dccbf64c",
+          "truncated": false,
+          "canonical_rows": [],
+          "canonical_row_fingerprint": null,
+          "client_duration_ms": 188.754,
+          "elapsed_ms": 181.828
+        },
+        {
+          "scenario_name": "category_region_stacked",
+          "principal_name": "administrator",
+          "row_count": 3,
+          "fingerprint": "1952e1d87205a27fe77d2e28a0d1e81b62a1b98bb7ee8b98df1ee0f364cff173",
+          "truncated": false,
+          "canonical_rows": [],
+          "canonical_row_fingerprint": null,
+          "client_duration_ms": 494.715,
+          "elapsed_ms": 185.714
+        },
+        {
+          "scenario_name": "month_trend",
+          "principal_name": "editor",
+          "row_count": 2,
+          "fingerprint": "28a4490f35ae97ae6a30aec0f4882e3cee77b5bb37f84345e1050816a33c2ff0",
+          "truncated": false,
+          "canonical_rows": [],
+          "canonical_row_fingerprint": null,
+          "client_duration_ms": 228.571,
+          "elapsed_ms": 220.985
+        },
+        {
+          "scenario_name": "top_2",
+          "principal_name": "editor",
+          "row_count": 2,
+          "fingerprint": "be85b5521873431d8512d40fc471b957da45c8e1a1c132c7600895b6418939ff",
+          "truncated": true,
+          "canonical_rows": [],
+          "canonical_row_fingerprint": null,
+          "client_duration_ms": 168.999,
+          "elapsed_ms": 161.225
+        },
+        {
+          "scenario_name": "global_page_component_filters",
+          "principal_name": "editor",
+          "row_count": 1,
+          "fingerprint": "bc8fa7e27ca071dab48b2dd3c417675f437881824d3dac45c6a0c70701e44b33",
+          "truncated": false,
+          "canonical_rows": [],
+          "canonical_row_fingerprint": null,
+          "client_duration_ms": 194.777,
+          "elapsed_ms": 185.951
+        },
+        {
+          "scenario_name": "restricted_viewer_same_group",
+          "principal_name": "restricted_viewer",
+          "row_count": 3,
+          "fingerprint": "b7a44cc482fbb2c22fc9db511af4c4faa6b6de17695130717b67cf2b5e6b252a",
+          "truncated": false,
+          "canonical_rows": [
+            {
+              "dimension": "Hardware",
+              "value_1": "3932021.50"
+            },
+            {
+              "dimension": "Services",
+              "value_1": "714228.57"
+            },
+            {
+              "dimension": null,
+              "value_1": "1108950.75"
+            }
+          ],
+          "canonical_row_fingerprint": "5da2b632646bae3868c01968bb994704332208c027ceecebbdb458b7714390e3",
+          "client_duration_ms": 140.644,
+          "elapsed_ms": 132.648
+        }
+      ]
+    },
+    {
+      "round_index": 3,
+      "worker_index": 0,
+      "sample_index": 3,
+      "duration_ms": 1470.8116999972844,
+      "truncated_results": 1,
+      "results": [
+        {
+          "scenario_name": "full_kpi",
+          "principal_name": "administrator",
+          "row_count": 1,
+          "fingerprint": "a1fb3722e2eeee1ba619cdc6687b189627984c03bb81a6a5d11a7ad5744a3ec3",
+          "truncated": false,
+          "canonical_rows": [],
+          "canonical_row_fingerprint": null,
+          "client_duration_ms": 161.881,
+          "elapsed_ms": 155.754
+        },
+        {
+          "scenario_name": "category_bar",
+          "principal_name": "administrator",
+          "row_count": 3,
+          "fingerprint": "f7b14e1eb1bb83c1b56ac642616a04c31114a4ac699ba0a443727ac8dccbf64c",
+          "truncated": false,
+          "canonical_rows": [],
+          "canonical_row_fingerprint": null,
+          "client_duration_ms": 169.658,
+          "elapsed_ms": 162.929
+        },
+        {
+          "scenario_name": "category_region_stacked",
+          "principal_name": "administrator",
+          "row_count": 3,
+          "fingerprint": "1952e1d87205a27fe77d2e28a0d1e81b62a1b98bb7ee8b98df1ee0f364cff173",
+          "truncated": false,
+          "canonical_rows": [],
+          "canonical_row_fingerprint": null,
+          "client_duration_ms": 453.229,
+          "elapsed_ms": 152.104
+        },
+        {
+          "scenario_name": "month_trend",
+          "principal_name": "editor",
+          "row_count": 2,
+          "fingerprint": "28a4490f35ae97ae6a30aec0f4882e3cee77b5bb37f84345e1050816a33c2ff0",
+          "truncated": false,
+          "canonical_rows": [],
+          "canonical_row_fingerprint": null,
+          "client_duration_ms": 182.596,
+          "elapsed_ms": 174.699
+        },
+        {
+          "scenario_name": "top_2",
+          "principal_name": "editor",
+          "row_count": 2,
+          "fingerprint": "be85b5521873431d8512d40fc471b957da45c8e1a1c132c7600895b6418939ff",
+          "truncated": true,
+          "canonical_rows": [],
+          "canonical_row_fingerprint": null,
+          "client_duration_ms": 178.092,
+          "elapsed_ms": 171.382
+        },
+        {
+          "scenario_name": "global_page_component_filters",
+          "principal_name": "editor",
+          "row_count": 1,
+          "fingerprint": "bc8fa7e27ca071dab48b2dd3c417675f437881824d3dac45c6a0c70701e44b33",
+          "truncated": false,
+          "canonical_rows": [],
+          "canonical_row_fingerprint": null,
+          "client_duration_ms": 188.193,
+          "elapsed_ms": 180.342
+        },
+        {
+          "scenario_name": "restricted_viewer_same_group",
+          "principal_name": "restricted_viewer",
+          "row_count": 3,
+          "fingerprint": "b7a44cc482fbb2c22fc9db511af4c4faa6b6de17695130717b67cf2b5e6b252a",
+          "truncated": false,
+          "canonical_rows": [
+            {
+              "dimension": "Hardware",
+              "value_1": "3932021.50"
+            },
+            {
+              "dimension": "Services",
+              "value_1": "714228.57"
+            },
+            {
+              "dimension": null,
+              "value_1": "1108950.75"
+            }
+          ],
+          "canonical_row_fingerprint": "5da2b632646bae3868c01968bb994704332208c027ceecebbdb458b7714390e3",
+          "client_duration_ms": 135.793,
+          "elapsed_ms": 128.542
+        }
+      ]
+    },
+    {
+      "round_index": 4,
+      "worker_index": 0,
+      "sample_index": 4,
+      "duration_ms": 1541.8363000062527,
+      "truncated_results": 1,
+      "results": [
+        {
+          "scenario_name": "full_kpi",
+          "principal_name": "administrator",
+          "row_count": 1,
+          "fingerprint": "a1fb3722e2eeee1ba619cdc6687b189627984c03bb81a6a5d11a7ad5744a3ec3",
+          "truncated": false,
+          "canonical_rows": [],
+          "canonical_row_fingerprint": null,
+          "client_duration_ms": 181.948,
+          "elapsed_ms": 173.704
+        },
+        {
+          "scenario_name": "category_bar",
+          "principal_name": "administrator",
+          "row_count": 3,
+          "fingerprint": "f7b14e1eb1bb83c1b56ac642616a04c31114a4ac699ba0a443727ac8dccbf64c",
+          "truncated": false,
+          "canonical_rows": [],
+          "canonical_row_fingerprint": null,
+          "client_duration_ms": 168.831,
+          "elapsed_ms": 162.598
+        },
+        {
+          "scenario_name": "category_region_stacked",
+          "principal_name": "administrator",
+          "row_count": 3,
+          "fingerprint": "1952e1d87205a27fe77d2e28a0d1e81b62a1b98bb7ee8b98df1ee0f364cff173",
+          "truncated": false,
+          "canonical_rows": [],
+          "canonical_row_fingerprint": null,
+          "client_duration_ms": 467.08,
+          "elapsed_ms": 153.863
+        },
+        {
+          "scenario_name": "month_trend",
+          "principal_name": "editor",
+          "row_count": 2,
+          "fingerprint": "28a4490f35ae97ae6a30aec0f4882e3cee77b5bb37f84345e1050816a33c2ff0",
+          "truncated": false,
+          "canonical_rows": [],
+          "canonical_row_fingerprint": null,
+          "client_duration_ms": 212.82,
+          "elapsed_ms": 202.228
+        },
+        {
+          "scenario_name": "top_2",
+          "principal_name": "editor",
+          "row_count": 2,
+          "fingerprint": "be85b5521873431d8512d40fc471b957da45c8e1a1c132c7600895b6418939ff",
+          "truncated": true,
+          "canonical_rows": [],
+          "canonical_row_fingerprint": null,
+          "client_duration_ms": 170.204,
+          "elapsed_ms": 163.355
+        },
+        {
+          "scenario_name": "global_page_component_filters",
+          "principal_name": "editor",
+          "row_count": 1,
+          "fingerprint": "bc8fa7e27ca071dab48b2dd3c417675f437881824d3dac45c6a0c70701e44b33",
+          "truncated": false,
+          "canonical_rows": [],
+          "canonical_row_fingerprint": null,
+          "client_duration_ms": 204.671,
+          "elapsed_ms": 197.091
+        },
+        {
+          "scenario_name": "restricted_viewer_same_group",
+          "principal_name": "restricted_viewer",
+          "row_count": 3,
+          "fingerprint": "b7a44cc482fbb2c22fc9db511af4c4faa6b6de17695130717b67cf2b5e6b252a",
+          "truncated": false,
+          "canonical_rows": [
+            {
+              "dimension": "Hardware",
+              "value_1": "3932021.50"
+            },
+            {
+              "dimension": "Services",
+              "value_1": "714228.57"
+            },
+            {
+              "dimension": null,
+              "value_1": "1108950.75"
+            }
+          ],
+          "canonical_row_fingerprint": "5da2b632646bae3868c01968bb994704332208c027ceecebbdb458b7714390e3",
+          "client_duration_ms": 134.88,
+          "elapsed_ms": 128.337
+        }
+      ]
+    },
+    {
+      "round_index": 5,
+      "worker_index": 0,
+      "sample_index": 5,
+      "duration_ms": 1646.7490999930305,
+      "truncated_results": 1,
+      "results": [
+        {
+          "scenario_name": "full_kpi",
+          "principal_name": "administrator",
+          "row_count": 1,
+          "fingerprint": "a1fb3722e2eeee1ba619cdc6687b189627984c03bb81a6a5d11a7ad5744a3ec3",
+          "truncated": false,
+          "canonical_rows": [],
+          "canonical_row_fingerprint": null,
+          "client_duration_ms": 162.967,
+          "elapsed_ms": 155.728
+        },
+        {
+          "scenario_name": "category_bar",
+          "principal_name": "administrator",
+          "row_count": 3,
+          "fingerprint": "f7b14e1eb1bb83c1b56ac642616a04c31114a4ac699ba0a443727ac8dccbf64c",
+          "truncated": false,
+          "canonical_rows": [],
+          "canonical_row_fingerprint": null,
+          "client_duration_ms": 168.692,
+          "elapsed_ms": 162.482
+        },
+        {
+          "scenario_name": "category_region_stacked",
+          "principal_name": "administrator",
+          "row_count": 3,
+          "fingerprint": "1952e1d87205a27fe77d2e28a0d1e81b62a1b98bb7ee8b98df1ee0f364cff173",
+          "truncated": false,
+          "canonical_rows": [],
+          "canonical_row_fingerprint": null,
+          "client_duration_ms": 506.089,
+          "elapsed_ms": 186.179
+        },
+        {
+          "scenario_name": "month_trend",
+          "principal_name": "editor",
+          "row_count": 2,
+          "fingerprint": "28a4490f35ae97ae6a30aec0f4882e3cee77b5bb37f84345e1050816a33c2ff0",
+          "truncated": false,
+          "canonical_rows": [],
+          "canonical_row_fingerprint": null,
+          "client_duration_ms": 226.028,
+          "elapsed_ms": 213.9
+        },
+        {
+          "scenario_name": "top_2",
+          "principal_name": "editor",
+          "row_count": 2,
+          "fingerprint": "be85b5521873431d8512d40fc471b957da45c8e1a1c132c7600895b6418939ff",
+          "truncated": true,
+          "canonical_rows": [],
+          "canonical_row_fingerprint": null,
+          "client_duration_ms": 207.522,
+          "elapsed_ms": 195.969
+        },
+        {
+          "scenario_name": "global_page_component_filters",
+          "principal_name": "editor",
+          "row_count": 1,
+          "fingerprint": "bc8fa7e27ca071dab48b2dd3c417675f437881824d3dac45c6a0c70701e44b33",
+          "truncated": false,
+          "canonical_rows": [],
+          "canonical_row_fingerprint": null,
+          "client_duration_ms": 212.855,
+          "elapsed_ms": 201.792
+        },
+        {
+          "scenario_name": "restricted_viewer_same_group",
+          "principal_name": "restricted_viewer",
+          "row_count": 3,
+          "fingerprint": "b7a44cc482fbb2c22fc9db511af4c4faa6b6de17695130717b67cf2b5e6b252a",
+          "truncated": false,
+          "canonical_rows": [
+            {
+              "dimension": "Hardware",
+              "value_1": "3932021.50"
+            },
+            {
+              "dimension": "Services",
+              "value_1": "714228.57"
+            },
+            {
+              "dimension": null,
+              "value_1": "1108950.75"
+            }
+          ],
+          "canonical_row_fingerprint": "5da2b632646bae3868c01968bb994704332208c027ceecebbdb458b7714390e3",
+          "client_duration_ms": 160.659,
+          "elapsed_ms": 152.529
+        }
+      ]
+    },
+    {
+      "round_index": 6,
+      "worker_index": 0,
+      "sample_index": 6,
+      "duration_ms": 1741.3651000097161,
+      "truncated_results": 1,
+      "results": [
+        {
+          "scenario_name": "full_kpi",
+          "principal_name": "administrator",
+          "row_count": 1,
+          "fingerprint": "a1fb3722e2eeee1ba619cdc6687b189627984c03bb81a6a5d11a7ad5744a3ec3",
+          "truncated": false,
+          "canonical_rows": [],
+          "canonical_row_fingerprint": null,
+          "client_duration_ms": 192.359,
+          "elapsed_ms": 181.909
+        },
+        {
+          "scenario_name": "category_bar",
+          "principal_name": "administrator",
+          "row_count": 3,
+          "fingerprint": "f7b14e1eb1bb83c1b56ac642616a04c31114a4ac699ba0a443727ac8dccbf64c",
+          "truncated": false,
+          "canonical_rows": [],
+          "canonical_row_fingerprint": null,
+          "client_duration_ms": 197.523,
+          "elapsed_ms": 189.775
+        },
+        {
+          "scenario_name": "category_region_stacked",
+          "principal_name": "administrator",
+          "row_count": 3,
+          "fingerprint": "1952e1d87205a27fe77d2e28a0d1e81b62a1b98bb7ee8b98df1ee0f364cff173",
+          "truncated": false,
+          "canonical_rows": [],
+          "canonical_row_fingerprint": null,
+          "client_duration_ms": 544.178,
+          "elapsed_ms": 187.65
+        },
+        {
+          "scenario_name": "month_trend",
+          "principal_name": "editor",
+          "row_count": 2,
+          "fingerprint": "28a4490f35ae97ae6a30aec0f4882e3cee77b5bb37f84345e1050816a33c2ff0",
+          "truncated": false,
+          "canonical_rows": [],
+          "canonical_row_fingerprint": null,
+          "client_duration_ms": 210.095,
+          "elapsed_ms": 198.567
+        },
+        {
+          "scenario_name": "top_2",
+          "principal_name": "editor",
+          "row_count": 2,
+          "fingerprint": "be85b5521873431d8512d40fc471b957da45c8e1a1c132c7600895b6418939ff",
+          "truncated": true,
+          "canonical_rows": [],
+          "canonical_row_fingerprint": null,
+          "client_duration_ms": 205.414,
+          "elapsed_ms": 193.029
+        },
+        {
+          "scenario_name": "global_page_component_filters",
+          "principal_name": "editor",
+          "row_count": 1,
+          "fingerprint": "bc8fa7e27ca071dab48b2dd3c417675f437881824d3dac45c6a0c70701e44b33",
+          "truncated": false,
+          "canonical_rows": [],
+          "canonical_row_fingerprint": null,
+          "client_duration_ms": 228.798,
+          "elapsed_ms": 213.641
+        },
+        {
+          "scenario_name": "restricted_viewer_same_group",
+          "principal_name": "restricted_viewer",
+          "row_count": 3,
+          "fingerprint": "b7a44cc482fbb2c22fc9db511af4c4faa6b6de17695130717b67cf2b5e6b252a",
+          "truncated": false,
+          "canonical_rows": [
+            {
+              "dimension": "Hardware",
+              "value_1": "3932021.50"
+            },
+            {
+              "dimension": "Services",
+              "value_1": "714228.57"
+            },
+            {
+              "dimension": null,
+              "value_1": "1108950.75"
+            }
+          ],
+          "canonical_row_fingerprint": "5da2b632646bae3868c01968bb994704332208c027ceecebbdb458b7714390e3",
+          "client_duration_ms": 161.446,
+          "elapsed_ms": 151.897
+        }
+      ]
+    },
+    {
+      "round_index": 7,
+      "worker_index": 0,
+      "sample_index": 7,
+      "duration_ms": 1584.295499997097,
+      "truncated_results": 1,
+      "results": [
+        {
+          "scenario_name": "full_kpi",
+          "principal_name": "administrator",
+          "row_count": 1,
+          "fingerprint": "a1fb3722e2eeee1ba619cdc6687b189627984c03bb81a6a5d11a7ad5744a3ec3",
+          "truncated": false,
+          "canonical_rows": [],
+          "canonical_row_fingerprint": null,
+          "client_duration_ms": 202.759,
+          "elapsed_ms": 193.969
+        },
+        {
+          "scenario_name": "category_bar",
+          "principal_name": "administrator",
+          "row_count": 3,
+          "fingerprint": "f7b14e1eb1bb83c1b56ac642616a04c31114a4ac699ba0a443727ac8dccbf64c",
+          "truncated": false,
+          "canonical_rows": [],
+          "canonical_row_fingerprint": null,
+          "client_duration_ms": 192.985,
+          "elapsed_ms": 182.84
+        },
+        {
+          "scenario_name": "category_region_stacked",
+          "principal_name": "administrator",
+          "row_count": 3,
+          "fingerprint": "1952e1d87205a27fe77d2e28a0d1e81b62a1b98bb7ee8b98df1ee0f364cff173",
+          "truncated": false,
+          "canonical_rows": [],
+          "canonical_row_fingerprint": null,
+          "client_duration_ms": 497.201,
+          "elapsed_ms": 177.686
+        },
+        {
+          "scenario_name": "month_trend",
+          "principal_name": "editor",
+          "row_count": 2,
+          "fingerprint": "28a4490f35ae97ae6a30aec0f4882e3cee77b5bb37f84345e1050816a33c2ff0",
+          "truncated": false,
+          "canonical_rows": [],
+          "canonical_row_fingerprint": null,
+          "client_duration_ms": 191.669,
+          "elapsed_ms": 181.919
+        },
+        {
+          "scenario_name": "top_2",
+          "principal_name": "editor",
+          "row_count": 2,
+          "fingerprint": "be85b5521873431d8512d40fc471b957da45c8e1a1c132c7600895b6418939ff",
+          "truncated": true,
+          "canonical_rows": [],
+          "canonical_row_fingerprint": null,
+          "client_duration_ms": 172.09,
+          "elapsed_ms": 163.466
+        },
+        {
+          "scenario_name": "global_page_component_filters",
+          "principal_name": "editor",
+          "row_count": 1,
+          "fingerprint": "bc8fa7e27ca071dab48b2dd3c417675f437881824d3dac45c6a0c70701e44b33",
+          "truncated": false,
+          "canonical_rows": [],
+          "canonical_row_fingerprint": null,
+          "client_duration_ms": 188.588,
+          "elapsed_ms": 179.888
+        },
+        {
+          "scenario_name": "restricted_viewer_same_group",
+          "principal_name": "restricted_viewer",
+          "row_count": 3,
+          "fingerprint": "b7a44cc482fbb2c22fc9db511af4c4faa6b6de17695130717b67cf2b5e6b252a",
+          "truncated": false,
+          "canonical_rows": [
+            {
+              "dimension": "Hardware",
+              "value_1": "3932021.50"
+            },
+            {
+              "dimension": "Services",
+              "value_1": "714228.57"
+            },
+            {
+              "dimension": null,
+              "value_1": "1108950.75"
+            }
+          ],
+          "canonical_row_fingerprint": "5da2b632646bae3868c01968bb994704332208c027ceecebbdb458b7714390e3",
+          "client_duration_ms": 137.778,
+          "elapsed_ms": 130.276
+        }
+      ]
+    },
+    {
+      "round_index": 8,
+      "worker_index": 0,
+      "sample_index": 8,
+      "duration_ms": 1511.6737999924226,
+      "truncated_results": 1,
+      "results": [
+        {
+          "scenario_name": "full_kpi",
+          "principal_name": "administrator",
+          "row_count": 1,
+          "fingerprint": "a1fb3722e2eeee1ba619cdc6687b189627984c03bb81a6a5d11a7ad5744a3ec3",
+          "truncated": false,
+          "canonical_rows": [],
+          "canonical_row_fingerprint": null,
+          "client_duration_ms": 185.205,
+          "elapsed_ms": 178.494
+        },
+        {
+          "scenario_name": "category_bar",
+          "principal_name": "administrator",
+          "row_count": 3,
+          "fingerprint": "f7b14e1eb1bb83c1b56ac642616a04c31114a4ac699ba0a443727ac8dccbf64c",
+          "truncated": false,
+          "canonical_rows": [],
+          "canonical_row_fingerprint": null,
+          "client_duration_ms": 181.483,
+          "elapsed_ms": 174.69
+        },
+        {
+          "scenario_name": "category_region_stacked",
+          "principal_name": "administrator",
+          "row_count": 3,
+          "fingerprint": "1952e1d87205a27fe77d2e28a0d1e81b62a1b98bb7ee8b98df1ee0f364cff173",
+          "truncated": false,
+          "canonical_rows": [],
+          "canonical_row_fingerprint": null,
+          "client_duration_ms": 452.982,
+          "elapsed_ms": 157.628
+        },
+        {
+          "scenario_name": "month_trend",
+          "principal_name": "editor",
+          "row_count": 2,
+          "fingerprint": "28a4490f35ae97ae6a30aec0f4882e3cee77b5bb37f84345e1050816a33c2ff0",
+          "truncated": false,
+          "canonical_rows": [],
+          "canonical_row_fingerprint": null,
+          "client_duration_ms": 190.328,
+          "elapsed_ms": 180.591
+        },
+        {
+          "scenario_name": "top_2",
+          "principal_name": "editor",
+          "row_count": 2,
+          "fingerprint": "be85b5521873431d8512d40fc471b957da45c8e1a1c132c7600895b6418939ff",
+          "truncated": true,
+          "canonical_rows": [],
+          "canonical_row_fingerprint": null,
+          "client_duration_ms": 170.101,
+          "elapsed_ms": 162.764
+        },
+        {
+          "scenario_name": "global_page_component_filters",
+          "principal_name": "editor",
+          "row_count": 1,
+          "fingerprint": "bc8fa7e27ca071dab48b2dd3c417675f437881824d3dac45c6a0c70701e44b33",
+          "truncated": false,
+          "canonical_rows": [],
+          "canonical_row_fingerprint": null,
+          "client_duration_ms": 188.6,
+          "elapsed_ms": 180.094
+        },
+        {
+          "scenario_name": "restricted_viewer_same_group",
+          "principal_name": "restricted_viewer",
+          "row_count": 3,
+          "fingerprint": "b7a44cc482fbb2c22fc9db511af4c4faa6b6de17695130717b67cf2b5e6b252a",
+          "truncated": false,
+          "canonical_rows": [
+            {
+              "dimension": "Hardware",
+              "value_1": "3932021.50"
+            },
+            {
+              "dimension": "Services",
+              "value_1": "714228.57"
+            },
+            {
+              "dimension": null,
+              "value_1": "1108950.75"
+            }
+          ],
+          "canonical_row_fingerprint": "5da2b632646bae3868c01968bb994704332208c027ceecebbdb458b7714390e3",
+          "client_duration_ms": 141.545,
+          "elapsed_ms": 134.599
+        }
+      ]
+    },
+    {
+      "round_index": 9,
+      "worker_index": 0,
+      "sample_index": 9,
+      "duration_ms": 1537.1975000016391,
+      "truncated_results": 1,
+      "results": [
+        {
+          "scenario_name": "full_kpi",
+          "principal_name": "administrator",
+          "row_count": 1,
+          "fingerprint": "a1fb3722e2eeee1ba619cdc6687b189627984c03bb81a6a5d11a7ad5744a3ec3",
+          "truncated": false,
+          "canonical_rows": [],
+          "canonical_row_fingerprint": null,
+          "client_duration_ms": 166.968,
+          "elapsed_ms": 159.623
+        },
+        {
+          "scenario_name": "category_bar",
+          "principal_name": "administrator",
+          "row_count": 3,
+          "fingerprint": "f7b14e1eb1bb83c1b56ac642616a04c31114a4ac699ba0a443727ac8dccbf64c",
+          "truncated": false,
+          "canonical_rows": [],
+          "canonical_row_fingerprint": null,
+          "client_duration_ms": 168.675,
+          "elapsed_ms": 162.358
+        },
+        {
+          "scenario_name": "category_region_stacked",
+          "principal_name": "administrator",
+          "row_count": 3,
+          "fingerprint": "1952e1d87205a27fe77d2e28a0d1e81b62a1b98bb7ee8b98df1ee0f364cff173",
+          "truncated": false,
+          "canonical_rows": [],
+          "canonical_row_fingerprint": null,
+          "client_duration_ms": 440.838,
+          "elapsed_ms": 150.142
+        },
+        {
+          "scenario_name": "month_trend",
+          "principal_name": "editor",
+          "row_count": 2,
+          "fingerprint": "28a4490f35ae97ae6a30aec0f4882e3cee77b5bb37f84345e1050816a33c2ff0",
+          "truncated": false,
+          "canonical_rows": [],
+          "canonical_row_fingerprint": null,
+          "client_duration_ms": 196.276,
+          "elapsed_ms": 188.37
+        },
+        {
+          "scenario_name": "top_2",
+          "principal_name": "editor",
+          "row_count": 2,
+          "fingerprint": "be85b5521873431d8512d40fc471b957da45c8e1a1c132c7600895b6418939ff",
+          "truncated": true,
+          "canonical_rows": [],
+          "canonical_row_fingerprint": null,
+          "client_duration_ms": 179.488,
+          "elapsed_ms": 171.593
+        },
+        {
+          "scenario_name": "global_page_component_filters",
+          "principal_name": "editor",
+          "row_count": 1,
+          "fingerprint": "bc8fa7e27ca071dab48b2dd3c417675f437881824d3dac45c6a0c70701e44b33",
+          "truncated": false,
+          "canonical_rows": [],
+          "canonical_row_fingerprint": null,
+          "client_duration_ms": 196.989,
+          "elapsed_ms": 186.022
+        },
+        {
+          "scenario_name": "restricted_viewer_same_group",
+          "principal_name": "restricted_viewer",
+          "row_count": 3,
+          "fingerprint": "b7a44cc482fbb2c22fc9db511af4c4faa6b6de17695130717b67cf2b5e6b252a",
+          "truncated": false,
+          "canonical_rows": [
+            {
+              "dimension": "Hardware",
+              "value_1": "3932021.50"
+            },
+            {
+              "dimension": "Services",
+              "value_1": "714228.57"
+            },
+            {
+              "dimension": null,
+              "value_1": "1108950.75"
+            }
+          ],
+          "canonical_row_fingerprint": "5da2b632646bae3868c01968bb994704332208c027ceecebbdb458b7714390e3",
+          "client_duration_ms": 186.473,
+          "elapsed_ms": 179.412
+        }
+      ]
+    },
+    {
+      "round_index": 10,
+      "worker_index": 0,
+      "sample_index": 10,
+      "duration_ms": 2178.627100001904,
+      "truncated_results": 1,
+      "results": [
+        {
+          "scenario_name": "full_kpi",
+          "principal_name": "administrator",
+          "row_count": 1,
+          "fingerprint": "a1fb3722e2eeee1ba619cdc6687b189627984c03bb81a6a5d11a7ad5744a3ec3",
+          "truncated": false,
+          "canonical_rows": [],
+          "canonical_row_fingerprint": null,
+          "client_duration_ms": 248.775,
+          "elapsed_ms": 240.262
+        },
+        {
+          "scenario_name": "category_bar",
+          "principal_name": "administrator",
+          "row_count": 3,
+          "fingerprint": "f7b14e1eb1bb83c1b56ac642616a04c31114a4ac699ba0a443727ac8dccbf64c",
+          "truncated": false,
+          "canonical_rows": [],
+          "canonical_row_fingerprint": null,
+          "client_duration_ms": 344.801,
+          "elapsed_ms": 334.891
+        },
+        {
+          "scenario_name": "category_region_stacked",
+          "principal_name": "administrator",
+          "row_count": 3,
+          "fingerprint": "1952e1d87205a27fe77d2e28a0d1e81b62a1b98bb7ee8b98df1ee0f364cff173",
+          "truncated": false,
+          "canonical_rows": [],
+          "canonical_row_fingerprint": null,
+          "client_duration_ms": 637.112,
+          "elapsed_ms": 179.903
+        },
+        {
+          "scenario_name": "month_trend",
+          "principal_name": "editor",
+          "row_count": 2,
+          "fingerprint": "28a4490f35ae97ae6a30aec0f4882e3cee77b5bb37f84345e1050816a33c2ff0",
+          "truncated": false,
+          "canonical_rows": [],
+          "canonical_row_fingerprint": null,
+          "client_duration_ms": 329.344,
+          "elapsed_ms": 318.935
+        },
+        {
+          "scenario_name": "top_2",
+          "principal_name": "editor",
+          "row_count": 2,
+          "fingerprint": "be85b5521873431d8512d40fc471b957da45c8e1a1c132c7600895b6418939ff",
+          "truncated": true,
+          "canonical_rows": [],
+          "canonical_row_fingerprint": null,
+          "client_duration_ms": 240.698,
+          "elapsed_ms": 230.201
+        },
+        {
+          "scenario_name": "global_page_component_filters",
+          "principal_name": "editor",
+          "row_count": 1,
+          "fingerprint": "bc8fa7e27ca071dab48b2dd3c417675f437881824d3dac45c6a0c70701e44b33",
+          "truncated": false,
+          "canonical_rows": [],
+          "canonical_row_fingerprint": null,
+          "client_duration_ms": 186.907,
+          "elapsed_ms": 175.188
+        },
+        {
+          "scenario_name": "restricted_viewer_same_group",
+          "principal_name": "restricted_viewer",
+          "row_count": 3,
+          "fingerprint": "b7a44cc482fbb2c22fc9db511af4c4faa6b6de17695130717b67cf2b5e6b252a",
+          "truncated": false,
+          "canonical_rows": [
+            {
+              "dimension": "Hardware",
+              "value_1": "3932021.50"
+            },
+            {
+              "dimension": "Services",
+              "value_1": "714228.57"
+            },
+            {
+              "dimension": null,
+              "value_1": "1108950.75"
+            }
+          ],
+          "canonical_row_fingerprint": "5da2b632646bae3868c01968bb994704332208c027ceecebbdb458b7714390e3",
+          "client_duration_ms": 189.455,
+          "elapsed_ms": 180.046
+        }
+      ]
+    },
+    {
+      "round_index": 11,
+      "worker_index": 0,
+      "sample_index": 11,
+      "duration_ms": 1941.8180000066059,
+      "truncated_results": 1,
+      "results": [
+        {
+          "scenario_name": "full_kpi",
+          "principal_name": "administrator",
+          "row_count": 1,
+          "fingerprint": "a1fb3722e2eeee1ba619cdc6687b189627984c03bb81a6a5d11a7ad5744a3ec3",
+          "truncated": false,
+          "canonical_rows": [],
+          "canonical_row_fingerprint": null,
+          "client_duration_ms": 234.837,
+          "elapsed_ms": 226.972
+        },
+        {
+          "scenario_name": "category_bar",
+          "principal_name": "administrator",
+          "row_count": 3,
+          "fingerprint": "f7b14e1eb1bb83c1b56ac642616a04c31114a4ac699ba0a443727ac8dccbf64c",
+          "truncated": false,
+          "canonical_rows": [],
+          "canonical_row_fingerprint": null,
+          "client_duration_ms": 246.707,
+          "elapsed_ms": 239.522
+        },
+        {
+          "scenario_name": "category_region_stacked",
+          "principal_name": "administrator",
+          "row_count": 3,
+          "fingerprint": "1952e1d87205a27fe77d2e28a0d1e81b62a1b98bb7ee8b98df1ee0f364cff173",
+          "truncated": false,
+          "canonical_rows": [],
+          "canonical_row_fingerprint": null,
+          "client_duration_ms": 625.905,
+          "elapsed_ms": 165.422
+        },
+        {
+          "scenario_name": "month_trend",
+          "principal_name": "editor",
+          "row_count": 2,
+          "fingerprint": "28a4490f35ae97ae6a30aec0f4882e3cee77b5bb37f84345e1050816a33c2ff0",
+          "truncated": false,
+          "canonical_rows": [],
+          "canonical_row_fingerprint": null,
+          "client_duration_ms": 237.103,
+          "elapsed_ms": 226.444
+        },
+        {
+          "scenario_name": "top_2",
+          "principal_name": "editor",
+          "row_count": 2,
+          "fingerprint": "be85b5521873431d8512d40fc471b957da45c8e1a1c132c7600895b6418939ff",
+          "truncated": true,
+          "canonical_rows": [],
+          "canonical_row_fingerprint": null,
+          "client_duration_ms": 229.441,
+          "elapsed_ms": 220.399
+        },
+        {
+          "scenario_name": "global_page_component_filters",
+          "principal_name": "editor",
+          "row_count": 1,
+          "fingerprint": "bc8fa7e27ca071dab48b2dd3c417675f437881824d3dac45c6a0c70701e44b33",
+          "truncated": false,
+          "canonical_rows": [],
+          "canonical_row_fingerprint": null,
+          "client_duration_ms": 183.892,
+          "elapsed_ms": 173.801
+        },
+        {
+          "scenario_name": "restricted_viewer_same_group",
+          "principal_name": "restricted_viewer",
+          "row_count": 3,
+          "fingerprint": "b7a44cc482fbb2c22fc9db511af4c4faa6b6de17695130717b67cf2b5e6b252a",
+          "truncated": false,
+          "canonical_rows": [
+            {
+              "dimension": "Hardware",
+              "value_1": "3932021.50"
+            },
+            {
+              "dimension": "Services",
+              "value_1": "714228.57"
+            },
+            {
+              "dimension": null,
+              "value_1": "1108950.75"
+            }
+          ],
+          "canonical_row_fingerprint": "5da2b632646bae3868c01968bb994704332208c027ceecebbdb458b7714390e3",
+          "client_duration_ms": 182.813,
+          "elapsed_ms": 172.06
+        }
+      ]
+    },
+    {
+      "round_index": 12,
+      "worker_index": 0,
+      "sample_index": 12,
+      "duration_ms": 1734.5224000018789,
+      "truncated_results": 1,
+      "results": [
+        {
+          "scenario_name": "full_kpi",
+          "principal_name": "administrator",
+          "row_count": 1,
+          "fingerprint": "a1fb3722e2eeee1ba619cdc6687b189627984c03bb81a6a5d11a7ad5744a3ec3",
+          "truncated": false,
+          "canonical_rows": [],
+          "canonical_row_fingerprint": null,
+          "client_duration_ms": 227.102,
+          "elapsed_ms": 218.963
+        },
+        {
+          "scenario_name": "category_bar",
+          "principal_name": "administrator",
+          "row_count": 3,
+          "fingerprint": "f7b14e1eb1bb83c1b56ac642616a04c31114a4ac699ba0a443727ac8dccbf64c",
+          "truncated": false,
+          "canonical_rows": [],
+          "canonical_row_fingerprint": null,
+          "client_duration_ms": 225.477,
+          "elapsed_ms": 217.974
+        },
+        {
+          "scenario_name": "category_region_stacked",
+          "principal_name": "administrator",
+          "row_count": 3,
+          "fingerprint": "1952e1d87205a27fe77d2e28a0d1e81b62a1b98bb7ee8b98df1ee0f364cff173",
+          "truncated": false,
+          "canonical_rows": [],
+          "canonical_row_fingerprint": null,
+          "client_duration_ms": 540.165,
+          "elapsed_ms": 182.763
+        },
+        {
+          "scenario_name": "month_trend",
+          "principal_name": "editor",
+          "row_count": 2,
+          "fingerprint": "28a4490f35ae97ae6a30aec0f4882e3cee77b5bb37f84345e1050816a33c2ff0",
+          "truncated": false,
+          "canonical_rows": [],
+          "canonical_row_fingerprint": null,
+          "client_duration_ms": 212.37,
+          "elapsed_ms": 205.369
+        },
+        {
+          "scenario_name": "top_2",
+          "principal_name": "editor",
+          "row_count": 2,
+          "fingerprint": "be85b5521873431d8512d40fc471b957da45c8e1a1c132c7600895b6418939ff",
+          "truncated": true,
+          "canonical_rows": [],
+          "canonical_row_fingerprint": null,
+          "client_duration_ms": 203.553,
+          "elapsed_ms": 196.654
+        },
+        {
+          "scenario_name": "global_page_component_filters",
+          "principal_name": "editor",
+          "row_count": 1,
+          "fingerprint": "bc8fa7e27ca071dab48b2dd3c417675f437881824d3dac45c6a0c70701e44b33",
+          "truncated": false,
+          "canonical_rows": [],
+          "canonical_row_fingerprint": null,
+          "client_duration_ms": 167.014,
+          "elapsed_ms": 157.703
+        },
+        {
+          "scenario_name": "restricted_viewer_same_group",
+          "principal_name": "restricted_viewer",
+          "row_count": 3,
+          "fingerprint": "b7a44cc482fbb2c22fc9db511af4c4faa6b6de17695130717b67cf2b5e6b252a",
+          "truncated": false,
+          "canonical_rows": [
+            {
+              "dimension": "Hardware",
+              "value_1": "3932021.50"
+            },
+            {
+              "dimension": "Services",
+              "value_1": "714228.57"
+            },
+            {
+              "dimension": null,
+              "value_1": "1108950.75"
+            }
+          ],
+          "canonical_row_fingerprint": "5da2b632646bae3868c01968bb994704332208c027ceecebbdb458b7714390e3",
+          "client_duration_ms": 157.662,
+          "elapsed_ms": 150.542
+        }
+      ]
+    },
+    {
+      "round_index": 13,
+      "worker_index": 0,
+      "sample_index": 13,
+      "duration_ms": 1681.82360001083,
+      "truncated_results": 1,
+      "results": [
+        {
+          "scenario_name": "full_kpi",
+          "principal_name": "administrator",
+          "row_count": 1,
+          "fingerprint": "a1fb3722e2eeee1ba619cdc6687b189627984c03bb81a6a5d11a7ad5744a3ec3",
+          "truncated": false,
+          "canonical_rows": [],
+          "canonical_row_fingerprint": null,
+          "client_duration_ms": 213.893,
+          "elapsed_ms": 207.169
+        },
+        {
+          "scenario_name": "category_bar",
+          "principal_name": "administrator",
+          "row_count": 3,
+          "fingerprint": "f7b14e1eb1bb83c1b56ac642616a04c31114a4ac699ba0a443727ac8dccbf64c",
+          "truncated": false,
+          "canonical_rows": [],
+          "canonical_row_fingerprint": null,
+          "client_duration_ms": 217.789,
+          "elapsed_ms": 209.286
+        },
+        {
+          "scenario_name": "category_region_stacked",
+          "principal_name": "administrator",
+          "row_count": 3,
+          "fingerprint": "1952e1d87205a27fe77d2e28a0d1e81b62a1b98bb7ee8b98df1ee0f364cff173",
+          "truncated": false,
+          "canonical_rows": [],
+          "canonical_row_fingerprint": null,
+          "client_duration_ms": 490.397,
+          "elapsed_ms": 160.747
+        },
+        {
+          "scenario_name": "month_trend",
+          "principal_name": "editor",
+          "row_count": 2,
+          "fingerprint": "28a4490f35ae97ae6a30aec0f4882e3cee77b5bb37f84345e1050816a33c2ff0",
+          "truncated": false,
+          "canonical_rows": [],
+          "canonical_row_fingerprint": null,
+          "client_duration_ms": 210.57,
+          "elapsed_ms": 203.522
+        },
+        {
+          "scenario_name": "top_2",
+          "principal_name": "editor",
+          "row_count": 2,
+          "fingerprint": "be85b5521873431d8512d40fc471b957da45c8e1a1c132c7600895b6418939ff",
+          "truncated": true,
+          "canonical_rows": [],
+          "canonical_row_fingerprint": null,
+          "client_duration_ms": 212.97,
+          "elapsed_ms": 204.198
+        },
+        {
+          "scenario_name": "global_page_component_filters",
+          "principal_name": "editor",
+          "row_count": 1,
+          "fingerprint": "bc8fa7e27ca071dab48b2dd3c417675f437881824d3dac45c6a0c70701e44b33",
+          "truncated": false,
+          "canonical_rows": [],
+          "canonical_row_fingerprint": null,
+          "client_duration_ms": 174.662,
+          "elapsed_ms": 165.878
+        },
+        {
+          "scenario_name": "restricted_viewer_same_group",
+          "principal_name": "restricted_viewer",
+          "row_count": 3,
+          "fingerprint": "b7a44cc482fbb2c22fc9db511af4c4faa6b6de17695130717b67cf2b5e6b252a",
+          "truncated": false,
+          "canonical_rows": [
+            {
+              "dimension": "Hardware",
+              "value_1": "3932021.50"
+            },
+            {
+              "dimension": "Services",
+              "value_1": "714228.57"
+            },
+            {
+              "dimension": null,
+              "value_1": "1108950.75"
+            }
+          ],
+          "canonical_row_fingerprint": "5da2b632646bae3868c01968bb994704332208c027ceecebbdb458b7714390e3",
+          "client_duration_ms": 160.581,
+          "elapsed_ms": 154.096
+        }
+      ]
+    },
+    {
+      "round_index": 14,
+      "worker_index": 0,
+      "sample_index": 14,
+      "duration_ms": 1686.783800003468,
+      "truncated_results": 1,
+      "results": [
+        {
+          "scenario_name": "full_kpi",
+          "principal_name": "administrator",
+          "row_count": 1,
+          "fingerprint": "a1fb3722e2eeee1ba619cdc6687b189627984c03bb81a6a5d11a7ad5744a3ec3",
+          "truncated": false,
+          "canonical_rows": [],
+          "canonical_row_fingerprint": null,
+          "client_duration_ms": 212.328,
+          "elapsed_ms": 205.906
+        },
+        {
+          "scenario_name": "category_bar",
+          "principal_name": "administrator",
+          "row_count": 3,
+          "fingerprint": "f7b14e1eb1bb83c1b56ac642616a04c31114a4ac699ba0a443727ac8dccbf64c",
+          "truncated": false,
+          "canonical_rows": [],
+          "canonical_row_fingerprint": null,
+          "client_duration_ms": 209.767,
+          "elapsed_ms": 203.526
+        },
+        {
+          "scenario_name": "category_region_stacked",
+          "principal_name": "administrator",
+          "row_count": 3,
+          "fingerprint": "1952e1d87205a27fe77d2e28a0d1e81b62a1b98bb7ee8b98df1ee0f364cff173",
+          "truncated": false,
+          "canonical_rows": [],
+          "canonical_row_fingerprint": null,
+          "client_duration_ms": 505.253,
+          "elapsed_ms": 161.418
+        },
+        {
+          "scenario_name": "month_trend",
+          "principal_name": "editor",
+          "row_count": 2,
+          "fingerprint": "28a4490f35ae97ae6a30aec0f4882e3cee77b5bb37f84345e1050816a33c2ff0",
+          "truncated": false,
+          "canonical_rows": [],
+          "canonical_row_fingerprint": null,
+          "client_duration_ms": 215.116,
+          "elapsed_ms": 208.271
+        },
+        {
+          "scenario_name": "top_2",
+          "principal_name": "editor",
+          "row_count": 2,
+          "fingerprint": "be85b5521873431d8512d40fc471b957da45c8e1a1c132c7600895b6418939ff",
+          "truncated": true,
+          "canonical_rows": [],
+          "canonical_row_fingerprint": null,
+          "client_duration_ms": 209.353,
+          "elapsed_ms": 202.583
+        },
+        {
+          "scenario_name": "global_page_component_filters",
+          "principal_name": "editor",
+          "row_count": 1,
+          "fingerprint": "bc8fa7e27ca071dab48b2dd3c417675f437881824d3dac45c6a0c70701e44b33",
+          "truncated": false,
+          "canonical_rows": [],
+          "canonical_row_fingerprint": null,
+          "client_duration_ms": 178.399,
+          "elapsed_ms": 168.706
+        },
+        {
+          "scenario_name": "restricted_viewer_same_group",
+          "principal_name": "restricted_viewer",
+          "row_count": 3,
+          "fingerprint": "b7a44cc482fbb2c22fc9db511af4c4faa6b6de17695130717b67cf2b5e6b252a",
+          "truncated": false,
+          "canonical_rows": [
+            {
+              "dimension": "Hardware",
+              "value_1": "3932021.50"
+            },
+            {
+              "dimension": "Services",
+              "value_1": "714228.57"
+            },
+            {
+              "dimension": null,
+              "value_1": "1108950.75"
+            }
+          ],
+          "canonical_row_fingerprint": "5da2b632646bae3868c01968bb994704332208c027ceecebbdb458b7714390e3",
+          "client_duration_ms": 155.357,
+          "elapsed_ms": 148.739
+        }
+      ]
+    },
+    {
+      "round_index": 15,
+      "worker_index": 0,
+      "sample_index": 15,
+      "duration_ms": 1945.984399993904,
+      "truncated_results": 1,
+      "results": [
+        {
+          "scenario_name": "full_kpi",
+          "principal_name": "administrator",
+          "row_count": 1,
+          "fingerprint": "a1fb3722e2eeee1ba619cdc6687b189627984c03bb81a6a5d11a7ad5744a3ec3",
+          "truncated": false,
+          "canonical_rows": [],
+          "canonical_row_fingerprint": null,
+          "client_duration_ms": 315.903,
+          "elapsed_ms": 309.581
+        },
+        {
+          "scenario_name": "category_bar",
+          "principal_name": "administrator",
+          "row_count": 3,
+          "fingerprint": "f7b14e1eb1bb83c1b56ac642616a04c31114a4ac699ba0a443727ac8dccbf64c",
+          "truncated": false,
+          "canonical_rows": [],
+          "canonical_row_fingerprint": null,
+          "client_duration_ms": 207.948,
+          "elapsed_ms": 201.638
+        },
+        {
+          "scenario_name": "category_region_stacked",
+          "principal_name": "administrator",
+          "row_count": 3,
+          "fingerprint": "1952e1d87205a27fe77d2e28a0d1e81b62a1b98bb7ee8b98df1ee0f364cff173",
+          "truncated": false,
+          "canonical_rows": [],
+          "canonical_row_fingerprint": null,
+          "client_duration_ms": 599.99,
+          "elapsed_ms": 167.904
+        },
+        {
+          "scenario_name": "month_trend",
+          "principal_name": "editor",
+          "row_count": 2,
+          "fingerprint": "28a4490f35ae97ae6a30aec0f4882e3cee77b5bb37f84345e1050816a33c2ff0",
+          "truncated": false,
+          "canonical_rows": [],
+          "canonical_row_fingerprint": null,
+          "client_duration_ms": 231.107,
+          "elapsed_ms": 220.008
+        },
+        {
+          "scenario_name": "top_2",
+          "principal_name": "editor",
+          "row_count": 2,
+          "fingerprint": "be85b5521873431d8512d40fc471b957da45c8e1a1c132c7600895b6418939ff",
+          "truncated": true,
+          "canonical_rows": [],
+          "canonical_row_fingerprint": null,
+          "client_duration_ms": 232.499,
+          "elapsed_ms": 219.593
+        },
+        {
+          "scenario_name": "global_page_component_filters",
+          "principal_name": "editor",
+          "row_count": 1,
+          "fingerprint": "bc8fa7e27ca071dab48b2dd3c417675f437881824d3dac45c6a0c70701e44b33",
+          "truncated": false,
+          "canonical_rows": [],
+          "canonical_row_fingerprint": null,
+          "client_duration_ms": 194.73,
+          "elapsed_ms": 181.014
+        },
+        {
+          "scenario_name": "restricted_viewer_same_group",
+          "principal_name": "restricted_viewer",
+          "row_count": 3,
+          "fingerprint": "b7a44cc482fbb2c22fc9db511af4c4faa6b6de17695130717b67cf2b5e6b252a",
+          "truncated": false,
+          "canonical_rows": [
+            {
+              "dimension": "Hardware",
+              "value_1": "3932021.50"
+            },
+            {
+              "dimension": "Services",
+              "value_1": "714228.57"
+            },
+            {
+              "dimension": null,
+              "value_1": "1108950.75"
+            }
+          ],
+          "canonical_row_fingerprint": "5da2b632646bae3868c01968bb994704332208c027ceecebbdb458b7714390e3",
+          "client_duration_ms": 162.825,
+          "elapsed_ms": 154.138
+        }
+      ]
+    },
+    {
+      "round_index": 16,
+      "worker_index": 0,
+      "sample_index": 16,
+      "duration_ms": 1854.3443999951705,
+      "truncated_results": 1,
+      "results": [
+        {
+          "scenario_name": "full_kpi",
+          "principal_name": "administrator",
+          "row_count": 1,
+          "fingerprint": "a1fb3722e2eeee1ba619cdc6687b189627984c03bb81a6a5d11a7ad5744a3ec3",
+          "truncated": false,
+          "canonical_rows": [],
+          "canonical_row_fingerprint": null,
+          "client_duration_ms": 204.581,
+          "elapsed_ms": 198.389
+        },
+        {
+          "scenario_name": "category_bar",
+          "principal_name": "administrator",
+          "row_count": 3,
+          "fingerprint": "f7b14e1eb1bb83c1b56ac642616a04c31114a4ac699ba0a443727ac8dccbf64c",
+          "truncated": false,
+          "canonical_rows": [],
+          "canonical_row_fingerprint": null,
+          "client_duration_ms": 217.286,
+          "elapsed_ms": 210.927
+        },
+        {
+          "scenario_name": "category_region_stacked",
+          "principal_name": "administrator",
+          "row_count": 3,
+          "fingerprint": "1952e1d87205a27fe77d2e28a0d1e81b62a1b98bb7ee8b98df1ee0f364cff173",
+          "truncated": false,
+          "canonical_rows": [],
+          "canonical_row_fingerprint": null,
+          "client_duration_ms": 543.597,
+          "elapsed_ms": 167.98
+        },
+        {
+          "scenario_name": "month_trend",
+          "principal_name": "editor",
+          "row_count": 2,
+          "fingerprint": "28a4490f35ae97ae6a30aec0f4882e3cee77b5bb37f84345e1050816a33c2ff0",
+          "truncated": false,
+          "canonical_rows": [],
+          "canonical_row_fingerprint": null,
+          "client_duration_ms": 228.016,
+          "elapsed_ms": 217.294
+        },
+        {
+          "scenario_name": "top_2",
+          "principal_name": "editor",
+          "row_count": 2,
+          "fingerprint": "be85b5521873431d8512d40fc471b957da45c8e1a1c132c7600895b6418939ff",
+          "truncated": true,
+          "canonical_rows": [],
+          "canonical_row_fingerprint": null,
+          "client_duration_ms": 307.091,
+          "elapsed_ms": 298.945
+        },
+        {
+          "scenario_name": "global_page_component_filters",
+          "principal_name": "editor",
+          "row_count": 1,
+          "fingerprint": "bc8fa7e27ca071dab48b2dd3c417675f437881824d3dac45c6a0c70701e44b33",
+          "truncated": false,
+          "canonical_rows": [],
+          "canonical_row_fingerprint": null,
+          "client_duration_ms": 180.237,
+          "elapsed_ms": 170.399
+        },
+        {
+          "scenario_name": "restricted_viewer_same_group",
+          "principal_name": "restricted_viewer",
+          "row_count": 3,
+          "fingerprint": "b7a44cc482fbb2c22fc9db511af4c4faa6b6de17695130717b67cf2b5e6b252a",
+          "truncated": false,
+          "canonical_rows": [
+            {
+              "dimension": "Hardware",
+              "value_1": "3932021.50"
+            },
+            {
+              "dimension": "Services",
+              "value_1": "714228.57"
+            },
+            {
+              "dimension": null,
+              "value_1": "1108950.75"
+            }
+          ],
+          "canonical_row_fingerprint": "5da2b632646bae3868c01968bb994704332208c027ceecebbdb458b7714390e3",
+          "client_duration_ms": 172.586,
+          "elapsed_ms": 162.114
+        }
+      ]
+    },
+    {
+      "round_index": 17,
+      "worker_index": 0,
+      "sample_index": 17,
+      "duration_ms": 1976.0343999951147,
+      "truncated_results": 1,
+      "results": [
+        {
+          "scenario_name": "full_kpi",
+          "principal_name": "administrator",
+          "row_count": 1,
+          "fingerprint": "a1fb3722e2eeee1ba619cdc6687b189627984c03bb81a6a5d11a7ad5744a3ec3",
+          "truncated": false,
+          "canonical_rows": [],
+          "canonical_row_fingerprint": null,
+          "client_duration_ms": 208.135,
+          "elapsed_ms": 201.802
+        },
+        {
+          "scenario_name": "category_bar",
+          "principal_name": "administrator",
+          "row_count": 3,
+          "fingerprint": "f7b14e1eb1bb83c1b56ac642616a04c31114a4ac699ba0a443727ac8dccbf64c",
+          "truncated": false,
+          "canonical_rows": [],
+          "canonical_row_fingerprint": null,
+          "client_duration_ms": 284.277,
+          "elapsed_ms": 277.402
+        },
+        {
+          "scenario_name": "category_region_stacked",
+          "principal_name": "administrator",
+          "row_count": 3,
+          "fingerprint": "1952e1d87205a27fe77d2e28a0d1e81b62a1b98bb7ee8b98df1ee0f364cff173",
+          "truncated": false,
+          "canonical_rows": [],
+          "canonical_row_fingerprint": null,
+          "client_duration_ms": 503.306,
+          "elapsed_ms": 181.35
+        },
+        {
+          "scenario_name": "month_trend",
+          "principal_name": "editor",
+          "row_count": 2,
+          "fingerprint": "28a4490f35ae97ae6a30aec0f4882e3cee77b5bb37f84345e1050816a33c2ff0",
+          "truncated": false,
+          "canonical_rows": [],
+          "canonical_row_fingerprint": null,
+          "client_duration_ms": 207.891,
+          "elapsed_ms": 201.059
+        },
+        {
+          "scenario_name": "top_2",
+          "principal_name": "editor",
+          "row_count": 2,
+          "fingerprint": "be85b5521873431d8512d40fc471b957da45c8e1a1c132c7600895b6418939ff",
+          "truncated": true,
+          "canonical_rows": [],
+          "canonical_row_fingerprint": null,
+          "client_duration_ms": 326.442,
+          "elapsed_ms": 319.687
+        },
+        {
+          "scenario_name": "global_page_component_filters",
+          "principal_name": "editor",
+          "row_count": 1,
+          "fingerprint": "bc8fa7e27ca071dab48b2dd3c417675f437881824d3dac45c6a0c70701e44b33",
+          "truncated": false,
+          "canonical_rows": [],
+          "canonical_row_fingerprint": null,
+          "client_duration_ms": 282.779,
+          "elapsed_ms": 274.966
+        },
+        {
+          "scenario_name": "restricted_viewer_same_group",
+          "principal_name": "restricted_viewer",
+          "row_count": 3,
+          "fingerprint": "b7a44cc482fbb2c22fc9db511af4c4faa6b6de17695130717b67cf2b5e6b252a",
+          "truncated": false,
+          "canonical_rows": [
+            {
+              "dimension": "Hardware",
+              "value_1": "3932021.50"
+            },
+            {
+              "dimension": "Services",
+              "value_1": "714228.57"
+            },
+            {
+              "dimension": null,
+              "value_1": "1108950.75"
+            }
+          ],
+          "canonical_row_fingerprint": "5da2b632646bae3868c01968bb994704332208c027ceecebbdb458b7714390e3",
+          "client_duration_ms": 162.194,
+          "elapsed_ms": 155.205
+        }
+      ]
+    },
+    {
+      "round_index": 18,
+      "worker_index": 0,
+      "sample_index": 18,
+      "duration_ms": 1656.2363999983063,
+      "truncated_results": 1,
+      "results": [
+        {
+          "scenario_name": "full_kpi",
+          "principal_name": "administrator",
+          "row_count": 1,
+          "fingerprint": "a1fb3722e2eeee1ba619cdc6687b189627984c03bb81a6a5d11a7ad5744a3ec3",
+          "truncated": false,
+          "canonical_rows": [],
+          "canonical_row_fingerprint": null,
+          "client_duration_ms": 221.998,
+          "elapsed_ms": 214.521
+        },
+        {
+          "scenario_name": "category_bar",
+          "principal_name": "administrator",
+          "row_count": 3,
+          "fingerprint": "f7b14e1eb1bb83c1b56ac642616a04c31114a4ac699ba0a443727ac8dccbf64c",
+          "truncated": false,
+          "canonical_rows": [],
+          "canonical_row_fingerprint": null,
+          "client_duration_ms": 212.272,
+          "elapsed_ms": 206.023
+        },
+        {
+          "scenario_name": "category_region_stacked",
+          "principal_name": "administrator",
+          "row_count": 3,
+          "fingerprint": "1952e1d87205a27fe77d2e28a0d1e81b62a1b98bb7ee8b98df1ee0f364cff173",
+          "truncated": false,
+          "canonical_rows": [],
+          "canonical_row_fingerprint": null,
+          "client_duration_ms": 475.668,
+          "elapsed_ms": 160.056
+        },
+        {
+          "scenario_name": "month_trend",
+          "principal_name": "editor",
+          "row_count": 2,
+          "fingerprint": "28a4490f35ae97ae6a30aec0f4882e3cee77b5bb37f84345e1050816a33c2ff0",
+          "truncated": false,
+          "canonical_rows": [],
+          "canonical_row_fingerprint": null,
+          "client_duration_ms": 212.377,
+          "elapsed_ms": 205.318
+        },
+        {
+          "scenario_name": "top_2",
+          "principal_name": "editor",
+          "row_count": 2,
+          "fingerprint": "be85b5521873431d8512d40fc471b957da45c8e1a1c132c7600895b6418939ff",
+          "truncated": true,
+          "canonical_rows": [],
+          "canonical_row_fingerprint": null,
+          "client_duration_ms": 206.804,
+          "elapsed_ms": 199.609
+        },
+        {
+          "scenario_name": "global_page_component_filters",
+          "principal_name": "editor",
+          "row_count": 1,
+          "fingerprint": "bc8fa7e27ca071dab48b2dd3c417675f437881824d3dac45c6a0c70701e44b33",
+          "truncated": false,
+          "canonical_rows": [],
+          "canonical_row_fingerprint": null,
+          "client_duration_ms": 169.236,
+          "elapsed_ms": 161.081
+        },
+        {
+          "scenario_name": "restricted_viewer_same_group",
+          "principal_name": "restricted_viewer",
+          "row_count": 3,
+          "fingerprint": "b7a44cc482fbb2c22fc9db511af4c4faa6b6de17695130717b67cf2b5e6b252a",
+          "truncated": false,
+          "canonical_rows": [
+            {
+              "dimension": "Hardware",
+              "value_1": "3932021.50"
+            },
+            {
+              "dimension": "Services",
+              "value_1": "714228.57"
+            },
+            {
+              "dimension": null,
+              "value_1": "1108950.75"
+            }
+          ],
+          "canonical_row_fingerprint": "5da2b632646bae3868c01968bb994704332208c027ceecebbdb458b7714390e3",
+          "client_duration_ms": 157.06,
+          "elapsed_ms": 150.366
+        }
+      ]
+    },
+    {
+      "round_index": 19,
+      "worker_index": 0,
+      "sample_index": 19,
+      "duration_ms": 2013.8062000041828,
+      "truncated_results": 1,
+      "results": [
+        {
+          "scenario_name": "full_kpi",
+          "principal_name": "administrator",
+          "row_count": 1,
+          "fingerprint": "a1fb3722e2eeee1ba619cdc6687b189627984c03bb81a6a5d11a7ad5744a3ec3",
+          "truncated": false,
+          "canonical_rows": [],
+          "canonical_row_fingerprint": null,
+          "client_duration_ms": 211.443,
+          "elapsed_ms": 205.408
+        },
+        {
+          "scenario_name": "category_bar",
+          "principal_name": "administrator",
+          "row_count": 3,
+          "fingerprint": "f7b14e1eb1bb83c1b56ac642616a04c31114a4ac699ba0a443727ac8dccbf64c",
+          "truncated": false,
+          "canonical_rows": [],
+          "canonical_row_fingerprint": null,
+          "client_duration_ms": 327.552,
+          "elapsed_ms": 320.781
+        },
+        {
+          "scenario_name": "category_region_stacked",
+          "principal_name": "administrator",
+          "row_count": 3,
+          "fingerprint": "1952e1d87205a27fe77d2e28a0d1e81b62a1b98bb7ee8b98df1ee0f364cff173",
+          "truncated": false,
+          "canonical_rows": [],
+          "canonical_row_fingerprint": null,
+          "client_duration_ms": 611.633,
+          "elapsed_ms": 289.662
+        },
+        {
+          "scenario_name": "month_trend",
+          "principal_name": "editor",
+          "row_count": 2,
+          "fingerprint": "28a4490f35ae97ae6a30aec0f4882e3cee77b5bb37f84345e1050816a33c2ff0",
+          "truncated": false,
+          "canonical_rows": [],
+          "canonical_row_fingerprint": null,
+          "client_duration_ms": 214.681,
+          "elapsed_ms": 207.505
+        },
+        {
+          "scenario_name": "top_2",
+          "principal_name": "editor",
+          "row_count": 2,
+          "fingerprint": "be85b5521873431d8512d40fc471b957da45c8e1a1c132c7600895b6418939ff",
+          "truncated": true,
+          "canonical_rows": [],
+          "canonical_row_fingerprint": null,
+          "client_duration_ms": 204.599,
+          "elapsed_ms": 197.261
+        },
+        {
+          "scenario_name": "global_page_component_filters",
+          "principal_name": "editor",
+          "row_count": 1,
+          "fingerprint": "bc8fa7e27ca071dab48b2dd3c417675f437881824d3dac45c6a0c70701e44b33",
+          "truncated": false,
+          "canonical_rows": [],
+          "canonical_row_fingerprint": null,
+          "client_duration_ms": 166.389,
+          "elapsed_ms": 159.257
+        },
+        {
+          "scenario_name": "restricted_viewer_same_group",
+          "principal_name": "restricted_viewer",
+          "row_count": 3,
+          "fingerprint": "b7a44cc482fbb2c22fc9db511af4c4faa6b6de17695130717b67cf2b5e6b252a",
+          "truncated": false,
+          "canonical_rows": [
+            {
+              "dimension": "Hardware",
+              "value_1": "3932021.50"
+            },
+            {
+              "dimension": "Services",
+              "value_1": "714228.57"
+            },
+            {
+              "dimension": null,
+              "value_1": "1108950.75"
+            }
+          ],
+          "canonical_row_fingerprint": "5da2b632646bae3868c01968bb994704332208c027ceecebbdb458b7714390e3",
+          "client_duration_ms": 276.603,
+          "elapsed_ms": 267.454
+        }
+      ]
+    },
+    {
+      "round_index": 20,
+      "worker_index": 0,
+      "sample_index": 20,
+      "duration_ms": 1722.2824999917066,
+      "truncated_results": 1,
+      "results": [
+        {
+          "scenario_name": "full_kpi",
+          "principal_name": "administrator",
+          "row_count": 1,
+          "fingerprint": "a1fb3722e2eeee1ba619cdc6687b189627984c03bb81a6a5d11a7ad5744a3ec3",
+          "truncated": false,
+          "canonical_rows": [],
+          "canonical_row_fingerprint": null,
+          "client_duration_ms": 213.393,
+          "elapsed_ms": 206.779
+        },
+        {
+          "scenario_name": "category_bar",
+          "principal_name": "administrator",
+          "row_count": 3,
+          "fingerprint": "f7b14e1eb1bb83c1b56ac642616a04c31114a4ac699ba0a443727ac8dccbf64c",
+          "truncated": false,
+          "canonical_rows": [],
+          "canonical_row_fingerprint": null,
+          "client_duration_ms": 221.28,
+          "elapsed_ms": 211.428
+        },
+        {
+          "scenario_name": "category_region_stacked",
+          "principal_name": "administrator",
+          "row_count": 3,
+          "fingerprint": "1952e1d87205a27fe77d2e28a0d1e81b62a1b98bb7ee8b98df1ee0f364cff173",
+          "truncated": false,
+          "canonical_rows": [],
+          "canonical_row_fingerprint": null,
+          "client_duration_ms": 478.078,
+          "elapsed_ms": 160.644
+        },
+        {
+          "scenario_name": "month_trend",
+          "principal_name": "editor",
+          "row_count": 2,
+          "fingerprint": "28a4490f35ae97ae6a30aec0f4882e3cee77b5bb37f84345e1050816a33c2ff0",
+          "truncated": false,
+          "canonical_rows": [],
+          "canonical_row_fingerprint": null,
+          "client_duration_ms": 221.914,
+          "elapsed_ms": 212.14
+        },
+        {
+          "scenario_name": "top_2",
+          "principal_name": "editor",
+          "row_count": 2,
+          "fingerprint": "be85b5521873431d8512d40fc471b957da45c8e1a1c132c7600895b6418939ff",
+          "truncated": true,
+          "canonical_rows": [],
+          "canonical_row_fingerprint": null,
+          "client_duration_ms": 223.565,
+          "elapsed_ms": 214.914
+        },
+        {
+          "scenario_name": "global_page_component_filters",
+          "principal_name": "editor",
+          "row_count": 1,
+          "fingerprint": "bc8fa7e27ca071dab48b2dd3c417675f437881824d3dac45c6a0c70701e44b33",
+          "truncated": false,
+          "canonical_rows": [],
+          "canonical_row_fingerprint": null,
+          "client_duration_ms": 187.257,
+          "elapsed_ms": 177.253
+        },
+        {
+          "scenario_name": "restricted_viewer_same_group",
+          "principal_name": "restricted_viewer",
+          "row_count": 3,
+          "fingerprint": "b7a44cc482fbb2c22fc9db511af4c4faa6b6de17695130717b67cf2b5e6b252a",
+          "truncated": false,
+          "canonical_rows": [
+            {
+              "dimension": "Hardware",
+              "value_1": "3932021.50"
+            },
+            {
+              "dimension": "Services",
+              "value_1": "714228.57"
+            },
+            {
+              "dimension": null,
+              "value_1": "1108950.75"
+            }
+          ],
+          "canonical_row_fingerprint": "5da2b632646bae3868c01968bb994704332208c027ceecebbdb458b7714390e3",
+          "client_duration_ms": 175.747,
+          "elapsed_ms": 163.421
+        }
+      ]
+    },
+    {
+      "round_index": 21,
+      "worker_index": 0,
+      "sample_index": 21,
+      "duration_ms": 1878.2657999981893,
+      "truncated_results": 1,
+      "results": [
+        {
+          "scenario_name": "full_kpi",
+          "principal_name": "administrator",
+          "row_count": 1,
+          "fingerprint": "a1fb3722e2eeee1ba619cdc6687b189627984c03bb81a6a5d11a7ad5744a3ec3",
+          "truncated": false,
+          "canonical_rows": [],
+          "canonical_row_fingerprint": null,
+          "client_duration_ms": 319.417,
+          "elapsed_ms": 312.762
+        },
+        {
+          "scenario_name": "category_bar",
+          "principal_name": "administrator",
+          "row_count": 3,
+          "fingerprint": "f7b14e1eb1bb83c1b56ac642616a04c31114a4ac699ba0a443727ac8dccbf64c",
+          "truncated": false,
+          "canonical_rows": [],
+          "canonical_row_fingerprint": null,
+          "client_duration_ms": 215.803,
+          "elapsed_ms": 209.797
+        },
+        {
+          "scenario_name": "category_region_stacked",
+          "principal_name": "administrator",
+          "row_count": 3,
+          "fingerprint": "1952e1d87205a27fe77d2e28a0d1e81b62a1b98bb7ee8b98df1ee0f364cff173",
+          "truncated": false,
+          "canonical_rows": [],
+          "canonical_row_fingerprint": null,
+          "client_duration_ms": 483.264,
+          "elapsed_ms": 157.029
+        },
+        {
+          "scenario_name": "month_trend",
+          "principal_name": "editor",
+          "row_count": 2,
+          "fingerprint": "28a4490f35ae97ae6a30aec0f4882e3cee77b5bb37f84345e1050816a33c2ff0",
+          "truncated": false,
+          "canonical_rows": [],
+          "canonical_row_fingerprint": null,
+          "client_duration_ms": 209.561,
+          "elapsed_ms": 202.132
+        },
+        {
+          "scenario_name": "top_2",
+          "principal_name": "editor",
+          "row_count": 2,
+          "fingerprint": "be85b5521873431d8512d40fc471b957da45c8e1a1c132c7600895b6418939ff",
+          "truncated": true,
+          "canonical_rows": [],
+          "canonical_row_fingerprint": null,
+          "client_duration_ms": 309.826,
+          "elapsed_ms": 298.261
+        },
+        {
+          "scenario_name": "global_page_component_filters",
+          "principal_name": "editor",
+          "row_count": 1,
+          "fingerprint": "bc8fa7e27ca071dab48b2dd3c417675f437881824d3dac45c6a0c70701e44b33",
+          "truncated": false,
+          "canonical_rows": [],
+          "canonical_row_fingerprint": null,
+          "client_duration_ms": 176.082,
+          "elapsed_ms": 168.617
+        },
+        {
+          "scenario_name": "restricted_viewer_same_group",
+          "principal_name": "restricted_viewer",
+          "row_count": 3,
+          "fingerprint": "b7a44cc482fbb2c22fc9db511af4c4faa6b6de17695130717b67cf2b5e6b252a",
+          "truncated": false,
+          "canonical_rows": [
+            {
+              "dimension": "Hardware",
+              "value_1": "3932021.50"
+            },
+            {
+              "dimension": "Services",
+              "value_1": "714228.57"
+            },
+            {
+              "dimension": null,
+              "value_1": "1108950.75"
+            }
+          ],
+          "canonical_row_fingerprint": "5da2b632646bae3868c01968bb994704332208c027ceecebbdb458b7714390e3",
+          "client_duration_ms": 163.235,
+          "elapsed_ms": 156.216
+        }
+      ]
+    },
+    {
+      "round_index": 22,
+      "worker_index": 0,
+      "sample_index": 22,
+      "duration_ms": 1798.834099987289,
+      "truncated_results": 1,
+      "results": [
+        {
+          "scenario_name": "full_kpi",
+          "principal_name": "administrator",
+          "row_count": 1,
+          "fingerprint": "a1fb3722e2eeee1ba619cdc6687b189627984c03bb81a6a5d11a7ad5744a3ec3",
+          "truncated": false,
+          "canonical_rows": [],
+          "canonical_row_fingerprint": null,
+          "client_duration_ms": 216.014,
+          "elapsed_ms": 206.916
+        },
+        {
+          "scenario_name": "category_bar",
+          "principal_name": "administrator",
+          "row_count": 3,
+          "fingerprint": "f7b14e1eb1bb83c1b56ac642616a04c31114a4ac699ba0a443727ac8dccbf64c",
+          "truncated": false,
+          "canonical_rows": [],
+          "canonical_row_fingerprint": null,
+          "client_duration_ms": 224.062,
+          "elapsed_ms": 216.435
+        },
+        {
+          "scenario_name": "category_region_stacked",
+          "principal_name": "administrator",
+          "row_count": 3,
+          "fingerprint": "1952e1d87205a27fe77d2e28a0d1e81b62a1b98bb7ee8b98df1ee0f364cff173",
+          "truncated": false,
+          "canonical_rows": [],
+          "canonical_row_fingerprint": null,
+          "client_duration_ms": 581.888,
+          "elapsed_ms": 255.045
+        },
+        {
+          "scenario_name": "month_trend",
+          "principal_name": "editor",
+          "row_count": 2,
+          "fingerprint": "28a4490f35ae97ae6a30aec0f4882e3cee77b5bb37f84345e1050816a33c2ff0",
+          "truncated": false,
+          "canonical_rows": [],
+          "canonical_row_fingerprint": null,
+          "client_duration_ms": 204.716,
+          "elapsed_ms": 197.828
+        },
+        {
+          "scenario_name": "top_2",
+          "principal_name": "editor",
+          "row_count": 2,
+          "fingerprint": "be85b5521873431d8512d40fc471b957da45c8e1a1c132c7600895b6418939ff",
+          "truncated": true,
+          "canonical_rows": [],
+          "canonical_row_fingerprint": null,
+          "client_duration_ms": 221.69,
+          "elapsed_ms": 213.283
+        },
+        {
+          "scenario_name": "global_page_component_filters",
+          "principal_name": "editor",
+          "row_count": 1,
+          "fingerprint": "bc8fa7e27ca071dab48b2dd3c417675f437881824d3dac45c6a0c70701e44b33",
+          "truncated": false,
+          "canonical_rows": [],
+          "canonical_row_fingerprint": null,
+          "client_duration_ms": 177.772,
+          "elapsed_ms": 166.797
+        },
+        {
+          "scenario_name": "restricted_viewer_same_group",
+          "principal_name": "restricted_viewer",
+          "row_count": 3,
+          "fingerprint": "b7a44cc482fbb2c22fc9db511af4c4faa6b6de17695130717b67cf2b5e6b252a",
+          "truncated": false,
+          "canonical_rows": [
+            {
+              "dimension": "Hardware",
+              "value_1": "3932021.50"
+            },
+            {
+              "dimension": "Services",
+              "value_1": "714228.57"
+            },
+            {
+              "dimension": null,
+              "value_1": "1108950.75"
+            }
+          ],
+          "canonical_row_fingerprint": "5da2b632646bae3868c01968bb994704332208c027ceecebbdb458b7714390e3",
+          "client_duration_ms": 171.535,
+          "elapsed_ms": 164.914
+        }
+      ]
+    },
+    {
+      "round_index": 23,
+      "worker_index": 0,
+      "sample_index": 23,
+      "duration_ms": 1740.2785000012955,
+      "truncated_results": 1,
+      "results": [
+        {
+          "scenario_name": "full_kpi",
+          "principal_name": "administrator",
+          "row_count": 1,
+          "fingerprint": "a1fb3722e2eeee1ba619cdc6687b189627984c03bb81a6a5d11a7ad5744a3ec3",
+          "truncated": false,
+          "canonical_rows": [],
+          "canonical_row_fingerprint": null,
+          "client_duration_ms": 206.235,
+          "elapsed_ms": 199.848
+        },
+        {
+          "scenario_name": "category_bar",
+          "principal_name": "administrator",
+          "row_count": 3,
+          "fingerprint": "f7b14e1eb1bb83c1b56ac642616a04c31114a4ac699ba0a443727ac8dccbf64c",
+          "truncated": false,
+          "canonical_rows": [],
+          "canonical_row_fingerprint": null,
+          "client_duration_ms": 211.497,
+          "elapsed_ms": 205.022
+        },
+        {
+          "scenario_name": "category_region_stacked",
+          "principal_name": "administrator",
+          "row_count": 3,
+          "fingerprint": "1952e1d87205a27fe77d2e28a0d1e81b62a1b98bb7ee8b98df1ee0f364cff173",
+          "truncated": false,
+          "canonical_rows": [],
+          "canonical_row_fingerprint": null,
+          "client_duration_ms": 521.342,
+          "elapsed_ms": 162.31
+        },
+        {
+          "scenario_name": "month_trend",
+          "principal_name": "editor",
+          "row_count": 2,
+          "fingerprint": "28a4490f35ae97ae6a30aec0f4882e3cee77b5bb37f84345e1050816a33c2ff0",
+          "truncated": false,
+          "canonical_rows": [],
+          "canonical_row_fingerprint": null,
+          "client_duration_ms": 224.42,
+          "elapsed_ms": 214.441
+        },
+        {
+          "scenario_name": "top_2",
+          "principal_name": "editor",
+          "row_count": 2,
+          "fingerprint": "be85b5521873431d8512d40fc471b957da45c8e1a1c132c7600895b6418939ff",
+          "truncated": true,
+          "canonical_rows": [],
+          "canonical_row_fingerprint": null,
+          "client_duration_ms": 211.893,
+          "elapsed_ms": 203.752
+        },
+        {
+          "scenario_name": "global_page_component_filters",
+          "principal_name": "editor",
+          "row_count": 1,
+          "fingerprint": "bc8fa7e27ca071dab48b2dd3c417675f437881824d3dac45c6a0c70701e44b33",
+          "truncated": false,
+          "canonical_rows": [],
+          "canonical_row_fingerprint": null,
+          "client_duration_ms": 177.807,
+          "elapsed_ms": 168.142
+        },
+        {
+          "scenario_name": "restricted_viewer_same_group",
+          "principal_name": "restricted_viewer",
+          "row_count": 3,
+          "fingerprint": "b7a44cc482fbb2c22fc9db511af4c4faa6b6de17695130717b67cf2b5e6b252a",
+          "truncated": false,
+          "canonical_rows": [
+            {
+              "dimension": "Hardware",
+              "value_1": "3932021.50"
+            },
+            {
+              "dimension": "Services",
+              "value_1": "714228.57"
+            },
+            {
+              "dimension": null,
+              "value_1": "1108950.75"
+            }
+          ],
+          "canonical_row_fingerprint": "5da2b632646bae3868c01968bb994704332208c027ceecebbdb458b7714390e3",
+          "client_duration_ms": 186.183,
+          "elapsed_ms": 178.178
+        }
+      ]
+    },
+    {
+      "round_index": 24,
+      "worker_index": 0,
+      "sample_index": 24,
+      "duration_ms": 1833.2050999888452,
+      "truncated_results": 1,
+      "results": [
+        {
+          "scenario_name": "full_kpi",
+          "principal_name": "administrator",
+          "row_count": 1,
+          "fingerprint": "a1fb3722e2eeee1ba619cdc6687b189627984c03bb81a6a5d11a7ad5744a3ec3",
+          "truncated": false,
+          "canonical_rows": [],
+          "canonical_row_fingerprint": null,
+          "client_duration_ms": 207.678,
+          "elapsed_ms": 200.851
+        },
+        {
+          "scenario_name": "category_bar",
+          "principal_name": "administrator",
+          "row_count": 3,
+          "fingerprint": "f7b14e1eb1bb83c1b56ac642616a04c31114a4ac699ba0a443727ac8dccbf64c",
+          "truncated": false,
+          "canonical_rows": [],
+          "canonical_row_fingerprint": null,
+          "client_duration_ms": 231.525,
+          "elapsed_ms": 223.439
+        },
+        {
+          "scenario_name": "category_region_stacked",
+          "principal_name": "administrator",
+          "row_count": 3,
+          "fingerprint": "1952e1d87205a27fe77d2e28a0d1e81b62a1b98bb7ee8b98df1ee0f364cff173",
+          "truncated": false,
+          "canonical_rows": [],
+          "canonical_row_fingerprint": null,
+          "client_duration_ms": 478.113,
+          "elapsed_ms": 160.835
+        },
+        {
+          "scenario_name": "month_trend",
+          "principal_name": "editor",
+          "row_count": 2,
+          "fingerprint": "28a4490f35ae97ae6a30aec0f4882e3cee77b5bb37f84345e1050816a33c2ff0",
+          "truncated": false,
+          "canonical_rows": [],
+          "canonical_row_fingerprint": null,
+          "client_duration_ms": 290.188,
+          "elapsed_ms": 283.033
+        },
+        {
+          "scenario_name": "top_2",
+          "principal_name": "editor",
+          "row_count": 2,
+          "fingerprint": "be85b5521873431d8512d40fc471b957da45c8e1a1c132c7600895b6418939ff",
+          "truncated": true,
+          "canonical_rows": [],
+          "canonical_row_fingerprint": null,
+          "client_duration_ms": 221.748,
+          "elapsed_ms": 213.13
+        },
+        {
+          "scenario_name": "global_page_component_filters",
+          "principal_name": "editor",
+          "row_count": 1,
+          "fingerprint": "bc8fa7e27ca071dab48b2dd3c417675f437881824d3dac45c6a0c70701e44b33",
+          "truncated": false,
+          "canonical_rows": [],
+          "canonical_row_fingerprint": null,
+          "client_duration_ms": 244.551,
+          "elapsed_ms": 236.735
+        },
+        {
+          "scenario_name": "restricted_viewer_same_group",
+          "principal_name": "restricted_viewer",
+          "row_count": 3,
+          "fingerprint": "b7a44cc482fbb2c22fc9db511af4c4faa6b6de17695130717b67cf2b5e6b252a",
+          "truncated": false,
+          "canonical_rows": [
+            {
+              "dimension": "Hardware",
+              "value_1": "3932021.50"
+            },
+            {
+              "dimension": "Services",
+              "value_1": "714228.57"
+            },
+            {
+              "dimension": null,
+              "value_1": "1108950.75"
+            }
+          ],
+          "canonical_row_fingerprint": "5da2b632646bae3868c01968bb994704332208c027ceecebbdb458b7714390e3",
+          "client_duration_ms": 158.37,
+          "elapsed_ms": 151.333
+        }
+      ]
+    },
+    {
+      "round_index": 25,
+      "worker_index": 0,
+      "sample_index": 25,
+      "duration_ms": 1969.8940999951446,
+      "truncated_results": 1,
+      "results": [
+        {
+          "scenario_name": "full_kpi",
+          "principal_name": "administrator",
+          "row_count": 1,
+          "fingerprint": "a1fb3722e2eeee1ba619cdc6687b189627984c03bb81a6a5d11a7ad5744a3ec3",
+          "truncated": false,
+          "canonical_rows": [],
+          "canonical_row_fingerprint": null,
+          "client_duration_ms": 219.703,
+          "elapsed_ms": 210.881
+        },
+        {
+          "scenario_name": "category_bar",
+          "principal_name": "administrator",
+          "row_count": 3,
+          "fingerprint": "f7b14e1eb1bb83c1b56ac642616a04c31114a4ac699ba0a443727ac8dccbf64c",
+          "truncated": false,
+          "canonical_rows": [],
+          "canonical_row_fingerprint": null,
+          "client_duration_ms": 231.789,
+          "elapsed_ms": 223.973
+        },
+        {
+          "scenario_name": "category_region_stacked",
+          "principal_name": "administrator",
+          "row_count": 3,
+          "fingerprint": "1952e1d87205a27fe77d2e28a0d1e81b62a1b98bb7ee8b98df1ee0f364cff173",
+          "truncated": false,
+          "canonical_rows": [],
+          "canonical_row_fingerprint": null,
+          "client_duration_ms": 641.214,
+          "elapsed_ms": 245.592
+        },
+        {
+          "scenario_name": "month_trend",
+          "principal_name": "editor",
+          "row_count": 2,
+          "fingerprint": "28a4490f35ae97ae6a30aec0f4882e3cee77b5bb37f84345e1050816a33c2ff0",
+          "truncated": false,
+          "canonical_rows": [],
+          "canonical_row_fingerprint": null,
+          "client_duration_ms": 221.845,
+          "elapsed_ms": 214.533
+        },
+        {
+          "scenario_name": "top_2",
+          "principal_name": "editor",
+          "row_count": 2,
+          "fingerprint": "be85b5521873431d8512d40fc471b957da45c8e1a1c132c7600895b6418939ff",
+          "truncated": true,
+          "canonical_rows": [],
+          "canonical_row_fingerprint": null,
+          "client_duration_ms": 217.615,
+          "elapsed_ms": 209.058
+        },
+        {
+          "scenario_name": "global_page_component_filters",
+          "principal_name": "editor",
+          "row_count": 1,
+          "fingerprint": "bc8fa7e27ca071dab48b2dd3c417675f437881824d3dac45c6a0c70701e44b33",
+          "truncated": false,
+          "canonical_rows": [],
+          "canonical_row_fingerprint": null,
+          "client_duration_ms": 179.297,
+          "elapsed_ms": 169.468
+        },
+        {
+          "scenario_name": "restricted_viewer_same_group",
+          "principal_name": "restricted_viewer",
+          "row_count": 3,
+          "fingerprint": "b7a44cc482fbb2c22fc9db511af4c4faa6b6de17695130717b67cf2b5e6b252a",
+          "truncated": false,
+          "canonical_rows": [
+            {
+              "dimension": "Hardware",
+              "value_1": "3932021.50"
+            },
+            {
+              "dimension": "Services",
+              "value_1": "714228.57"
+            },
+            {
+              "dimension": null,
+              "value_1": "1108950.75"
+            }
+          ],
+          "canonical_row_fingerprint": "5da2b632646bae3868c01968bb994704332208c027ceecebbdb458b7714390e3",
+          "client_duration_ms": 257.562,
+          "elapsed_ms": 250.952
+        }
+      ]
+    },
+    {
+      "round_index": 26,
+      "worker_index": 0,
+      "sample_index": 26,
+      "duration_ms": 1760.6782000075327,
+      "truncated_results": 1,
+      "results": [
+        {
+          "scenario_name": "full_kpi",
+          "principal_name": "administrator",
+          "row_count": 1,
+          "fingerprint": "a1fb3722e2eeee1ba619cdc6687b189627984c03bb81a6a5d11a7ad5744a3ec3",
+          "truncated": false,
+          "canonical_rows": [],
+          "canonical_row_fingerprint": null,
+          "client_duration_ms": 209.143,
+          "elapsed_ms": 202.998
+        },
+        {
+          "scenario_name": "category_bar",
+          "principal_name": "administrator",
+          "row_count": 3,
+          "fingerprint": "f7b14e1eb1bb83c1b56ac642616a04c31114a4ac699ba0a443727ac8dccbf64c",
+          "truncated": false,
+          "canonical_rows": [],
+          "canonical_row_fingerprint": null,
+          "client_duration_ms": 235.27,
+          "elapsed_ms": 227.338
+        },
+        {
+          "scenario_name": "category_region_stacked",
+          "principal_name": "administrator",
+          "row_count": 3,
+          "fingerprint": "1952e1d87205a27fe77d2e28a0d1e81b62a1b98bb7ee8b98df1ee0f364cff173",
+          "truncated": false,
+          "canonical_rows": [],
+          "canonical_row_fingerprint": null,
+          "client_duration_ms": 516.394,
+          "elapsed_ms": 163.217
+        },
+        {
+          "scenario_name": "month_trend",
+          "principal_name": "editor",
+          "row_count": 2,
+          "fingerprint": "28a4490f35ae97ae6a30aec0f4882e3cee77b5bb37f84345e1050816a33c2ff0",
+          "truncated": false,
+          "canonical_rows": [],
+          "canonical_row_fingerprint": null,
+          "client_duration_ms": 213.154,
+          "elapsed_ms": 205.996
+        },
+        {
+          "scenario_name": "top_2",
+          "principal_name": "editor",
+          "row_count": 2,
+          "fingerprint": "be85b5521873431d8512d40fc471b957da45c8e1a1c132c7600895b6418939ff",
+          "truncated": true,
+          "canonical_rows": [],
+          "canonical_row_fingerprint": null,
+          "client_duration_ms": 247.484,
+          "elapsed_ms": 236.977
+        },
+        {
+          "scenario_name": "global_page_component_filters",
+          "principal_name": "editor",
+          "row_count": 1,
+          "fingerprint": "bc8fa7e27ca071dab48b2dd3c417675f437881824d3dac45c6a0c70701e44b33",
+          "truncated": false,
+          "canonical_rows": [],
+          "canonical_row_fingerprint": null,
+          "client_duration_ms": 179.405,
+          "elapsed_ms": 171.457
+        },
+        {
+          "scenario_name": "restricted_viewer_same_group",
+          "principal_name": "restricted_viewer",
+          "row_count": 3,
+          "fingerprint": "b7a44cc482fbb2c22fc9db511af4c4faa6b6de17695130717b67cf2b5e6b252a",
+          "truncated": false,
+          "canonical_rows": [
+            {
+              "dimension": "Hardware",
+              "value_1": "3932021.50"
+            },
+            {
+              "dimension": "Services",
+              "value_1": "714228.57"
+            },
+            {
+              "dimension": null,
+              "value_1": "1108950.75"
+            }
+          ],
+          "canonical_row_fingerprint": "5da2b632646bae3868c01968bb994704332208c027ceecebbdb458b7714390e3",
+          "client_duration_ms": 158.986,
+          "elapsed_ms": 150.969
+        }
+      ]
+    },
+    {
+      "round_index": 27,
+      "worker_index": 0,
+      "sample_index": 27,
+      "duration_ms": 1773.271099998965,
+      "truncated_results": 1,
+      "results": [
+        {
+          "scenario_name": "full_kpi",
+          "principal_name": "administrator",
+          "row_count": 1,
+          "fingerprint": "a1fb3722e2eeee1ba619cdc6687b189627984c03bb81a6a5d11a7ad5744a3ec3",
+          "truncated": false,
+          "canonical_rows": [],
+          "canonical_row_fingerprint": null,
+          "client_duration_ms": 205.76,
+          "elapsed_ms": 199.291
+        },
+        {
+          "scenario_name": "category_bar",
+          "principal_name": "administrator",
+          "row_count": 3,
+          "fingerprint": "f7b14e1eb1bb83c1b56ac642616a04c31114a4ac699ba0a443727ac8dccbf64c",
+          "truncated": false,
+          "canonical_rows": [],
+          "canonical_row_fingerprint": null,
+          "client_duration_ms": 206.823,
+          "elapsed_ms": 200.684
+        },
+        {
+          "scenario_name": "category_region_stacked",
+          "principal_name": "administrator",
+          "row_count": 3,
+          "fingerprint": "1952e1d87205a27fe77d2e28a0d1e81b62a1b98bb7ee8b98df1ee0f364cff173",
+          "truncated": false,
+          "canonical_rows": [],
+          "canonical_row_fingerprint": null,
+          "client_duration_ms": 501.717,
+          "elapsed_ms": 172.035
+        },
+        {
+          "scenario_name": "month_trend",
+          "principal_name": "editor",
+          "row_count": 2,
+          "fingerprint": "28a4490f35ae97ae6a30aec0f4882e3cee77b5bb37f84345e1050816a33c2ff0",
+          "truncated": false,
+          "canonical_rows": [],
+          "canonical_row_fingerprint": null,
+          "client_duration_ms": 226.578,
+          "elapsed_ms": 217.407
+        },
+        {
+          "scenario_name": "top_2",
+          "principal_name": "editor",
+          "row_count": 2,
+          "fingerprint": "be85b5521873431d8512d40fc471b957da45c8e1a1c132c7600895b6418939ff",
+          "truncated": true,
+          "canonical_rows": [],
+          "canonical_row_fingerprint": null,
+          "client_duration_ms": 285.253,
+          "elapsed_ms": 278.242
+        },
+        {
+          "scenario_name": "global_page_component_filters",
+          "principal_name": "editor",
+          "row_count": 1,
+          "fingerprint": "bc8fa7e27ca071dab48b2dd3c417675f437881824d3dac45c6a0c70701e44b33",
+          "truncated": false,
+          "canonical_rows": [],
+          "canonical_row_fingerprint": null,
+          "client_duration_ms": 176.43,
+          "elapsed_ms": 169.032
+        },
+        {
+          "scenario_name": "restricted_viewer_same_group",
+          "principal_name": "restricted_viewer",
+          "row_count": 3,
+          "fingerprint": "b7a44cc482fbb2c22fc9db511af4c4faa6b6de17695130717b67cf2b5e6b252a",
+          "truncated": false,
+          "canonical_rows": [
+            {
+              "dimension": "Hardware",
+              "value_1": "3932021.50"
+            },
+            {
+              "dimension": "Services",
+              "value_1": "714228.57"
+            },
+            {
+              "dimension": null,
+              "value_1": "1108950.75"
+            }
+          ],
+          "canonical_row_fingerprint": "5da2b632646bae3868c01968bb994704332208c027ceecebbdb458b7714390e3",
+          "client_duration_ms": 169.81,
+          "elapsed_ms": 159.451
+        }
+      ]
+    },
+    {
+      "round_index": 28,
+      "worker_index": 0,
+      "sample_index": 28,
+      "duration_ms": 1783.819099990069,
+      "truncated_results": 1,
+      "results": [
+        {
+          "scenario_name": "full_kpi",
+          "principal_name": "administrator",
+          "row_count": 1,
+          "fingerprint": "a1fb3722e2eeee1ba619cdc6687b189627984c03bb81a6a5d11a7ad5744a3ec3",
+          "truncated": false,
+          "canonical_rows": [],
+          "canonical_row_fingerprint": null,
+          "client_duration_ms": 208.306,
+          "elapsed_ms": 202.377
+        },
+        {
+          "scenario_name": "category_bar",
+          "principal_name": "administrator",
+          "row_count": 3,
+          "fingerprint": "f7b14e1eb1bb83c1b56ac642616a04c31114a4ac699ba0a443727ac8dccbf64c",
+          "truncated": false,
+          "canonical_rows": [],
+          "canonical_row_fingerprint": null,
+          "client_duration_ms": 207.968,
+          "elapsed_ms": 201.704
+        },
+        {
+          "scenario_name": "category_region_stacked",
+          "principal_name": "administrator",
+          "row_count": 3,
+          "fingerprint": "1952e1d87205a27fe77d2e28a0d1e81b62a1b98bb7ee8b98df1ee0f364cff173",
+          "truncated": false,
+          "canonical_rows": [],
+          "canonical_row_fingerprint": null,
+          "client_duration_ms": 574.984,
+          "elapsed_ms": 161.745
+        },
+        {
+          "scenario_name": "month_trend",
+          "principal_name": "editor",
+          "row_count": 2,
+          "fingerprint": "28a4490f35ae97ae6a30aec0f4882e3cee77b5bb37f84345e1050816a33c2ff0",
+          "truncated": false,
+          "canonical_rows": [],
+          "canonical_row_fingerprint": null,
+          "client_duration_ms": 210.194,
+          "elapsed_ms": 202.978
+        },
+        {
+          "scenario_name": "top_2",
+          "principal_name": "editor",
+          "row_count": 2,
+          "fingerprint": "be85b5521873431d8512d40fc471b957da45c8e1a1c132c7600895b6418939ff",
+          "truncated": true,
+          "canonical_rows": [],
+          "canonical_row_fingerprint": null,
+          "client_duration_ms": 215.352,
+          "elapsed_ms": 208.378
+        },
+        {
+          "scenario_name": "global_page_component_filters",
+          "principal_name": "editor",
+          "row_count": 1,
+          "fingerprint": "bc8fa7e27ca071dab48b2dd3c417675f437881824d3dac45c6a0c70701e44b33",
+          "truncated": false,
+          "canonical_rows": [],
+          "canonical_row_fingerprint": null,
+          "client_duration_ms": 191.751,
+          "elapsed_ms": 179.659
+        },
+        {
+          "scenario_name": "restricted_viewer_same_group",
+          "principal_name": "restricted_viewer",
+          "row_count": 3,
+          "fingerprint": "b7a44cc482fbb2c22fc9db511af4c4faa6b6de17695130717b67cf2b5e6b252a",
+          "truncated": false,
+          "canonical_rows": [
+            {
+              "dimension": "Hardware",
+              "value_1": "3932021.50"
+            },
+            {
+              "dimension": "Services",
+              "value_1": "714228.57"
+            },
+            {
+              "dimension": null,
+              "value_1": "1108950.75"
+            }
+          ],
+          "canonical_row_fingerprint": "5da2b632646bae3868c01968bb994704332208c027ceecebbdb458b7714390e3",
+          "client_duration_ms": 173.936,
+          "elapsed_ms": 162.604
+        }
+      ]
+    },
+    {
+      "round_index": 29,
+      "worker_index": 0,
+      "sample_index": 29,
+      "duration_ms": 1832.5067999976454,
+      "truncated_results": 1,
+      "results": [
+        {
+          "scenario_name": "full_kpi",
+          "principal_name": "administrator",
+          "row_count": 1,
+          "fingerprint": "a1fb3722e2eeee1ba619cdc6687b189627984c03bb81a6a5d11a7ad5744a3ec3",
+          "truncated": false,
+          "canonical_rows": [],
+          "canonical_row_fingerprint": null,
+          "client_duration_ms": 219.212,
+          "elapsed_ms": 212.946
+        },
+        {
+          "scenario_name": "category_bar",
+          "principal_name": "administrator",
+          "row_count": 3,
+          "fingerprint": "f7b14e1eb1bb83c1b56ac642616a04c31114a4ac699ba0a443727ac8dccbf64c",
+          "truncated": false,
+          "canonical_rows": [],
+          "canonical_row_fingerprint": null,
+          "client_duration_ms": 224.745,
+          "elapsed_ms": 214.947
+        },
+        {
+          "scenario_name": "category_region_stacked",
+          "principal_name": "administrator",
+          "row_count": 3,
+          "fingerprint": "1952e1d87205a27fe77d2e28a0d1e81b62a1b98bb7ee8b98df1ee0f364cff173",
+          "truncated": false,
+          "canonical_rows": [],
+          "canonical_row_fingerprint": null,
+          "client_duration_ms": 498.634,
+          "elapsed_ms": 160.738
+        },
+        {
+          "scenario_name": "month_trend",
+          "principal_name": "editor",
+          "row_count": 2,
+          "fingerprint": "28a4490f35ae97ae6a30aec0f4882e3cee77b5bb37f84345e1050816a33c2ff0",
+          "truncated": false,
+          "canonical_rows": [],
+          "canonical_row_fingerprint": null,
+          "client_duration_ms": 219.967,
+          "elapsed_ms": 212.852
+        },
+        {
+          "scenario_name": "top_2",
+          "principal_name": "editor",
+          "row_count": 2,
+          "fingerprint": "be85b5521873431d8512d40fc471b957da45c8e1a1c132c7600895b6418939ff",
+          "truncated": true,
+          "canonical_rows": [],
+          "canonical_row_fingerprint": null,
+          "client_duration_ms": 219.123,
+          "elapsed_ms": 207.917
+        },
+        {
+          "scenario_name": "global_page_component_filters",
+          "principal_name": "editor",
+          "row_count": 1,
+          "fingerprint": "bc8fa7e27ca071dab48b2dd3c417675f437881824d3dac45c6a0c70701e44b33",
+          "truncated": false,
+          "canonical_rows": [],
+          "canonical_row_fingerprint": null,
+          "client_duration_ms": 291.85,
+          "elapsed_ms": 279.027
+        },
+        {
+          "scenario_name": "restricted_viewer_same_group",
+          "principal_name": "restricted_viewer",
+          "row_count": 3,
+          "fingerprint": "b7a44cc482fbb2c22fc9db511af4c4faa6b6de17695130717b67cf2b5e6b252a",
+          "truncated": false,
+          "canonical_rows": [
+            {
+              "dimension": "Hardware",
+              "value_1": "3932021.50"
+            },
+            {
+              "dimension": "Services",
+              "value_1": "714228.57"
+            },
+            {
+              "dimension": null,
+              "value_1": "1108950.75"
+            }
+          ],
+          "canonical_row_fingerprint": "5da2b632646bae3868c01968bb994704332208c027ceecebbdb458b7714390e3",
+          "client_duration_ms": 157.928,
+          "elapsed_ms": 150.486
+        }
+      ]
+    }
+  ],
+  "environment": {
+    "python_version": "3.13.8",
+    "python_implementation": "CPython",
+    "platform": "Windows-11-10.0.26200-SP0",
+    "machine": "AMD64",
+    "processor": "Intel64 Family 6 Model 151 Stepping 2, GenuineIntel",
+    "cpu_count": 20,
+    "dialect": "postgresql",
+    "server_version": "18.1"
+  },
+  "fixture_provenance": {
+    "status": "pass",
+    "fixture_version": "m3-star-v2",
+    "fixture_manifest_sha256": "015df74d59fb6e70c04c0f05da1392a57a1e8acd919d851d51fff0394f123c8c",
+    "fixture_manifest_path": "spikes/m3/quality/fixture/v2/manifest.json",
+    "principal_contract_path": "spikes/m3/quality/fixture/v2/principals.json",
+    "principal_permissions": {
+      "administrator": [
+        "dashboards:manage",
+        "datasets:manage",
+        "datasets:query"
+      ],
+      "editor": [
+        "dashboards:manage",
+        "datasets:query"
+      ],
+      "restricted_viewer": [
+        "datasets:query"
+      ],
+      "foreign_administrator": [
+        "dashboards:manage",
+        "datasets:manage",
+        "datasets:query"
+      ]
+    },
+    "runtime_principal_permissions": {
+      "administrator": [
+        "dashboards:manage",
+        "dashboards:view",
+        "datasets:manage",
+        "datasets:query"
+      ],
+      "editor": [
+        "dashboards:manage",
+        "dashboards:view",
+        "datasets:query"
+      ],
+      "restricted_viewer": [
+        "dashboards:view",
+        "datasets:query"
+      ]
+    },
+    "permission_alignment": "Runtime principals preserve the fixture-v2 capability separation and add only dashboards:view, which is required by the production read endpoint.",
+    "standard_fixture_consumed": true,
+    "benchmark_seed": "scripts/benchmark_m2_queries.py::seed_benchmark",
+    "benchmark_rows": 100000,
+    "benchmark_profile": "deterministic_performance_scale",
+    "benchmark_manifest_sha256": "a552d8b2a8b1cc6ffe56f3cf933ff64b24e0c433d4301492c08a0e93ccd41da7",
+    "benchmark_fact_row_count": 100000,
+    "reason": "The benchmark loaded and verified the fixture-v2 deterministic performance scale from all three CSV sources and schema.json."
+  },
+  "run_validation": {
+    "valid": true,
+    "issues": []
+  },
+  "acceptance": {
+    "status": "pass",
+    "run_evidence_valid": true,
+    "standard_fixture_status": "pass",
+    "performance_gate_status": "pass",
+    "application_result_cache_status": "not_applicable",
+    "limitations": [
+      "The direct service benchmark has no application result cache; cache isolation is not applicable."
+    ]
+  }
+}

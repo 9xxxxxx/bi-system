@@ -8,3 +8,6 @@
 *.jpeg binary
 *.gif binary
 *.pdf binary
+
+# Preserve verification archives byte-for-byte so manifest hashes remain reproducible.
+docs/verification/m3/*/** binary

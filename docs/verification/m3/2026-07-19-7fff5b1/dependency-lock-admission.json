@@ -1,0 +1,23 @@
+{
+  "independent_commit_proof": {
+    "changed_files": [
+      "frontend/package-lock.json",
+      "frontend/package.json"
+    ],
+    "commit_sha": "f99962b8d5586aa0a3a01af2ea172a82b13d4ffe",
+    "verified": true
+  },
+  "lockfile_sha256": "e571e67218d2b1645127b0df0b2ce24ddca1949694791d0569b96613e6a5f0c5",
+  "lockfile_versions": {
+    "echarts": "6.1.0",
+    "gridstack": null,
+    "react-grid-layout": "2.2.3"
+  },
+  "production_dependencies": {
+    "echarts": "6.1.0",
+    "gridstack_present": false,
+    "react-grid-layout": "2.2.3"
+  },
+  "schema_version": 1,
+  "status": "pass"
+}

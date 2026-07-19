@@ -1,0 +1,26 @@
+{
+  "git_sha": "4a932a5",
+  "case_id": "M3-PERF02",
+  "browser": "Chrome 150.0.0.0",
+  "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/150.0.0.0 Safari/537.36",
+  "viewport": { "width": 1280, "height": 720, "dpr": 1 },
+  "started_at": "2026-07-19T19:34:00+08:00",
+  "warmups": 5,
+  "samples": 30,
+  "cache_state": "warm-static-assets-and-repeated-governed-backend-queries",
+  "server_result_cache_claimed": false,
+  "percentile_method": "nearest-rank",
+  "threshold_ms": 3000,
+  "warmup_samples_ms": [925, 879, 872, 878, 850],
+  "raw_samples_ms": [899, 860, 872, 863, 1005, 874, 882, 881, 867, 886, 852, 878, 871, 884, 1029, 868, 887, 885, 868, 889, 886, 879, 870, 853, 1061, 863, 864, 876, 894, 864],
+  "p50_ms": 876,
+  "p95_ms": 1029,
+  "max_ms": 1061,
+  "final_state": {
+    "component_count": 14,
+    "loading_count": 0,
+    "fallback_count": 0,
+    "chart_error_visible": false
+  },
+  "status": "pass"
+}

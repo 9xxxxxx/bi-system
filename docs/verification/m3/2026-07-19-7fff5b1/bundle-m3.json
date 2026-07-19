@@ -1,0 +1,167 @@
+{
+  "schema_version": 1,
+  "generated_at": "2026-07-18T16:13:51.884Z",
+  "environment": {
+    "node": "v24.18.0",
+    "npm": "11.18.0",
+    "platform": "win32",
+    "architecture": "x64",
+    "vite": "8.1.1"
+  },
+  "inputs": {
+    "baseline": "baseline.html using React 19, React DOM, Lucide, shared CSS and the same Vite config",
+    "candidate": "index.html with ECharts, React Grid Layout and lazy GridStack comparison",
+    "package_lock_sha256": "7d0993dbcb33f2798ec1573e849238b31a3445410ed883dc1e0a35a044fbbe46"
+  },
+  "baseline": {
+    "entry": "baseline.html",
+    "initial": {
+      "raw_bytes": 202696,
+      "gzip_bytes": 62943,
+      "brotli_bytes": 54263
+    },
+    "lazy": {
+      "raw_bytes": 0,
+      "gzip_bytes": 0,
+      "brotli_bytes": 0
+    },
+    "total": {
+      "raw_bytes": 202696,
+      "gzip_bytes": 62943,
+      "brotli_bytes": 54263
+    },
+    "chunks": [
+      {
+        "file": "assets/baseline-B8Et8caW.js",
+        "group": "application",
+        "initial": true,
+        "raw_bytes": 192744,
+        "gzip_bytes": 60238,
+        "brotli_bytes": 51931
+      },
+      {
+        "file": "assets/baseline-CMr6_9hi.css",
+        "group": "application",
+        "initial": true,
+        "raw_bytes": 9952,
+        "gzip_bytes": 2705,
+        "brotli_bytes": 2332
+      }
+    ]
+  },
+  "candidate": {
+    "entry": "index.html",
+    "initial": {
+      "raw_bytes": 286895,
+      "gzip_bytes": 87234,
+      "brotli_bytes": 75502
+    },
+    "lazy": {
+      "raw_bytes": 645381,
+      "gzip_bytes": 211977,
+      "brotli_bytes": 179936
+    },
+    "total": {
+      "raw_bytes": 932276,
+      "gzip_bytes": 299211,
+      "brotli_bytes": 255438
+    },
+    "chunks": [
+      {
+        "file": "assets/EChart-DY2kGtd3.js",
+        "group": "application",
+        "initial": false,
+        "raw_bytes": 4621,
+        "gzip_bytes": 2322,
+        "brotli_bytes": 1931
+      },
+      {
+        "file": "assets/echarts-BFQmY_NK.js",
+        "group": "echarts",
+        "initial": false,
+        "raw_bytes": 552727,
+        "gzip_bytes": 185442,
+        "brotli_bytes": 156652
+      },
+      {
+        "file": "assets/GridStackCandidate-BBFvDwOK.js",
+        "group": "gridstack-lazy",
+        "initial": false,
+        "raw_bytes": 84265,
+        "gzip_bytes": 23272,
+        "brotli_bytes": 20554
+      },
+      {
+        "file": "assets/GridStackCandidate-Rg2RhwAc.css",
+        "group": "gridstack-lazy",
+        "initial": false,
+        "raw_bytes": 3768,
+        "gzip_bytes": 941,
+        "brotli_bytes": 799
+      },
+      {
+        "file": "assets/index-BXymBY8r.js",
+        "group": "application",
+        "initial": true,
+        "raw_bytes": 197717,
+        "gzip_bytes": 62429,
+        "brotli_bytes": 53983
+      },
+      {
+        "file": "assets/index-CMr6_9hi.css",
+        "group": "application",
+        "initial": true,
+        "raw_bytes": 9952,
+        "gzip_bytes": 2705,
+        "brotli_bytes": 2332
+      },
+      {
+        "file": "assets/layout-BSQGWZWX.js",
+        "group": "react-grid-layout",
+        "initial": true,
+        "raw_bytes": 76220,
+        "gzip_bytes": 21116,
+        "brotli_bytes": 18359
+      },
+      {
+        "file": "assets/layout-kzrx2K5g.css",
+        "group": "react-grid-layout",
+        "initial": true,
+        "raw_bytes": 2312,
+        "gzip_bytes": 562,
+        "brotli_bytes": 455
+      },
+      {
+        "file": "assets/rolldown-runtime-QTnfLwEv.js",
+        "group": "application",
+        "initial": true,
+        "raw_bytes": 694,
+        "gzip_bytes": 422,
+        "brotli_bytes": 373
+      }
+    ]
+  },
+  "initial_delta": {
+    "raw_bytes": 84199,
+    "gzip_bytes": 24291,
+    "brotli_bytes": 21239
+  },
+  "dependency_licenses": {
+    "production_package_count": 19,
+    "identifiers": [
+      "0BSD",
+      "Apache-2.0",
+      "BSD-3-Clause",
+      "ISC",
+      "MIT"
+    ],
+    "review_required": 0
+  },
+  "decision": {
+    "echarts_initial_load": "deferred",
+    "reason": "The ECharts chunk is isolated behind a dynamic import and is absent from the initial manifest closure.",
+    "required_production_action": "Preserve the dynamic chart boundary when integrating the production dashboard and rerun bundle evidence against that entry.",
+    "preferred_layout": "react-grid-layout@2.2.3",
+    "fallback_layout": "gridstack@12.6.0 remains spike-only and lazy-loaded"
+  }
+}

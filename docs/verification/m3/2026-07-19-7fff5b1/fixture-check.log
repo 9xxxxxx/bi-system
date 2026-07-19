@@ -1,0 +1,22 @@
+command_key=fixture_check
+command=uv run python spikes/m3/quality/fixture_tool.py check
+cwd=.
+started_at=2026-07-19T13:51:17.222313+00:00
+duration_seconds=0.173
+exit_code=0
+stdout:
+validated m3-star-v2: 9 files
+stderr:
+
+
+command_key=fixture_tests
+command=uv run pytest spikes/m3/quality/tests -q
+cwd=.
+started_at=2026-07-19T13:51:17.395017+00:00
+duration_seconds=0.426
+exit_code=0
+stdout:
+...........                                                              [100%]
+11 passed in 0.03s
+stderr:
+

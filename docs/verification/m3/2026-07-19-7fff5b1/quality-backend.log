@@ -1,0 +1,144 @@
+command_key=backend_pytest
+command=uv run pytest backend/tests -q --cov=bi_system
+cwd=.
+started_at=2026-07-19T13:52:57.389973+00:00
+duration_seconds=138.017
+exit_code=0
+stdout:
+....ss....................................................s.......ss.... [ 18%]
+..s..................................................................... [ 36%]
+........................................................................ [ 54%]
+........................................................................ [ 72%]
+........................................................................ [ 90%]
+.......................................                                  [100%]
+============================== warnings summary ===============================
+.venv\Lib\site-packages\fastapi\testclient.py:1
+  C:\Dev\bi-system\.venv\Lib\site-packages\fastapi\testclient.py:1: StarletteDeprecationWarning: Using `httpx` with `starlette.testclient` is deprecated; install `httpx2` instead.
+    from starlette.testclient import TestClient as TestClient  # noqa
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=============================== tests coverage ================================
+_______________ coverage: platform win32, python 3.13.8-final-0 _______________
+
+Name                                                           Stmts   Miss  Cover
+----------------------------------------------------------------------------------
+backend\src\bi_system\__init__.py                                  0      0   100%
+backend\src\bi_system\api\__init__.py                              0      0   100%
+backend\src\bi_system\api\dependencies.py                         23      0   100%
+backend\src\bi_system\api\router.py                               19      0   100%
+backend\src\bi_system\api\routes\__init__.py                       0      0   100%
+backend\src\bi_system\api\routes\auth.py                          49      2    96%
+backend\src\bi_system\api\routes\dashboard_assets.py              55      7    87%
+backend\src\bi_system\api\routes\dashboard_chart_queries.py       83      5    94%
+backend\src\bi_system\api\routes\dashboards.py                   223     31    86%
+backend\src\bi_system\api\routes\data_sources.py                  37      0   100%
+backend\src\bi_system\api\routes\dataset_queries.py               48      3    94%
+backend\src\bi_system\api\routes\datasets.py                     105      6    94%
+backend\src\bi_system\api\routes\health.py                        25      0   100%
+backend\src\bi_system\api\routes\identity.py                      32      0   100%
+backend\src\bi_system\api\routes\import_batches.py               136     25    82%
+backend\src\bi_system\api\routes\import_templates.py              35      0   100%
+backend\src\bi_system\api\routes\metrics.py                       78      6    92%
+backend\src\bi_system\api\routes\row_policies.py                 101     11    89%
+backend\src\bi_system\api\routes\semantic_models.py              103      5    95%
+backend\src\bi_system\api\routes\source_files.py                  86      5    94%
+backend\src\bi_system\core\__init__.py                             0      0   100%
+backend\src\bi_system\core\config.py                              70      5    93%
+backend\src\bi_system\dashboards\__init__.py                       3      0   100%
+backend\src\bi_system\dashboards\assets.py                       155     17    89%
+backend\src\bi_system\dashboards\chart_contracts.py              165     16    90%
+backend\src\bi_system\dashboards\chart_query.py                  323     39    88%
+backend\src\bi_system\dashboards\contracts.py                    188     19    90%
+backend\src\bi_system\dashboards\errors.py                        24      0   100%
+backend\src\bi_system\dashboards\filters.py                      232     19    92%
+backend\src\bi_system\dashboards\service.py                      503     36    93%
+backend\src\bi_system\db\__init__.py                               0      0   100%
+backend\src\bi_system\db\base.py                                   3      0   100%
+backend\src\bi_system\db\models\__init__.py                        5      0   100%
+backend\src\bi_system\db\models\dashboards.py                    110      0   100%
+backend\src\bi_system\db\models\identity.py                       47      0   100%
+backend\src\bi_system\db\models\ingestion.py                     114      0   100%
+backend\src\bi_system\db\models\modeling.py                      133      0   100%
+backend\src\bi_system\db\session.py                               20      4    80%
+backend\src\bi_system\identity\__init__.py                         3      0   100%
+backend\src\bi_system\identity\authentication.py                  96      3    97%
+backend\src\bi_system\identity\principal.py                       11      0   100%
+backend\src\bi_system\ingestion\__init__.py                        0      0   100%
+backend\src\bi_system\ingestion\batch_contracts.py                32      3    91%
+backend\src\bi_system\ingestion\batches.py                       181     19    90%
+backend\src\bi_system\ingestion\cleanup.py                        54      4    93%
+backend\src\bi_system\ingestion\data_sources.py                   42      1    98%
+backend\src\bi_system\ingestion\domain.py                         43      0   100%
+backend\src\bi_system\ingestion\duplicate_tracking.py             45      2    96%
+backend\src\bi_system\ingestion\files.py                         105     10    90%
+backend\src\bi_system\ingestion\preview.py                       120     16    87%
+backend\src\bi_system\ingestion\readers.py                        52      0   100%
+backend\src\bi_system\ingestion\reports.py                        46      1    98%
+backend\src\bi_system\ingestion\storage.py                        88      3    97%
+backend\src\bi_system\ingestion\target_tables.py                  56      6    89%
+backend\src\bi_system\ingestion\template_contracts.py            138     15    89%
+backend\src\bi_system\ingestion\templates.py                      33      0   100%
+backend\src\bi_system\ingestion\validation.py                    155     38    75%
+backend\src\bi_system\ingestion\worker.py                        229     26    89%
+backend\src\bi_system\main.py                                     25      0   100%
+backend\src\bi_system\modeling\__init__.py                         3      0   100%
+backend\src\bi_system\modeling\calculated_field_contracts.py     121      5    96%
+backend\src\bi_system\modeling\compiler.py                       353     38    89%
+backend\src\bi_system\modeling\contracts.py                      138     12    91%
+backend\src\bi_system\modeling\dataset_contracts.py               59      3    95%
+backend\src\bi_system\modeling\datasets.py                       377     58    85%
+backend\src\bi_system\modeling\dialect.py                         34      8    76%
+backend\src\bi_system\modeling\expression.py                      64      1    98%
+backend\src\bi_system\modeling\metric_contracts.py               137     13    91%
+backend\src\bi_system\modeling\metrics.py                        158     10    94%
+backend\src\bi_system\modeling\model_contracts.py                 90      8    91%
+backend\src\bi_system\modeling\query_service.py                  295     36    88%
+backend\src\bi_system\modeling\query_timeout.py                   36      7    81%
+backend\src\bi_system\modeling\row_policies.py                   219     14    94%
+backend\src\bi_system\modeling\row_policy_contracts.py            41      3    93%
+backend\src\bi_system\modeling\semantic_models.py                159     12    92%
+----------------------------------------------------------------------------------
+TOTAL                                                           7171    636    91%
+=========================== short test summary info ===========================
+SKIPPED [1] backend\tests\integration\test_batch_portability.py:24: BI_DATABASE_URL is required for database portability checks
+SKIPPED [1] backend\tests\integration\test_batch_portability.py:94: BI_DATABASE_URL is required for worker portability checks
+SKIPPED [1] backend\tests\integration\test_m2_benchmark_postgres.py:16: BI_DATABASE_URL is required for PostgreSQL benchmark verification
+SKIPPED [1] backend\tests\integration\test_migrations.py:21: BI_DATABASE_URL is required for migration state checks
+SKIPPED [1] backend\tests\integration\test_query_timeout_portability.py:13: PostgreSQL-only timeout verification
+SKIPPED [1] backend\tests\integration\test_row_policy_portability.py:34: BI_DATABASE_URL is required for row policy portability checks
+393 passed, 6 skipped, 1 warning in 136.53s (0:02:16)
+stderr:
+
+
+command_key=backend_ruff
+command=uv run ruff check backend scripts
+cwd=.
+started_at=2026-07-19T13:55:15.409464+00:00
+duration_seconds=0.086
+exit_code=0
+stdout:
+All checks passed!
+stderr:
+
+
+command_key=backend_format
+command=uv run ruff format --check backend scripts
+cwd=.
+started_at=2026-07-19T13:55:15.495143+00:00
+duration_seconds=0.084
+exit_code=0
+stdout:
+166 files already formatted
+stderr:
+
+
+command_key=backend_pyright
+command=uv run basedpyright backend/src backend/tests scripts
+cwd=.
+started_at=2026-07-19T13:55:15.579495+00:00
+duration_seconds=5.868
+exit_code=0
+stdout:
+0 errors, 0 warnings, 0 notes
+stderr:
+

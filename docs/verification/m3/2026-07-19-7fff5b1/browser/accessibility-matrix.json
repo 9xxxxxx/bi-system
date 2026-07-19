@@ -1,0 +1,40 @@
+{
+  "chrome_desktop": {
+    "canvas_name": "12-column dashboard canvas",
+    "button_count": 35,
+    "unnamed_button_count": 0,
+    "accessible_data_table_count": 12,
+    "switch_names": ["legend", "labels", "tooltip"],
+    "header_commands": [
+      "publish current saved version as template",
+      "copy current component",
+      "paste component",
+      "save new version"
+    ],
+    "page_commands": ["add page", "rename page", "move page left", "move page right", "delete page"]
+  },
+  "edge_desktop": {
+    "canvas_name": "12-column dashboard canvas",
+    "button_count": 35,
+    "unnamed_button_count": 0,
+    "accessible_data_table_count": 12,
+    "switch_names": ["legend", "labels", "tooltip"],
+    "first_component_has_title_summary_table_and_source_evidence": true
+  },
+  "chrome_mobile": {
+    "canvas_name": "read-only dashboard canvas",
+    "button_count": 3,
+    "unnamed_button_count": 0,
+    "filter_button_name": "filter",
+    "filter_fields_named": ["global filter field", "page filter field", "component filter field"],
+    "component_tabindex": -1
+  },
+  "edge_mobile": {
+    "canvas_name": "read-only dashboard canvas",
+    "button_count": 3,
+    "unnamed_button_count": 0,
+    "filter_button_name": "filter",
+    "filter_fields_named": ["global filter field", "page filter field", "component filter field"],
+    "component_tabindex": -1
+  }
+}

@@ -1,0 +1,24 @@
+{
+  "chrome_desktop_business": {"errors": 0, "warnings": 0},
+  "chrome_desktop_controlled_conflict": {
+    "errors": 1,
+    "warnings": 0,
+    "expected": "HTTP 409 from the intercepted save-version request"
+  },
+  "chrome_mobile_dpr2": {"errors": 0, "warnings": 0},
+  "edge_desktop_business": {"errors": 0, "warnings": 0},
+  "edge_desktop_controlled_conflict": {
+    "errors": 1,
+    "warnings": 0,
+    "expected": "HTTP 409 from the intercepted save-version request"
+  },
+  "edge_mobile_dpr1": {"errors": 0, "warnings": 0},
+  "edge_mobile_dpr2": {"errors": 0, "warnings": 0},
+  "non_error_observation": "ECharts emits an informational grid.containLabel compatibility log.",
+  "superseded_failed_trace": {
+    "errors": 5,
+    "warnings": 0,
+    "cause": "The first Chrome attempt overlapped transient service contention and produced four CORS/fetch errors plus the expected 409.",
+    "replacement": "browser-chrome-desktop.trace"
+  }
+}

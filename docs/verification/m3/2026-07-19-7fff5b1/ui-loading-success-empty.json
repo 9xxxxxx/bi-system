@@ -1,0 +1,39 @@
+{
+  "case_ids": [],
+  "commands": [],
+  "contains_exported_rows_or_values": false,
+  "fixture_manifest_sha256": "015df74d59fb6e70c04c0f05da1392a57a1e8acd919d851d51fff0394f123c8c",
+  "fixture_version": "m3-star-v2",
+  "git_sha": "7fff5b1e35674708a08490ab35d941f8aa5924a1",
+  "limitation": "Structured runtime evidence was not provided for this acceptance item.",
+  "matrix_id": "M3-UI08",
+  "provenance": {
+    "git_sha": "7fff5b1e35674708a08490ab35d941f8aa5924a1",
+    "git_sha_override": false,
+    "head_sha": "7fff5b1e35674708a08490ab35d941f8aa5924a1",
+    "worktree_diff_sha256": "f53e2f306d5fb611a6492d198842134c1711038502b9cc93e3251dc347cc6ced",
+    "worktree_state": "dirty"
+  },
+  "runtime_evidence": {
+    "checks": {
+      "accessibility_complete": true,
+      "business_console_clean": true,
+      "chart_golden_complete": false,
+      "chrome_dpr2_valid": true,
+      "controlled_conflicts_observed": true,
+      "desktop_stress_profiles_complete": false,
+      "desktop_valid": true,
+      "edge_dpr2_valid": true,
+      "fixed_dimensions_complete": false,
+      "full_lifecycle_both_browsers": false,
+      "mobile_readonly_valid": true,
+      "recovery_observed": true,
+      "view_states_complete": false
+    },
+    "limitation": "Structured runtime evidence was not provided for this acceptance item.",
+    "source_artifacts": [],
+    "status": "missing"
+  },
+  "schema_version": 1,
+  "status": "missing"
+}

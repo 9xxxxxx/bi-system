@@ -1,0 +1,106 @@
+{
+  "schema_version": 1,
+  "git_sha": "4a932a5ece41fd05824132dc8b2882e3c7383a61",
+  "case_id": "M3-PERF05",
+  "browser": "Chrome 150.0.0.0",
+  "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/150.0.0.0 Safari/537.36",
+  "viewport": {
+    "width": 1440,
+    "height": 900,
+    "dpr": 1
+  },
+  "started_at": "2026-07-19T13:21:19.197Z",
+  "finished_at": "2026-07-19T13:21:30.744Z",
+  "timeout_seconds": 10,
+  "progress_visible_before_timeout": true,
+  "timed_out": true,
+  "cancel_succeeded": true,
+  "retry_succeeded": true,
+  "status": "pass",
+  "service_constraint": {
+    "response_status": 504,
+    "response_code": "dataset_query_timeout"
+  },
+  "progress": {
+    "visible_at_ms": 3338,
+    "before_10_seconds": true,
+    "cancel_button_visible": true
+  },
+  "timeout": {
+    "visible_at_ms": 4230,
+    "retry_accessible": true,
+    "attempts": 1
+  },
+  "retry": {
+    "clicked": true,
+    "recovered_at_ms": 4537,
+    "attempts": 1,
+    "result_visible": true,
+    "stale_timeout_visible_after_recovery": false
+  },
+  "cancellation": {
+    "clicked_at_ms": 5920,
+    "attempts": 1,
+    "request_failed_events": [
+      {
+        "failure": "net::ERR_ABORTED",
+        "at_ms": 1442
+      },
+      {
+        "failure": "net::ERR_ABORTED",
+        "at_ms": 5913
+      }
+    ],
+    "route_error": null,
+    "delayed_response_delivered_by_mock": true,
+    "stale_result_visible_after_cancel": false,
+    "loading_after_cancel": 0,
+    "timeout_after_cancel": 0,
+    "result_after_cancel": 0
+  },
+  "console": {
+    "errors": 1,
+    "warnings": 0,
+    "expected_errors": [
+      "HTTP 504 for the controlled dataset_query_timeout response"
+    ],
+    "unexpected_errors": 0
+  },
+  "artifacts": [
+    {
+      "path": "perf05-progress.png",
+      "bytes": 147784,
+      "sha256": "92ab7bbe21a312bfbf8928e3f95d1844af3b944e5d2a9d5b73b35860ad7abfd1"
+    },
+    {
+      "path": "perf05-timeout.png",
+      "bytes": 151116,
+      "sha256": "cadefb548fddce04a9e31f42f3ebd2ec2b0408b617bca49b0e1ecd46e8bde40c"
+    },
+    {
+      "path": "perf05-recovered.png",
+      "bytes": 144003,
+      "sha256": "7894ca6ff796c4fab6e9c541fe902b3b3ec7b2b4c2236cb011e90094f6e49b48"
+    },
+    {
+      "path": "perf05-cancelled.png",
+      "bytes": 146324,
+      "sha256": "89bd4980c5a29d04c1b5cf925ba402b095b78e7ebb655d22f7b457ea929edc46"
+    },
+    {
+      "path": "perf05-timeout-recovery.trace",
+      "bytes": 1232752,
+      "sha256": "3a81692db89842af917baf3f323f8ec1ca1befc20215eb2bad96d90e8f76de45"
+    },
+    {
+      "path": "perf05-timeout-recovery.network",
+      "bytes": 267237,
+      "sha256": "5c08e4ce95e7f6fd43f63cbce35a1293049b9f4de07e228ca4a92ec050ed9eb0"
+    },
+    {
+      "path": "perf05-timeout-recovery.js",
+      "bytes": 7837,
+      "sha256": "485349530dbde67da890aee896ac0a764f81942763d015832ed884086da62cb5"
+    }
+  ]
+}

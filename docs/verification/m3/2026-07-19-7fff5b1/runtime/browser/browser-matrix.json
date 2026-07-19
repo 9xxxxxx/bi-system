@@ -1,0 +1,117 @@
+{
+  "schema_version": 1,
+  "git_sha": "4a932a5",
+  "fixture": {
+    "version": "m3-star-v2",
+    "manifest_sha256": "015df74d59fb6e70c04c0f05da1392a57a1e8acd919d851d51fff0394f123c8c"
+  },
+  "environment": {
+    "frontend": "http://127.0.0.1:5173",
+    "api": "http://127.0.0.1:8000/api/v1",
+    "playwright_cli": "0.1.17",
+    "playwright_trace_version": "1.62.0-alpha-1783623505000",
+    "chrome_executable_version": "150.0.7871.127",
+    "edge_executable_version": "150.0.4078.83"
+  },
+  "chrome": {
+    "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/150.0.0.0 Safari/537.36",
+    "phase23_lifecycle_baseline": ".tmp/m3-r3-desktop-a-evidence.json",
+    "desktop_dpr1": {
+      "viewport": [1440, 900],
+      "document_width": [1440, 1440],
+      "component_count": 14,
+      "overlap_count": 0,
+      "horizontal_overflow": 0,
+      "canvas_count": 7,
+      "nonblank_canvas_count": 7,
+      "canvas_css_size": [174, 152],
+      "canvas_pixel_size": [174, 152],
+      "keyboard_copy_paste": [14, 15],
+      "conflict_detail_gets_before_confirm": 0,
+      "conflict_detail_gets_after_confirm": 1,
+      "components_after_recovery": 14,
+      "status": "passed"
+    },
+    "mobile_dpr2": {
+      "viewport": [390, 844],
+      "device_pixel_ratio": 2,
+      "document_width": [390, 390],
+      "component_count": 14,
+      "overlap_count": 0,
+      "horizontal_overflow": 0,
+      "canvas_count": 7,
+      "nonblank_canvas_count": 7,
+      "canvas_css_size": [318, 176],
+      "canvas_pixel_size": [636, 352],
+      "canvas_backing_ratio": 2,
+      "png_pixel_size": [780, 1688],
+      "static_grid_items": 14,
+      "visible_resize_handles": 0,
+      "edit_control_count": 0,
+      "filter_query_count": 12,
+      "filter_kind": "relative_date",
+      "status": "passed"
+    }
+  },
+  "edge": {
+    "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/150.0.0.0 Safari/537.36 Edg/150.0.0.0",
+    "desktop_dpr1": {
+      "viewport": [1440, 900],
+      "document_width": [1440, 1440],
+      "component_count": 14,
+      "overlap_count": 0,
+      "horizontal_overflow": 0,
+      "canvas_count": 7,
+      "nonblank_canvas_count": 7,
+      "canvas_css_size": [174, 152],
+      "canvas_pixel_size": [174, 152],
+      "status": "passed"
+    },
+    "lifecycle": {
+      "dashboard_id": "3d4bc4f6-4aac-49cb-ae9f-dd808c099123",
+      "template_name": "M3R3-A-1857 template",
+      "instantiate_status": 201,
+      "save_version_status": 201,
+      "saved_state": "v2",
+      "configured_component_persisted_after_reopen": true,
+      "keyboard_copy_paste": [14, 15],
+      "conflict_detail_gets_before_confirm": 0,
+      "conflict_detail_gets_after_confirm": 1,
+      "components_after_recovery": 14,
+      "status": "passed"
+    },
+    "mobile_dpr1": {
+      "viewport": [390, 844],
+      "device_pixel_ratio": 1,
+      "document_width": [390, 390],
+      "component_count": 14,
+      "overlap_count": 0,
+      "horizontal_overflow": 0,
+      "canvas_count": 7,
+      "nonblank_canvas_count": 7,
+      "canvas_css_size": [318, 176],
+      "canvas_pixel_size": [318, 176],
+      "static_grid_items": 14,
+      "visible_resize_handles": 0,
+      "edit_control_count": 0,
+      "filter_query_count": 12,
+      "filter_kind": "relative_date",
+      "status": "passed"
+    },
+    "mobile_dpr2": {
+      "viewport": [390, 844],
+      "device_pixel_ratio": 2,
+      "document_width": [390, 390],
+      "component_count": 14,
+      "overlap_count": 0,
+      "horizontal_overflow": 0,
+      "canvas_count": 7,
+      "nonblank_canvas_count": 7,
+      "canvas_css_size": [318, 176],
+      "canvas_pixel_size": [636, 352],
+      "canvas_backing_ratio": 2,
+      "png_pixel_size": [780, 1688],
+      "status": "passed"
+    }
+  }
+}

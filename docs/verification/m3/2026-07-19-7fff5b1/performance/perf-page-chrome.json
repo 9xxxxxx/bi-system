@@ -1,0 +1,19 @@
+{
+  "git_sha": "4a932a5",
+  "case_id": "M3-PERF01",
+  "browser": "Chrome 150.0.0.0",
+  "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/150.0.0.0 Safari/537.36",
+  "viewport": { "width": 1280, "height": 720, "dpr": 1 },
+  "started_at": "2026-07-19T19:33:00+08:00",
+  "warmups": 5,
+  "samples": 30,
+  "cache_state": "cold-http-cache-per-sample",
+  "percentile_method": "nearest-rank",
+  "threshold_ms": 2000,
+  "warmup_samples_ms": [911, 899, 893, 893, 895],
+  "raw_samples_ms": [892, 885, 889, 884, 896, 889, 889, 889, 880, 877, 888, 890, 886, 885, 887, 876, 887, 878, 872, 886, 891, 891, 904, 878, 878, 890, 875, 881, 907, 893],
+  "p50_ms": 887,
+  "p95_ms": 904,
+  "max_ms": 907,
+  "status": "pass"
+}

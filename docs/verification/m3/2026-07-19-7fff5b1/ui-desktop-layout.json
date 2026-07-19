@@ -1,0 +1,240 @@
+{
+  "case_ids": [],
+  "commands": [],
+  "contains_exported_rows_or_values": false,
+  "fixture_manifest_sha256": "015df74d59fb6e70c04c0f05da1392a57a1e8acd919d851d51fff0394f123c8c",
+  "fixture_version": "m3-star-v2",
+  "git_sha": "7fff5b1e35674708a08490ab35d941f8aa5924a1",
+  "limitation": "Runtime evidence is incomplete; missing or partial checks: checks.desktop_stress_profiles_complete, checks.chart_golden_complete, checks.fixed_dimensions_complete, checks.view_states_complete, checks.full_lifecycle_both_browsers.",
+  "matrix_id": "M3-UI02",
+  "provenance": {
+    "git_sha": "7fff5b1e35674708a08490ab35d941f8aa5924a1",
+    "git_sha_override": false,
+    "head_sha": "7fff5b1e35674708a08490ab35d941f8aa5924a1",
+    "worktree_diff_sha256": "f53e2f306d5fb611a6492d198842134c1711038502b9cc93e3251dc347cc6ced",
+    "worktree_state": "dirty"
+  },
+  "runtime_evidence": {
+    "checks": {
+      "accessibility_complete": true,
+      "business_console_clean": true,
+      "chart_golden_complete": false,
+      "chrome_dpr2_valid": true,
+      "controlled_conflicts_observed": true,
+      "desktop_stress_profiles_complete": false,
+      "desktop_valid": true,
+      "edge_dpr2_valid": true,
+      "fixed_dimensions_complete": false,
+      "full_lifecycle_both_browsers": false,
+      "mobile_readonly_valid": true,
+      "recovery_observed": true,
+      "view_states_complete": false
+    },
+    "limitation": "Runtime evidence is incomplete; missing or partial checks: checks.desktop_stress_profiles_complete, checks.chart_golden_complete, checks.fixed_dimensions_complete, checks.view_states_complete, checks.full_lifecycle_both_browsers.",
+    "source_artifacts": [
+      {
+        "copied_path": "runtime/browser/accessibility-matrix.json",
+        "copied_sha256": "f55041c5a2ff62e2aa129ae15be51a5d722d3c758f9669c884e0fba2619f8999",
+        "producer_provenance": null,
+        "source_git_sha": null,
+        "source_path": "browser/accessibility-matrix.json",
+        "source_sha256": "25901c87afcfa0de18b7ce1849b3b58d63a12b1c6d1e9409878e030158fa26ee"
+      },
+      {
+        "copied_path": "runtime/browser/browser-chrome-desktop-clean.png",
+        "copied_sha256": "aed4cd9e6a8647eea08d3c6a175e532c38731d05a85bf30df38a747da05599cb",
+        "producer_provenance": null,
+        "source_git_sha": null,
+        "source_path": "browser/browser-chrome-desktop-clean.png",
+        "source_sha256": "aed4cd9e6a8647eea08d3c6a175e532c38731d05a85bf30df38a747da05599cb"
+      },
+      {
+        "copied_path": "runtime/browser/browser-chrome-desktop-conflict-confirm.png",
+        "copied_sha256": "98fc53eb6f3e98417c733d5c567297b7ab16236a3f1c1b2ca4c6b8266e0c5e88",
+        "producer_provenance": null,
+        "source_git_sha": null,
+        "source_path": "browser/browser-chrome-desktop-conflict-confirm.png",
+        "source_sha256": "98fc53eb6f3e98417c733d5c567297b7ab16236a3f1c1b2ca4c6b8266e0c5e88"
+      },
+      {
+        "copied_path": "runtime/browser/browser-chrome-desktop-conflict.png",
+        "copied_sha256": "efd9950512e4b4b76393dd026f73440164bf987b380ea5197de67f7f93cd2cda",
+        "producer_provenance": null,
+        "source_git_sha": null,
+        "source_path": "browser/browser-chrome-desktop-conflict.png",
+        "source_sha256": "efd9950512e4b4b76393dd026f73440164bf987b380ea5197de67f7f93cd2cda"
+      },
+      {
+        "copied_path": "runtime/browser/browser-chrome-desktop-failed.network",
+        "copied_sha256": "6064f998e6ea0b8db7ff7269f25871768985da509e2b96777406462af5d156f7",
+        "producer_provenance": null,
+        "source_git_sha": null,
+        "source_path": "browser/browser-chrome-desktop-failed.network",
+        "source_sha256": "cc6a294c8bc267d92e28716da03b73b5e8be39b2019e35aed0180a8d1049b99d"
+      },
+      {
+        "copied_path": "runtime/browser/browser-chrome-desktop-failed.trace",
+        "copied_sha256": "ce1d14800058328c248b5198536ee751ffa7659856a56d0529e289efa6775920",
+        "producer_provenance": null,
+        "source_git_sha": null,
+        "source_path": "browser/browser-chrome-desktop-failed.trace",
+        "source_sha256": "298c45cef198bcc95939e2eef8801ce5d35dd74a117dda567b9a558b6b3bc647"
+      },
+      {
+        "copied_path": "runtime/browser/browser-chrome-desktop.network",
+        "copied_sha256": "b933af646d610c8b9041c70a5abd5b8ddcadb672c1fd2a940dd00d7f6f12e17a",
+        "producer_provenance": null,
+        "source_git_sha": null,
+        "source_path": "browser/browser-chrome-desktop.network",
+        "source_sha256": "6db9973adb457610ae4d657df3315e77008f0a926e76bbebfb9af94d1a53e732"
+      },
+      {
+        "copied_path": "runtime/browser/browser-chrome-desktop.trace",
+        "copied_sha256": "6b387a89691bb5d5ada337552d7dfbf84984c3b6fb1fdaaf1d08fe2305f4b0e2",
+        "producer_provenance": null,
+        "source_git_sha": null,
+        "source_path": "browser/browser-chrome-desktop.trace",
+        "source_sha256": "4bb23626717012623e5eb3d2542a0b8988ef27061789aaf4bfdc704027a3e3bd"
+      },
+      {
+        "copied_path": "runtime/browser/browser-chrome-mobile-dpr2.network",
+        "copied_sha256": "e4b65138dd021329bfab6a6bd06a8090716afdf53ec871d9df819cc94fb19734",
+        "producer_provenance": null,
+        "source_git_sha": null,
+        "source_path": "browser/browser-chrome-mobile-dpr2.network",
+        "source_sha256": "7cb70adedb862e0ac711bb4b0ee3a97ecd6b79245b74dfa8db50781d23ecd25e"
+      },
+      {
+        "copied_path": "runtime/browser/browser-chrome-mobile-dpr2.png",
+        "copied_sha256": "605e01af19f6529c4bc051a55baebb9417583b663a81c0c3bd7c1942c03fab3c",
+        "producer_provenance": null,
+        "source_git_sha": null,
+        "source_path": "browser/browser-chrome-mobile-dpr2.png",
+        "source_sha256": "605e01af19f6529c4bc051a55baebb9417583b663a81c0c3bd7c1942c03fab3c"
+      },
+      {
+        "copied_path": "runtime/browser/browser-chrome-mobile-dpr2.trace",
+        "copied_sha256": "8a5af1f9500f6c783adb6dc122e78ed75b8ad280f79acb5293875d8002aa27ba",
+        "producer_provenance": null,
+        "source_git_sha": null,
+        "source_path": "browser/browser-chrome-mobile-dpr2.trace",
+        "source_sha256": "a4b618ca3fe859f899f18f8284555cfa736a5fb534cf373e9390e25946142852"
+      },
+      {
+        "copied_path": "runtime/browser/browser-edge-desktop-clean.png",
+        "copied_sha256": "684e924427ec0e2d24f3ef916a57df431d09736aab67876868cd31f76c314513",
+        "producer_provenance": null,
+        "source_git_sha": null,
+        "source_path": "browser/browser-edge-desktop-clean.png",
+        "source_sha256": "684e924427ec0e2d24f3ef916a57df431d09736aab67876868cd31f76c314513"
+      },
+      {
+        "copied_path": "runtime/browser/browser-edge-desktop-conflict-confirm.png",
+        "copied_sha256": "0dbd7c49e253335b61af5b27fa97ba7e3aa8840998b655e3c0ad049c340826a3",
+        "producer_provenance": null,
+        "source_git_sha": null,
+        "source_path": "browser/browser-edge-desktop-conflict-confirm.png",
+        "source_sha256": "0dbd7c49e253335b61af5b27fa97ba7e3aa8840998b655e3c0ad049c340826a3"
+      },
+      {
+        "copied_path": "runtime/browser/browser-edge-desktop-conflict.png",
+        "copied_sha256": "11458e34427aeab9b9e2b93c0872e068b7f716f58689cace6d3abdee50e6f6be",
+        "producer_provenance": null,
+        "source_git_sha": null,
+        "source_path": "browser/browser-edge-desktop-conflict.png",
+        "source_sha256": "11458e34427aeab9b9e2b93c0872e068b7f716f58689cace6d3abdee50e6f6be"
+      },
+      {
+        "copied_path": "runtime/browser/browser-edge-desktop-fixture.png",
+        "copied_sha256": "a428f59835730547f0e31e072c26993723127eedc14a8f035a90457160762613",
+        "producer_provenance": null,
+        "source_git_sha": null,
+        "source_path": "browser/browser-edge-desktop-fixture.png",
+        "source_sha256": "a428f59835730547f0e31e072c26993723127eedc14a8f035a90457160762613"
+      },
+      {
+        "copied_path": "runtime/browser/browser-edge-desktop-lifecycle-reopened.png",
+        "copied_sha256": "4516d0200167403e3b3b383ee3efa72b82c033ffd8bd1fd84c05d7facd966456",
+        "producer_provenance": null,
+        "source_git_sha": null,
+        "source_path": "browser/browser-edge-desktop-lifecycle-reopened.png",
+        "source_sha256": "4516d0200167403e3b3b383ee3efa72b82c033ffd8bd1fd84c05d7facd966456"
+      },
+      {
+        "copied_path": "runtime/browser/browser-edge-desktop-lifecycle-saved.png",
+        "copied_sha256": "295e22d775202f7dc83e8118dc8ee5e3d3778c909ea1cd2ca595606427358883",
+        "producer_provenance": null,
+        "source_git_sha": null,
+        "source_path": "browser/browser-edge-desktop-lifecycle-saved.png",
+        "source_sha256": "295e22d775202f7dc83e8118dc8ee5e3d3778c909ea1cd2ca595606427358883"
+      },
+      {
+        "copied_path": "runtime/browser/browser-edge-desktop.network",
+        "copied_sha256": "fbf8e6c5a32952d3102e91e99a9947e78200a09e3f6938716dbaa96a6b7a19d2",
+        "producer_provenance": null,
+        "source_git_sha": null,
+        "source_path": "browser/browser-edge-desktop.network",
+        "source_sha256": "4a9ec18191ba35514d168cf2f82b66c83b2349db3fa28d980849240a586dd7e2"
+      },
+      {
+        "copied_path": "runtime/browser/browser-edge-desktop.trace",
+        "copied_sha256": "ed717a332b4ed23114ad7c71a989ec5917c66d2d2f1d5b7dfeef636b50cae06b",
+        "producer_provenance": null,
+        "source_git_sha": null,
+        "source_path": "browser/browser-edge-desktop.trace",
+        "source_sha256": "d3c05f48f02b51cf93956d41c4a10bd4e8e54afb33dd206780b13a077f46348f"
+      },
+      {
+        "copied_path": "runtime/browser/browser-edge-mobile-dpr1.network",
+        "copied_sha256": "da2a97220623b6f8f17a52900f091e3440bcb5290f1e7dfffb4fc0689292ad2c",
+        "producer_provenance": null,
+        "source_git_sha": null,
+        "source_path": "browser/browser-edge-mobile-dpr1.network",
+        "source_sha256": "8a434a4976439a35b135e54151ac5097ca359c05d256d17d250f1a6c395777ac"
+      },
+      {
+        "copied_path": "runtime/browser/browser-edge-mobile-dpr1.png",
+        "copied_sha256": "74819694915e756cd2f8666dc01168b392d384a434ada582e04ea6b74e597ea9",
+        "producer_provenance": null,
+        "source_git_sha": null,
+        "source_path": "browser/browser-edge-mobile-dpr1.png",
+        "source_sha256": "74819694915e756cd2f8666dc01168b392d384a434ada582e04ea6b74e597ea9"
+      },
+      {
+        "copied_path": "runtime/browser/browser-edge-mobile-dpr1.trace",
+        "copied_sha256": "fb49c06babcfd2d4c0561ac47e0e5860bdeab80dd8f6a11e21ce9533c56d3a21",
+        "producer_provenance": null,
+        "source_git_sha": null,
+        "source_path": "browser/browser-edge-mobile-dpr1.trace",
+        "source_sha256": "346c1d1295441a13bac8877a85360a05bcae5bf73cbdeae43dae8f1a242fd122"
+      },
+      {
+        "copied_path": "runtime/browser/browser-edge-mobile-dpr2.png",
+        "copied_sha256": "605e01af19f6529c4bc051a55baebb9417583b663a81c0c3bd7c1942c03fab3c",
+        "producer_provenance": null,
+        "source_git_sha": null,
+        "source_path": "browser/browser-edge-mobile-dpr2.png",
+        "source_sha256": "605e01af19f6529c4bc051a55baebb9417583b663a81c0c3bd7c1942c03fab3c"
+      },
+      {
+        "copied_path": "runtime/browser/browser-matrix.json",
+        "copied_sha256": "2f4370e36ea2f4e9841db300e63e665801def2915e057958aa9f3114b3c63609",
+        "producer_provenance": null,
+        "source_git_sha": "4a932a5",
+        "source_path": "browser/browser-matrix.json",
+        "source_sha256": "716c1464990f37f31c64d23c497f4e4d4e77008c016069ae167491d899044189"
+      },
+      {
+        "copied_path": "runtime/browser/console-matrix.json",
+        "copied_sha256": "0e4789a5283a74232ba15422142a94be36a97d951e2aa51e230b56bf4064ce30",
+        "producer_provenance": null,
+        "source_git_sha": null,
+        "source_path": "browser/console-matrix.json",
+        "source_sha256": "359877fc02b2ba167e068ba10539a7b4d0fc13d2928b7f21739c153cfe9f0b93"
+      }
+    ],
+    "status": "partial"
+  },
+  "schema_version": 1,
+  "status": "partial"
+}

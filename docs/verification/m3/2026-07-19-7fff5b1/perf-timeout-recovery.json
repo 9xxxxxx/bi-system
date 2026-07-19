@@ -1,0 +1,37 @@
+{
+  "case_ids": [],
+  "commands": [],
+  "contains_exported_rows_or_values": false,
+  "fixture_manifest_sha256": "015df74d59fb6e70c04c0f05da1392a57a1e8acd919d851d51fff0394f123c8c",
+  "fixture_version": "m3-star-v2",
+  "git_sha": "7fff5b1e35674708a08490ab35d941f8aa5924a1",
+  "limitation": null,
+  "matrix_id": "M3-PERF05",
+  "provenance": {
+    "git_sha": "7fff5b1e35674708a08490ab35d941f8aa5924a1",
+    "git_sha_override": false,
+    "head_sha": "7fff5b1e35674708a08490ab35d941f8aa5924a1",
+    "worktree_diff_sha256": "f53e2f306d5fb611a6492d198842134c1711038502b9cc93e3251dc347cc6ced",
+    "worktree_state": "dirty"
+  },
+  "runtime_evidence": {
+    "checks": {
+      "threshold_seconds": 10,
+      "timeout_recovery_contract_complete": true
+    },
+    "limitation": null,
+    "source_artifacts": [
+      {
+        "copied_path": "runtime/performance/perf-timeout-recovery.json",
+        "copied_sha256": "7c0c82a9b5976ec61a7abd4dc750b2b3d2a10cf8026b8dc2dc7f17ec1e9f85ef",
+        "producer_provenance": null,
+        "source_git_sha": "4a932a5ece41fd05824132dc8b2882e3c7383a61",
+        "source_path": "performance/perf-timeout-recovery.json",
+        "source_sha256": "9173fa92de5d3592ef644d88dcbc67645aacf6a6566ed6b9f9e59ae13b726e0b"
+      }
+    ],
+    "status": "pass"
+  },
+  "schema_version": 1,
+  "status": "pass"
+}
