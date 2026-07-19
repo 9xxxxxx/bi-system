@@ -1,6 +1,19 @@
 import { afterEach, expect, it, vi } from "vitest";
 
-import { getDashboard, saveDashboardVersion } from "./api";
+import { API_BASE_URL } from "../../shared/api/client";
+import {
+  activateDashboard,
+  createDashboardTemplate,
+  deleteDashboard,
+  getDashboard,
+  instantiateDashboardTemplate,
+  listDashboards,
+  listDashboardTemplates,
+  publishDashboardTemplate,
+  restoreDashboard,
+  saveDashboardVersion,
+} from "./api";
+import { dashboardQueryKeys } from "./queryKeys";
 import type {
   DashboardLayoutProfile,
   SaveDashboardVersionRequest,
@@ -99,6 +112,141 @@ it("maps nested wire pages and components into the editor view model", async () 
       ],
     },
   ]);
+});
+
+it("serializes dashboard list options including deleted dashboards", async () => {
+  const fetchMock = vi.fn(async () =>
+    jsonResponse({ items: [detailWire], total: 1, offset: 10, limit: 20 }),
+  );
+  vi.stubGlobal("fetch", fetchMock);
+
+  const response = await listDashboards({
+    offset: 10,
+    limit: 20,
+    status: "deleted",
+    includeDeleted: true,
+  });
+
+  expect(fetchMock).toHaveBeenCalledWith(
+    `${API_BASE_URL}/dashboards?offset=10&limit=20&status=deleted&include_deleted=true`,
+    expect.objectContaining({ credentials: "include" }),
+  );
+  expect(response.items[0]?.revision).toBe(4);
+});
+
+it("sends lifecycle revisions and maps every dashboard detail response", async () => {
+  const fetchMock = vi.fn(async () => jsonResponse(detailWire));
+  vi.stubGlobal("fetch", fetchMock);
+
+  const activated = await activateDashboard("dashboard-sales", 4);
+  const deleted = await deleteDashboard("dashboard-sales", 5);
+  const restored = await restoreDashboard("dashboard-sales", 6);
+  const instantiated = await instantiateDashboardTemplate("template-sales", {
+    name: "销售模板实例",
+    description: "按模板创建",
+    template_version_id: "template-version-1",
+  });
+
+  expect(fetchMock).toHaveBeenNthCalledWith(
+    1,
+    `${API_BASE_URL}/dashboards/dashboard-sales/activate`,
+    expect.objectContaining({
+      method: "POST",
+      body: JSON.stringify({ expected_revision: 4 }),
+    }),
+  );
+  expect(fetchMock).toHaveBeenNthCalledWith(
+    2,
+    `${API_BASE_URL}/dashboards/dashboard-sales?expected_revision=5`,
+    expect.objectContaining({ method: "DELETE" }),
+  );
+  expect(fetchMock).toHaveBeenNthCalledWith(
+    3,
+    `${API_BASE_URL}/dashboards/dashboard-sales/restore`,
+    expect.objectContaining({
+      method: "POST",
+      body: JSON.stringify({ expected_revision: 6 }),
+    }),
+  );
+  expect(fetchMock).toHaveBeenNthCalledWith(
+    4,
+    `${API_BASE_URL}/dashboard-templates/template-sales/instantiate`,
+    expect.objectContaining({
+      method: "POST",
+      body: JSON.stringify({
+        name: "销售模板实例",
+        description: "按模板创建",
+        template_version_id: "template-version-1",
+      }),
+    }),
+  );
+  for (const detail of [activated, deleted, restored, instantiated]) {
+    expect(detail.pages[0]?.id).toBe("page-overview");
+    expect(detail.pages[0]?.components[0]?.id).toBe("component-revenue");
+  }
+});
+
+it("sends template list, create, and publish contracts", async () => {
+  const templateWire = {
+    id: "template-sales",
+    name: "销售经营模板",
+    description: null,
+    status: "draft",
+    visibility: "workspace",
+    owner_name: "数据管理员",
+    revision: 1,
+    version_id: "template-version-1",
+    source_dashboard_version_id: "dashboard-version-1",
+    updated_at: "2026-07-19T08:00:00Z",
+  };
+  const fetchMock = vi.fn(async () => jsonResponse(templateWire));
+  vi.stubGlobal("fetch", fetchMock);
+
+  await listDashboardTemplates(5, 10, "draft");
+  const created = await createDashboardTemplate({
+    name: "销售经营模板",
+    description: null,
+    source_dashboard_version_id: "dashboard-version-1",
+    visibility: "workspace",
+  });
+  await publishDashboardTemplate("template-sales", 1);
+
+  expect(fetchMock).toHaveBeenNthCalledWith(
+    1,
+    `${API_BASE_URL}/dashboard-templates?offset=5&limit=10&status=draft`,
+    expect.objectContaining({ credentials: "include" }),
+  );
+  expect(fetchMock).toHaveBeenNthCalledWith(
+    2,
+    `${API_BASE_URL}/dashboard-templates`,
+    expect.objectContaining({
+      method: "POST",
+      body: JSON.stringify({
+        name: "销售经营模板",
+        description: null,
+        source_dashboard_version_id: "dashboard-version-1",
+        visibility: "workspace",
+      }),
+    }),
+  );
+  expect(fetchMock).toHaveBeenNthCalledWith(
+    3,
+    `${API_BASE_URL}/dashboard-templates/template-sales/publish`,
+    expect.objectContaining({
+      method: "POST",
+      body: JSON.stringify({ expected_revision: 1 }),
+    }),
+  );
+  expect(created).toEqual(templateWire);
+});
+
+it("keeps list filters and template status in distinct query keys", () => {
+  expect(dashboardQueryKeys.list()).not.toEqual(
+    dashboardQueryKeys.list({ includeDeleted: true }),
+  );
+  expect(dashboardQueryKeys.templates("draft")).not.toEqual(
+    dashboardQueryKeys.templates("published"),
+  );
 });
 
 it("flattens editor pages and merges presentation fields into wire config", async () => {

@@ -23,6 +23,7 @@ export interface DashboardSummary {
   status: DashboardStatus;
   owner_name: string;
   updated_at: string;
+  revision: number;
   current_version: number;
   page_count: number;
   capabilities: DashboardCapability[];
@@ -116,4 +117,33 @@ export interface DashboardTemplateListResponse {
   total: number;
   offset: number;
   limit: number;
+}
+
+export type DashboardTemplateStatus = "draft" | "published" | "archived";
+export type DashboardTemplateVisibility = "private" | "workspace";
+
+export interface DashboardTemplateDetail {
+  id: string;
+  name: string;
+  description: string | null;
+  status: DashboardTemplateStatus;
+  visibility: DashboardTemplateVisibility;
+  owner_name: string;
+  revision: number;
+  version_id: string;
+  source_dashboard_version_id: string;
+  updated_at: string;
+}
+
+export interface CreateDashboardTemplateRequest {
+  name: string;
+  description?: string | null;
+  source_dashboard_version_id: string;
+  visibility?: DashboardTemplateVisibility;
+}
+
+export interface InstantiateDashboardTemplateRequest {
+  name: string;
+  description?: string | null;
+  template_version_id: string;
 }

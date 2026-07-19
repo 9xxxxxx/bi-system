@@ -2,13 +2,17 @@ import { requestJson } from "../../shared/api/client";
 import { componentTypeLabels } from "./presentation";
 import type {
   CreateDashboardRequest,
+  CreateDashboardTemplateRequest,
   DashboardComponentType,
   DashboardDetail,
   DashboardLayoutProfile,
   DashboardListResponse,
   DashboardSummary,
   DashboardStatus,
+  DashboardTemplateDetail,
   DashboardTemplateListResponse,
+  DashboardTemplateStatus,
+  InstantiateDashboardTemplateRequest,
   SaveDashboardVersionRequest,
 } from "./types";
 
@@ -30,7 +34,6 @@ interface DashboardComponentWire {
 }
 
 interface DashboardDetailWire extends DashboardSummary {
-  revision: number;
   current_version_id: string;
   global_filter?: Record<string, unknown> | null;
   pages: DashboardPageWire[];
@@ -52,18 +55,23 @@ export interface DashboardListOptions {
   offset?: number;
   limit?: number;
   status?: DashboardStatus;
+  includeDeleted?: boolean;
 }
 
 export function listDashboards({
   offset = 0,
   limit = 50,
   status,
+  includeDeleted,
 }: DashboardListOptions = {}): Promise<DashboardListResponse> {
   const params = new URLSearchParams({
     offset: String(offset),
     limit: String(limit),
   });
   if (status) params.set("status", status);
+  if (includeDeleted !== undefined) {
+    params.set("include_deleted", String(includeDeleted));
+  }
   return requestJson<DashboardListResponse>(`/dashboards?${params.toString()}`);
 }
 
@@ -95,18 +103,93 @@ export function saveDashboardVersion(
   ).then(mapDashboardDetail);
 }
 
+export function activateDashboard(
+  dashboardId: string,
+  expectedRevision: number,
+): Promise<DashboardDetail> {
+  return requestJson<DashboardDetailWire>(
+    `/dashboards/${dashboardId}/activate`,
+    {
+      method: "POST",
+      body: JSON.stringify({ expected_revision: expectedRevision }),
+    },
+  ).then(mapDashboardDetail);
+}
+
+export function deleteDashboard(
+  dashboardId: string,
+  expectedRevision: number,
+): Promise<DashboardDetail> {
+  const params = new URLSearchParams({
+    expected_revision: String(expectedRevision),
+  });
+  return requestJson<DashboardDetailWire>(
+    `/dashboards/${dashboardId}?${params.toString()}`,
+    { method: "DELETE" },
+  ).then(mapDashboardDetail);
+}
+
+export function restoreDashboard(
+  dashboardId: string,
+  expectedRevision: number,
+): Promise<DashboardDetail> {
+  return requestJson<DashboardDetailWire>(
+    `/dashboards/${dashboardId}/restore`,
+    {
+      method: "POST",
+      body: JSON.stringify({ expected_revision: expectedRevision }),
+    },
+  ).then(mapDashboardDetail);
+}
+
 export function listDashboardTemplates(
   offset = 0,
   limit = 50,
+  status: DashboardTemplateStatus = "published",
 ): Promise<DashboardTemplateListResponse> {
   const params = new URLSearchParams({
     offset: String(offset),
     limit: String(limit),
-    status: "published",
+    status,
   });
   return requestJson<DashboardTemplateListResponse>(
     `/dashboard-templates?${params.toString()}`,
   );
+}
+
+export function createDashboardTemplate(
+  request: CreateDashboardTemplateRequest,
+): Promise<DashboardTemplateDetail> {
+  return requestJson<DashboardTemplateDetail>("/dashboard-templates", {
+    method: "POST",
+    body: JSON.stringify(request),
+  });
+}
+
+export function publishDashboardTemplate(
+  templateId: string,
+  expectedRevision: number,
+): Promise<DashboardTemplateDetail> {
+  return requestJson<DashboardTemplateDetail>(
+    `/dashboard-templates/${templateId}/publish`,
+    {
+      method: "POST",
+      body: JSON.stringify({ expected_revision: expectedRevision }),
+    },
+  );
+}
+
+export function instantiateDashboardTemplate(
+  templateId: string,
+  request: InstantiateDashboardTemplateRequest,
+): Promise<DashboardDetail> {
+  return requestJson<DashboardDetailWire>(
+    `/dashboard-templates/${templateId}/instantiate`,
+    {
+      method: "POST",
+      body: JSON.stringify(request),
+    },
+  ).then(mapDashboardDetail);
 }
 
 function mapDashboardDetail(wire: DashboardDetailWire): DashboardDetail {

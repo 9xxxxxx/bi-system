@@ -1,10 +1,19 @@
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import {
+  act,
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+  within,
+} from "@testing-library/react";
+import { type QueryClient, useQueryClient } from "@tanstack/react-query";
 import userEvent from "@testing-library/user-event";
 import { afterEach, expect, it, vi } from "vitest";
 import { Route, Routes } from "react-router-dom";
 
 import { TestProviders } from "../../../test/TestProviders";
 import { defaultChartConfig } from "../charts/config";
+import { dashboardQueryKeys } from "../queryKeys";
 import type { DashboardDetail } from "../types";
 import { DashboardEditorPage } from "./DashboardEditorPage";
 
@@ -79,9 +88,19 @@ const dashboard: DashboardDetail = {
   ],
 };
 
-function renderPage() {
+function QueryClientCapture({
+  onCapture,
+}: {
+  onCapture: (queryClient: QueryClient) => void;
+}) {
+  onCapture(useQueryClient());
+  return null;
+}
+
+function renderPage(onQueryClient?: (queryClient: QueryClient) => void) {
   return render(
     <TestProviders initialEntries={["/dashboards/dashboard-sales"]}>
+      {onQueryClient ? <QueryClientCapture onCapture={onQueryClient} /> : null}
       <Routes>
         <Route
           path="/dashboards/:dashboardId"
@@ -131,6 +150,7 @@ it("renders the component palette, 12-column canvas and property inspector", asy
 
 it("persists stable layout changes and copied components in both profiles", async () => {
   let saveBody: unknown;
+  let queryClient: QueryClient | undefined;
   vi.stubGlobal(
     "fetch",
     vi.fn(async (_input: string | URL | Request, init?: RequestInit) => {
@@ -149,7 +169,9 @@ it("persists stable layout changes and copied components in both profiles", asyn
     }),
   );
   const user = userEvent.setup();
-  const view = renderPage();
+  const view = renderPage((client) => {
+    queryClient = client;
+  });
 
   await screen.findByRole("heading", { name: "销售经营总览" });
   const revenue = view.container.querySelector<HTMLElement>(
@@ -228,6 +250,45 @@ it("persists stable layout changes and copied components in both profiles", asyn
       }),
     ]),
   );
+  await waitFor(() =>
+    expect(
+      queryClient?.getQueryData<DashboardDetail>(
+        dashboardQueryKeys.detail(dashboard.id),
+      )?.revision,
+    ).toBe(8),
+  );
+
+  act(() => {
+    queryClient?.setQueryData(
+      dashboardQueryKeys.detail(dashboard.id),
+      dashboard,
+    );
+  });
+  await waitFor(() =>
+    expect(
+      queryClient?.getQueryData<DashboardDetail>(
+        dashboardQueryKeys.detail(dashboard.id),
+      )?.revision,
+    ).toBe(8),
+  );
+
+  const newerDashboard: DashboardDetail = {
+    ...dashboard,
+    revision: 9,
+    current_version: 4,
+    current_version_id: "dashboard-version-4",
+    pages: [{ ...dashboard.pages[0], title: "服务端推进页面" }],
+  };
+  act(() => {
+    queryClient?.setQueryData(
+      dashboardQueryKeys.detail(dashboard.id),
+      newerDashboard,
+    );
+  });
+  expect(
+    await screen.findByRole("button", { name: "服务端推进页面" }),
+  ).toBeInTheDocument();
+  expect(screen.getByText("已同步最新版本")).toBeInTheDocument();
 });
 
 it("navigates multiple pages without mixing component layout snapshots", async () => {
@@ -277,6 +338,287 @@ it("navigates multiple pages without mixing component layout snapshots", async (
   expect(
     view.container.querySelector('[data-component-id="component-margin"]'),
   ).toHaveAttribute("data-layout-x", "4");
+});
+
+it("adds, renames, reorders and deletes pages with both layout profiles cleaned", async () => {
+  let saveBody: unknown;
+  vi.stubGlobal(
+    "fetch",
+    vi.fn(async (_input: string | URL | Request, init?: RequestInit) => {
+      if (init?.method === "POST") {
+        saveBody = JSON.parse(String(init.body));
+        return jsonResponse(toWire(dashboard));
+      }
+      return jsonResponse(toWire(dashboard));
+    }),
+  );
+  const user = userEvent.setup();
+  renderPage();
+
+  await screen.findByDisplayValue("总营收");
+  expect(screen.getByRole("button", { name: "删除页面" })).toBeDisabled();
+  await user.click(screen.getByRole("button", { name: "新增页面" }));
+  let dialog = await screen.findByRole("dialog", { name: "新增页面" });
+  const pageName = within(dialog).getByLabelText("页面名称");
+  await user.clear(pageName);
+  await user.type(pageName, "区域分析");
+  await user.click(within(dialog).getByRole("button", { name: /确\s*定/ }));
+  expect(screen.getByRole("button", { name: "经营概览" })).toBeInTheDocument();
+  expect(screen.getByRole("button", { name: "区域分析" })).toBeInTheDocument();
+
+  await user.click(screen.getByRole("button", { name: "重命名页面" }));
+  dialog = await screen.findByRole("dialog", { name: "重命名页面" });
+  const renamedPage = within(dialog).getByLabelText("页面名称");
+  await user.clear(renamedPage);
+  await user.type(renamedPage, "经营分析");
+  await user.click(within(dialog).getByRole("button", { name: /确\s*定/ }));
+  expect(screen.getByRole("button", { name: "经营分析" })).toBeInTheDocument();
+  expect(screen.getByRole("button", { name: "经营概览" })).toBeInTheDocument();
+
+  await user.click(screen.getByRole("button", { name: "页面左移" }));
+  expect(screen.getByRole("button", { name: "经营分析" })).toBeInTheDocument();
+  expect(screen.getByRole("button", { name: "经营概览" })).toBeInTheDocument();
+  await user.click(screen.getByRole("button", { name: "页面右移" }));
+  expect(screen.getByRole("button", { name: "经营分析" })).toBeInTheDocument();
+  expect(screen.getByRole("button", { name: "经营概览" })).toBeInTheDocument();
+  await user.click(screen.getByRole("button", { name: "页面左移" }));
+  expect(screen.getByRole("button", { name: "经营分析" })).toBeInTheDocument();
+  expect(screen.getByRole("button", { name: "经营概览" })).toBeInTheDocument();
+  await user.click(screen.getByRole("button", { name: "经营概览" }));
+  expect(screen.getByRole("button", { name: "经营分析" })).toBeInTheDocument();
+  expect(screen.getByRole("button", { name: "经营概览" })).toBeInTheDocument();
+  expect(screen.getByRole("button", { name: "删除页面" })).toBeEnabled();
+  fireEvent.click(screen.getByRole("button", { name: "删除页面" }));
+  expect(await screen.findByText("删除当前页面？")).toBeInTheDocument();
+  await user.click(screen.getByRole("button", { name: /^删\s*除$/ }));
+
+  expect(
+    screen.queryByRole("button", { name: "经营概览" }),
+  ).not.toBeInTheDocument();
+  expect(screen.getByRole("button", { name: "删除页面" })).toBeDisabled();
+  await user.click(screen.getByRole("button", { name: /保存新版本/ }));
+  await waitFor(() => expect(saveBody).toBeDefined());
+  expect(saveBody).toMatchObject({
+    pages: [{ title: "经营分析", ordinal: 0 }],
+    components: [],
+    layouts: [
+      { profile: "desktop", items: [] },
+      { profile: "mobile", items: [] },
+    ],
+  });
+});
+
+it("creates and publishes a template from the current saved version", async () => {
+  const requests: Array<{ url: string; body: unknown }> = [];
+  vi.stubGlobal(
+    "fetch",
+    vi.fn(async (input: string | URL | Request, init?: RequestInit) => {
+      const url = String(input);
+      if (url.endsWith("/dashboard-templates")) {
+        requests.push({ url, body: JSON.parse(String(init?.body)) });
+        return jsonResponse(
+          templateDetail({ revision: 3, status: "draft" }),
+          201,
+        );
+      }
+      if (url.endsWith("/dashboard-templates/template-sales/publish")) {
+        requests.push({ url, body: JSON.parse(String(init?.body)) });
+        return jsonResponse(
+          templateDetail({ revision: 4, status: "published" }),
+        );
+      }
+      return jsonResponse(toWire(dashboard));
+    }),
+  );
+  const user = userEvent.setup();
+  renderPage();
+
+  await user.click(
+    await screen.findByRole("button", {
+      name: "发布当前已保存版本为模板",
+    }),
+  );
+  let dialog = await screen.findByRole("dialog", {
+    name: "发布当前版本为模板",
+  });
+  const templateName = within(dialog).getByLabelText("模板名称");
+  await user.clear(templateName);
+  await user.type(templateName, "销售经营模板");
+  await user.click(within(dialog).getByRole("button", { name: /发\s*布/ }));
+
+  expect(await screen.findByText("模板已发布")).toBeInTheDocument();
+  expect(requests).toHaveLength(2);
+  expect(requests[0].body).toEqual({
+    name: "销售经营模板",
+    description: dashboard.description,
+    source_dashboard_version_id: "dashboard-version-2",
+    visibility: "workspace",
+  });
+  expect(requests[1].body).toEqual({ expected_revision: 3 });
+});
+
+it("retains unsaved editor state and reuses the draft when template publication retries", async () => {
+  let createAttempts = 0;
+  let publishAttempts = 0;
+  let queryClient: QueryClient | undefined;
+  vi.stubGlobal(
+    "fetch",
+    vi.fn(async (input: string | URL | Request) => {
+      const url = String(input);
+      if (url.endsWith("/dashboard-templates")) {
+        createAttempts += 1;
+        return jsonResponse(
+          templateDetail({ revision: 3, status: "draft" }),
+          201,
+        );
+      }
+      if (url.endsWith("/dashboard-templates/template-sales/publish")) {
+        publishAttempts += 1;
+        if (publishAttempts > 1) {
+          return jsonResponse(
+            templateDetail({ revision: 4, status: "published" }),
+          );
+        }
+        return jsonResponse(
+          { detail: { message: "模板发布失败", action: "稍后重试" } },
+          500,
+        );
+      }
+      return jsonResponse(toWire(dashboard));
+    }),
+  );
+  const user = userEvent.setup();
+  renderPage((client) => {
+    queryClient = client;
+    client.setQueryData(dashboardQueryKeys.templates(), {
+      items: [],
+      total: 0,
+      offset: 0,
+      limit: 50,
+    });
+  });
+
+  await user.click(
+    await screen.findByRole("button", { name: "添加柱状图组件" }),
+  );
+  await user.click(
+    screen.getByRole("button", { name: "发布当前已保存版本为模板" }),
+  );
+  let dialog = await screen.findByRole("dialog", {
+    name: "发布当前版本为模板",
+  });
+  await user.click(within(dialog).getByRole("button", { name: /发\s*布/ }));
+
+  expect(await within(dialog).findByText("模板发布失败")).toBeInTheDocument();
+  expect(screen.getByDisplayValue("柱状图")).toBeInTheDocument();
+  expect(screen.getByText("有未保存更改")).toBeInTheDocument();
+  await user.click(within(dialog).getByRole("button", { name: /取\s*消/ }));
+  await user.click(
+    screen.getByRole("button", { name: "发布当前已保存版本为模板" }),
+  );
+  dialog = await screen.findByRole("dialog", {
+    name: "发布当前版本为模板",
+  });
+  await user.click(within(dialog).getByRole("button", { name: /发\s*布/ }));
+
+  expect(await screen.findByText("模板已发布")).toBeInTheDocument();
+  expect(createAttempts).toBe(1);
+  expect(publishAttempts).toBe(2);
+  expect(screen.getByDisplayValue("柱状图")).toBeInTheDocument();
+  await waitFor(() =>
+    expect(
+      queryClient?.getQueryState(dashboardQueryKeys.templates())?.isInvalidated,
+    ).toBe(true),
+  );
+});
+
+it("activates the dashboard with the current revision", async () => {
+  let activateBody: unknown;
+  vi.stubGlobal(
+    "fetch",
+    vi.fn(async (input: string | URL | Request, init?: RequestInit) => {
+      if (String(input).endsWith("/dashboards/dashboard-sales/activate")) {
+        activateBody = JSON.parse(String(init?.body));
+        return jsonResponse(
+          toWire({ ...dashboard, status: "active", revision: 8 }),
+        );
+      }
+      return jsonResponse(toWire(dashboard));
+    }),
+  );
+  const user = userEvent.setup();
+  renderPage();
+
+  await user.click(await screen.findByRole("button", { name: "激活仪表盘" }));
+
+  expect(await screen.findByText("仪表盘已激活")).toBeInTheDocument();
+  expect(activateBody).toEqual({ expected_revision: 7 });
+  expect(
+    screen.queryByRole("button", { name: "激活仪表盘" }),
+  ).not.toBeInTheDocument();
+});
+
+it("keeps the local draft on save conflict until reload is explicitly confirmed", async () => {
+  let dashboardReads = 0;
+  let saveAttempts = 0;
+  const latest = {
+    ...dashboard,
+    revision: 8,
+    current_version: 3,
+    current_version_id: "dashboard-version-3",
+    pages: [{ ...dashboard.pages[0], title: "服务端最新页面" }],
+  };
+  vi.stubGlobal(
+    "fetch",
+    vi.fn(async (input: string | URL | Request, init?: RequestInit) => {
+      if (init?.method === "POST") {
+        saveAttempts += 1;
+        return jsonResponse(
+          {
+            detail: {
+              code: "dashboard_revision_conflict",
+              message: "仪表盘已被其他用户更新",
+              action: "重新加载最新版本",
+            },
+          },
+          409,
+        );
+      }
+      if (String(input).endsWith("/dashboards/dashboard-sales")) {
+        dashboardReads += 1;
+        return jsonResponse(toWire(dashboardReads === 1 ? dashboard : latest));
+      }
+      return jsonResponse(toWire(dashboard));
+    }),
+  );
+  const user = userEvent.setup();
+  renderPage();
+
+  await user.click(
+    await screen.findByRole("button", { name: "添加柱状图组件" }),
+  );
+  await user.click(screen.getByRole("button", { name: /保存新版本/ }));
+  expect(await screen.findByText("仪表盘保存失败")).toBeInTheDocument();
+  expect(screen.getByDisplayValue("柱状图")).toBeInTheDocument();
+  expect(saveAttempts).toBe(1);
+  expect(dashboardReads).toBe(1);
+
+  await user.click(
+    screen.getByRole("button", { name: /放弃本地更改并重新加载/ }),
+  );
+  const dialog = await screen.findByRole("dialog", { name: "放弃本地更改" });
+  expect(screen.getByDisplayValue("柱状图")).toBeInTheDocument();
+  await user.click(
+    within(dialog).getByRole("button", { name: /放弃并重新加载/ }),
+  );
+
+  expect(
+    await screen.findByRole("button", { name: "服务端最新页面" }),
+  ).toBeInTheDocument();
+  expect(screen.queryByDisplayValue("柱状图")).not.toBeInTheDocument();
+  expect(screen.getByText("已重新加载最新版本")).toBeInTheDocument();
+  expect(saveAttempts).toBe(1);
+  expect(dashboardReads).toBe(2);
 });
 
 it("shows an explicit empty canvas for a blank draft", async () => {
@@ -419,6 +761,118 @@ it("uses the independent mobile profile and removes editing controls at 390px", 
   ).not.toBeInTheDocument();
 });
 
+it("keeps mobile preview filters out of the saved desktop contract", async () => {
+  let mobile = true;
+  const listeners = new Set<(event: MediaQueryListEvent) => void>();
+  vi.stubGlobal(
+    "matchMedia",
+    vi.fn((query: string) => ({
+      get matches() {
+        return mobile && query === "(max-width: 768px)";
+      },
+      media: query,
+      onchange: null,
+      addListener: vi.fn(),
+      removeListener: vi.fn(),
+      addEventListener: vi.fn(
+        (_type: string, listener: (event: MediaQueryListEvent) => void) => {
+          listeners.add(listener);
+        },
+      ),
+      removeEventListener: vi.fn(
+        (_type: string, listener: (event: MediaQueryListEvent) => void) => {
+          listeners.delete(listener);
+        },
+      ),
+      dispatchEvent: vi.fn(() => false),
+    })),
+  );
+  const config = defaultChartConfig("kpi");
+  config.query.dataset_id = "00000000-0000-0000-0000-000000000001";
+  config.query.measures[0] = {
+    kind: "field",
+    field_id: "00000000-0000-0000-0000-000000000002",
+    aggregate: "sum",
+    slot_key: "value",
+  };
+  const mobileDashboard: DashboardDetail = {
+    ...dashboard,
+    pages: [
+      {
+        ...dashboard.pages[0],
+        components: [{ ...dashboard.pages[0].components[0], config }],
+      },
+    ],
+  };
+  let saveBody: Record<string, unknown> | undefined;
+  vi.stubGlobal(
+    "fetch",
+    vi.fn(async (input: string | URL | Request, init?: RequestInit) => {
+      const url = String(input);
+      if (url.endsWith("/dashboard-chart-queries")) return chartResponse();
+      if (url.includes("/datasets/")) {
+        return jsonResponse({
+          id: config.query.dataset_id,
+          name: "销售数据集",
+          status: "active",
+          fields: [
+            {
+              id: "00000000-0000-0000-0000-000000000003",
+              label: "订单日期",
+              role: "dimension",
+              data_type: "date",
+              hidden: false,
+            },
+          ],
+        });
+      }
+      if (init?.method === "POST") {
+        saveBody = JSON.parse(String(init.body)) as Record<string, unknown>;
+        return jsonResponse(
+          toWire({ ...mobileDashboard, revision: 8, current_version: 3 }),
+        );
+      }
+      return jsonResponse(toWire(mobileDashboard));
+    }),
+  );
+  const user = userEvent.setup();
+  renderPage();
+
+  expect(await screen.findByText("移动端为只读模式")).toBeInTheDocument();
+  await user.click(screen.getByRole("button", { name: /筛选/ }));
+  await user.click(screen.getAllByText("相对日期")[0]);
+  fireEvent.mouseDown(screen.getByLabelText("全局筛选字段"));
+  fireEvent.click(screen.getAllByText("订单日期").at(-1)!);
+  expect(screen.getByText("当前为已保存版本")).toBeInTheDocument();
+
+  mobile = false;
+  act(() => {
+    for (const listener of listeners) {
+      listener({
+        matches: false,
+        media: "(max-width: 768px)",
+      } as MediaQueryListEvent);
+    }
+  });
+  await user.click(screen.getByRole("button", { name: /保存新版本/ }));
+  await waitFor(() => expect(saveBody).toBeDefined());
+  expect(saveBody).toMatchObject({ global_filter: null });
+});
+
+it("labels archived dashboards without presenting them as drafts", async () => {
+  vi.stubGlobal(
+    "fetch",
+    vi.fn(async () =>
+      jsonResponse(toWire({ ...dashboard, status: "archived" })),
+    ),
+  );
+
+  renderPage();
+
+  expect(await screen.findByText("已归档")).toBeInTheDocument();
+  expect(screen.queryByText("草稿")).not.toBeInTheDocument();
+});
+
 it("lets a read-only viewer apply global and page filters without saving", async () => {
   const config = defaultChartConfig("kpi");
   config.query.dataset_id = "00000000-0000-0000-0000-000000000001";
@@ -552,6 +1006,27 @@ function chartResponse() {
     resolved_filters: [],
     warnings: [],
   });
+}
+
+function templateDetail({
+  revision,
+  status,
+}: {
+  revision: number;
+  status: "draft" | "published";
+}) {
+  return {
+    id: "template-sales",
+    name: "销售经营模板",
+    description: dashboard.description,
+    status,
+    visibility: "workspace",
+    owner_name: dashboard.owner_name,
+    revision,
+    version_id: "template-version-3",
+    source_dashboard_version_id: dashboard.current_version_id,
+    updated_at: dashboard.updated_at,
+  };
 }
 
 function toWire(detail: DashboardDetail) {

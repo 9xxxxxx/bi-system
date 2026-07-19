@@ -3,7 +3,7 @@ import {
   AppstoreAddOutlined,
   FileAddOutlined,
 } from "@ant-design/icons";
-import { useMutation, useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   Alert,
   Button,
@@ -17,42 +17,58 @@ import {
 import { useState } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 
-import { createDashboard, listDashboardTemplates } from "../api";
+import {
+  createDashboard,
+  instantiateDashboardTemplate,
+  listDashboardTemplates,
+} from "../api";
 import { dashboardErrorDescription } from "../presentation";
 import { dashboardQueryKeys } from "../queryKeys";
+import type { DashboardTemplateSummary } from "../types";
 import "../dashboards.css";
 
 type CreationSource = "blank" | "template";
 
 export function DashboardCreatePage() {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const [searchParams] = useSearchParams();
   const [source, setSource] = useState<CreationSource>(() =>
     searchParams.get("source") === "template" ? "template" : "blank",
   );
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
-  const [templateVersionId, setTemplateVersionId] = useState<string>();
+  const [selectedTemplate, setSelectedTemplate] =
+    useState<DashboardTemplateSummary>();
   const templatesQuery = useQuery({
     queryKey: dashboardQueryKeys.templates(),
     queryFn: () => listDashboardTemplates(),
     enabled: source === "template",
   });
   const createMutation = useMutation({
-    mutationFn: () =>
-      createDashboard({
+    mutationFn: () => {
+      const request = {
         name: name.trim(),
         ...(description.trim() ? { description: description.trim() } : {}),
-        ...(source === "template" && templateVersionId
-          ? { template_version_id: templateVersionId }
-          : {}),
-      }),
-    onSuccess: (dashboard) =>
-      navigate(`/dashboards/${dashboard.id}`, { replace: true }),
+      };
+      if (source === "template" && selectedTemplate) {
+        return instantiateDashboardTemplate(selectedTemplate.id, {
+          ...request,
+          template_version_id: selectedTemplate.latest_version_id,
+        });
+      }
+      return createDashboard(request);
+    },
+    onSuccess: (dashboard) => {
+      void queryClient.invalidateQueries({
+        queryKey: dashboardQueryKeys.lists(),
+      });
+      navigate(`/dashboards/${dashboard.id}`, { replace: true });
+    },
   });
   const canCreate =
     Boolean(name.trim()) &&
-    (source === "blank" || Boolean(templateVersionId)) &&
+    (source === "blank" || Boolean(selectedTemplate)) &&
     !createMutation.isPending;
 
   return (
@@ -82,7 +98,7 @@ export function DashboardCreatePage() {
             value={source}
             onChange={(event) => {
               setSource(event.target.value as CreationSource);
-              setTemplateVersionId(undefined);
+              setSelectedTemplate(undefined);
             }}
             options={[
               { label: "空白仪表盘", value: "blank" },
@@ -137,13 +153,12 @@ export function DashboardCreatePage() {
                     <button
                       key={template.latest_version_id}
                       type="button"
-                      className={`dashboard-template-option${templateVersionId === template.latest_version_id ? " is-selected" : ""}`}
+                      className={`dashboard-template-option${selectedTemplate?.latest_version_id === template.latest_version_id ? " is-selected" : ""}`}
                       aria-pressed={
-                        templateVersionId === template.latest_version_id
+                        selectedTemplate?.latest_version_id ===
+                        template.latest_version_id
                       }
-                      onClick={() =>
-                        setTemplateVersionId(template.latest_version_id)
-                      }
+                      onClick={() => setSelectedTemplate(template)}
                     >
                       <strong>{template.name}</strong>
                       <span>

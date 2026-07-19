@@ -2,16 +2,41 @@ import {
   ArrowLeftOutlined,
   CheckOutlined,
   CopyOutlined,
+  DeleteOutlined,
+  EditOutlined,
+  FileAddOutlined,
+  LeftOutlined,
   LockOutlined,
+  PlusOutlined,
+  ReloadOutlined,
+  RightOutlined,
+  RocketOutlined,
   SaveOutlined,
   SnippetsOutlined,
 } from "@ant-design/icons";
-import { useMutation, useQuery } from "@tanstack/react-query";
-import { Alert, Button, Space, Tag, Tooltip, Typography } from "antd";
-import { useCallback, useEffect, useState } from "react";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import {
+  Alert,
+  Button,
+  Input,
+  Modal,
+  Popconfirm,
+  Space,
+  Tag,
+  Tooltip,
+  Typography,
+} from "antd";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 
-import { getDashboard, saveDashboardVersion } from "../api";
+import { ApiError } from "../../../shared/api/client";
+import {
+  activateDashboard,
+  createDashboardTemplate,
+  getDashboard,
+  publishDashboardTemplate,
+  saveDashboardVersion,
+} from "../api";
 import { ComponentPalette } from "../components/ComponentPalette";
 import { DashboardCanvas } from "../components/DashboardCanvas";
 import { DashboardFilterBar } from "../components/DashboardFilterBar";
@@ -33,6 +58,7 @@ import type {
   DashboardLayoutProfile,
   DashboardLayoutProfileName,
   DashboardPage,
+  DashboardTemplateDetail,
 } from "../types";
 import { isChartComponentConfig } from "../charts/config";
 import type { ScopedFilter } from "../charts/types";
@@ -44,6 +70,24 @@ interface ComponentClipboard {
   component: DashboardComponent;
   layoutItems: Partial<Record<DashboardLayoutProfileName, DashboardLayoutItem>>;
 }
+
+type PageNameMode = "add" | "rename";
+
+interface PreviewFilterOverrides {
+  globalFilter?: ScopedFilter | null;
+  pageFilters: Record<string, ScopedFilter | null>;
+  componentFilters: Record<string, ScopedFilter | null>;
+}
+
+const editorStatusPresentation: Record<
+  DashboardDetail["status"],
+  { color: string; label: string }
+> = {
+  draft: { color: "default", label: "草稿" },
+  active: { color: "success", label: "已发布" },
+  archived: { color: "warning", label: "已归档" },
+  deleted: { color: "error", label: "回收站" },
+};
 
 function useMobileViewport(): boolean {
   const [mobile, setMobile] = useState(
@@ -98,6 +142,28 @@ function cloneLayouts(
     }
   }
   return cloned;
+}
+
+function normalizePages(pages: DashboardPage[]): DashboardPage[] {
+  return pages.map((page, ordinal) => ({
+    ...page,
+    ordinal,
+    components: page.components.map((component, componentOrdinal) => ({
+      ...component,
+      ordinal: componentOrdinal,
+    })),
+  }));
+}
+
+function removePageLayoutItems(
+  layouts: DashboardLayoutProfile[],
+  componentIds: string[],
+): DashboardLayoutProfile[] {
+  const removedIds = new Set(componentIds);
+  return layouts.map((layout) => ({
+    ...layout,
+    items: layout.items.filter((item) => !removedIds.has(item.component_id)),
+  }));
 }
 
 function appendLayoutItem(
@@ -196,6 +262,8 @@ function appendCopiedLayoutItems(
 }
 
 function EditorWorkspace({ dashboard }: { dashboard: DashboardDetail }) {
+  const queryClient = useQueryClient();
+  const acceptedDashboard = useRef(dashboard);
   const mobile = useMobileViewport();
   const canEdit = dashboard.capabilities.includes("edit");
   const readonly = mobile || !canEdit;
@@ -205,11 +273,25 @@ function EditorWorkspace({ dashboard }: { dashboard: DashboardDetail }) {
     string,
     unknown
   > | null>(() => dashboard.global_filter ?? null);
+  const [previewFilters, setPreviewFilters] = useState<PreviewFilterOverrides>({
+    pageFilters: {},
+    componentFilters: {},
+  });
   const [selectedPageId, setSelectedPageId] = useState(() => pages[0].id);
   const [selectedComponentId, setSelectedComponentId] = useState<string | null>(
     () => pages[0].components[0]?.id ?? null,
   );
   const [clipboard, setClipboard] = useState<ComponentClipboard | null>(null);
+  const [pageNameMode, setPageNameMode] = useState<PageNameMode | null>(null);
+  const [pageNameDraft, setPageNameDraft] = useState("");
+  const [reloadConfirmOpen, setReloadConfirmOpen] = useState(false);
+  const [templateOpen, setTemplateOpen] = useState(false);
+  const [templateName, setTemplateName] = useState(`${dashboard.name} 模板`);
+  const [templateDraft, setTemplateDraft] =
+    useState<DashboardTemplateDetail | null>(null);
+  const [operationStatus, setOperationStatus] = useState<string | null>(null);
+  const [lifecycleStatus, setLifecycleStatus] = useState(dashboard.status);
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const [versionContext, setVersionContext] = useState(() => ({
     id: dashboard.current_version_id,
     version: dashboard.current_version,
@@ -218,8 +300,49 @@ function EditorWorkspace({ dashboard }: { dashboard: DashboardDetail }) {
   const [saveState, setSaveState] = useState("当前为已保存版本");
   const currentPage =
     pages.find((page) => page.id === selectedPageId) ?? pages[0];
+  const currentPageIndex = pages.findIndex(
+    (page) => page.id === currentPage.id,
+  );
   const selectedComponent =
     currentPage.components.find(
+      (component) => component.id === selectedComponentId,
+    ) ?? null;
+  const effectiveGlobalFilter =
+    readonly &&
+    Object.prototype.hasOwnProperty.call(previewFilters, "globalFilter")
+      ? (previewFilters.globalFilter ?? null)
+      : (globalFilter as ScopedFilter | null);
+  const effectivePageFilter =
+    readonly &&
+    Object.prototype.hasOwnProperty.call(
+      previewFilters.pageFilters,
+      currentPage.id,
+    )
+      ? previewFilters.pageFilters[currentPage.id]
+      : ((currentPage.page_filter ?? null) as ScopedFilter | null);
+  const effectiveComponents = readonly
+    ? currentPage.components.map((component) => {
+        if (
+          !isChartComponentConfig(component.config) ||
+          !Object.prototype.hasOwnProperty.call(
+            previewFilters.componentFilters,
+            component.id,
+          )
+        ) {
+          return component;
+        }
+        return {
+          ...component,
+          config: {
+            ...component.config,
+            component_filter:
+              previewFilters.componentFilters[component.id] ?? null,
+          },
+        };
+      })
+    : currentPage.components;
+  const effectiveSelectedComponent =
+    effectiveComponents.find(
       (component) => component.id === selectedComponentId,
     ) ?? null;
   const activeProfile = mobile ? "mobile" : "desktop";
@@ -238,14 +361,120 @@ function EditorWorkspace({ dashboard }: { dashboard: DashboardDetail }) {
     onSuccess: (saved) => {
       setPages(clonePages(saved.pages));
       setLayouts(cloneLayouts(saved.layouts));
+      setGlobalFilter(saved.global_filter ?? null);
       setVersionContext({
         id: saved.current_version_id,
         version: saved.current_version,
         revision: saved.revision,
       });
+      setLifecycleStatus(saved.status);
+      setHasUnsavedChanges(false);
       setSaveState(`已保存 v${saved.current_version}`);
+      acceptedDashboard.current = saved;
+      queryClient.setQueryData(dashboardQueryKeys.detail(dashboard.id), saved);
+      void queryClient.invalidateQueries({
+        queryKey: dashboardQueryKeys.lists(),
+      });
     },
   });
+  const templateMutation = useMutation({
+    mutationFn: async () => {
+      const draft =
+        templateDraft ??
+        (await createDashboardTemplate({
+          name: templateName.trim(),
+          description: dashboard.description,
+          source_dashboard_version_id: versionContext.id,
+          visibility: "workspace",
+        }));
+      setTemplateDraft(draft);
+      return publishDashboardTemplate(draft.id, draft.revision);
+    },
+    onSuccess: () => {
+      setTemplateOpen(false);
+      setTemplateDraft(null);
+      setTemplateName(`${dashboard.name} 模板`);
+      setOperationStatus("模板已发布");
+      void queryClient.invalidateQueries({
+        queryKey: dashboardQueryKeys.templateLists(),
+      });
+    },
+  });
+  const activateMutation = useMutation({
+    mutationFn: () => activateDashboard(dashboard.id, versionContext.revision),
+    onSuccess: (activated) => {
+      setVersionContext({
+        id: activated.current_version_id,
+        version: activated.current_version,
+        revision: activated.revision,
+      });
+      setLifecycleStatus(activated.status);
+      setOperationStatus("仪表盘已激活");
+      acceptedDashboard.current = activated;
+      queryClient.setQueryData(
+        dashboardQueryKeys.detail(dashboard.id),
+        activated,
+      );
+      void queryClient.invalidateQueries({
+        queryKey: dashboardQueryKeys.lists(),
+      });
+    },
+  });
+  const reloadMutation = useMutation({
+    mutationFn: () => getDashboard(dashboard.id),
+    onSuccess: (latest) => {
+      const latestPages = clonePages(latest.pages);
+      setPages(latestPages);
+      setLayouts(cloneLayouts(latest.layouts));
+      setGlobalFilter(latest.global_filter ?? null);
+      setSelectedPageId(latestPages[0].id);
+      setSelectedComponentId(latestPages[0].components[0]?.id ?? null);
+      setVersionContext({
+        id: latest.current_version_id,
+        version: latest.current_version,
+        revision: latest.revision,
+      });
+      setLifecycleStatus(latest.status);
+      setPreviewFilters({ pageFilters: {}, componentFilters: {} });
+      setHasUnsavedChanges(false);
+      setSaveState("已重新加载最新版本");
+      setReloadConfirmOpen(false);
+      saveMutation.reset();
+      acceptedDashboard.current = latest;
+      queryClient.setQueryData(dashboardQueryKeys.detail(dashboard.id), latest);
+    },
+  });
+  const saveConflict =
+    saveMutation.error instanceof ApiError && saveMutation.error.status === 409;
+
+  useEffect(() => {
+    const accepted = acceptedDashboard.current;
+    if (dashboard.revision < accepted.revision) {
+      queryClient.setQueryData(
+        dashboardQueryKeys.detail(dashboard.id),
+        accepted,
+      );
+      return;
+    }
+    if (dashboard.revision === accepted.revision || hasUnsavedChanges) {
+      return;
+    }
+    acceptedDashboard.current = dashboard;
+    const latestPages = clonePages(dashboard.pages);
+    setPages(latestPages);
+    setLayouts(cloneLayouts(dashboard.layouts));
+    setGlobalFilter(dashboard.global_filter ?? null);
+    setSelectedPageId(latestPages[0].id);
+    setSelectedComponentId(latestPages[0].components[0]?.id ?? null);
+    setVersionContext({
+      id: dashboard.current_version_id,
+      version: dashboard.current_version,
+      revision: dashboard.revision,
+    });
+    setLifecycleStatus(dashboard.status);
+    setPreviewFilters({ pageFilters: {}, componentFilters: {} });
+    setSaveState("已同步最新版本");
+  }, [dashboard, hasUnsavedChanges, queryClient]);
 
   const copySelectedComponent = useCallback(() => {
     if (!selectedComponent) return;
@@ -291,6 +520,7 @@ function EditorWorkspace({ dashboard }: { dashboard: DashboardDetail }) {
       ),
     );
     setSelectedComponentId(componentId);
+    setHasUnsavedChanges(true);
     setSaveState("有未保存更改");
   }, [clipboard, currentPage.components, currentPage.id, readonly]);
 
@@ -325,7 +555,84 @@ function EditorWorkspace({ dashboard }: { dashboard: DashboardDetail }) {
   ]);
 
   function markChanged() {
-    if (canEdit) setSaveState("有未保存更改");
+    if (canEdit) {
+      setHasUnsavedChanges(true);
+      setSaveState("有未保存更改");
+    }
+  }
+
+  function openPageName(mode: PageNameMode) {
+    setPageNameMode(mode);
+    setPageNameDraft(
+      mode === "add" ? `页面 ${pages.length + 1}` : currentPage.title,
+    );
+  }
+
+  function commitPageName() {
+    const title = pageNameDraft.trim();
+    if (!title || pageNameMode === null) return;
+    if (pageNameMode === "add") {
+      const page: DashboardPage = {
+        id: crypto.randomUUID(),
+        title,
+        ordinal: pages.length,
+        page_filter: null,
+        components: [],
+      };
+      setPages((current) => normalizePages([...current, page]));
+      setSelectedPageId(page.id);
+      setSelectedComponentId(null);
+    } else {
+      setPages((current) =>
+        normalizePages(
+          current.map((page) =>
+            page.id === currentPage.id ? { ...page, title } : page,
+          ),
+        ),
+      );
+    }
+    setPageNameMode(null);
+    markChanged();
+  }
+
+  function moveCurrentPage(offset: -1 | 1) {
+    const currentPageId = currentPage.id;
+    setPages((current) => {
+      const currentIndex = current.findIndex(
+        (page) => page.id === currentPageId,
+      );
+      const nextIndex = currentIndex + offset;
+      if (currentIndex < 0 || nextIndex < 0 || nextIndex >= current.length) {
+        return current;
+      }
+      const reordered = [...current];
+      [reordered[currentIndex], reordered[nextIndex]] = [
+        reordered[nextIndex],
+        reordered[currentIndex],
+      ];
+      return normalizePages(reordered);
+    });
+    markChanged();
+  }
+
+  function deleteCurrentPage() {
+    if (pages.length <= 1) return;
+    const currentIndex = pages.findIndex((page) => page.id === currentPage.id);
+    const remainingPages = normalizePages(
+      pages.filter((page) => page.id !== currentPage.id),
+    );
+    const selectedPage =
+      remainingPages[Math.min(currentIndex, remainingPages.length - 1)];
+    setPages(remainingPages);
+    setLayouts((current) =>
+      removePageLayoutItems(
+        current,
+        currentPage.components.map((component) => component.id),
+      ),
+    );
+    setSelectedPageId(selectedPage.id);
+    setSelectedComponentId(selectedPage.components[0]?.id ?? null);
+    markChanged();
   }
 
   function addComponent(componentType: DashboardComponentType) {
@@ -372,6 +679,16 @@ function EditorWorkspace({ dashboard }: { dashboard: DashboardDetail }) {
   }
 
   function updatePageFilter(nextFilter: ScopedFilter | null) {
+    if (readonly) {
+      setPreviewFilters((current) => ({
+        ...current,
+        pageFilters: {
+          ...current.pageFilters,
+          [currentPage.id]: nextFilter,
+        },
+      }));
+      return;
+    }
     setPages((current) =>
       current.map((page) =>
         page.id === currentPage.id
@@ -385,6 +702,16 @@ function EditorWorkspace({ dashboard }: { dashboard: DashboardDetail }) {
   function updateComponentFilter(nextFilter: ScopedFilter | null) {
     if (!selectedComponent || !isChartComponentConfig(selectedComponent.config))
       return;
+    if (readonly) {
+      setPreviewFilters((current) => ({
+        ...current,
+        componentFilters: {
+          ...current.componentFilters,
+          [selectedComponent.id]: nextFilter,
+        },
+      }));
+      return;
+    }
     updateComponent({
       ...selectedComponent,
       config: { ...selectedComponent.config, component_filter: nextFilter },
@@ -409,14 +736,41 @@ function EditorWorkspace({ dashboard }: { dashboard: DashboardDetail }) {
           </Typography.Text>
         </div>
         <Space wrap>
-          <Tag color={dashboard.status === "active" ? "success" : "default"}>
-            {dashboard.status === "active" ? "已发布" : "草稿"}
+          <Tag color={editorStatusPresentation[lifecycleStatus].color}>
+            {editorStatusPresentation[lifecycleStatus].label}
           </Tag>
+          {operationStatus ? (
+            <Tag color="success">{operationStatus}</Tag>
+          ) : null}
           <span className="dashboard-save-state">{saveState}</span>
           {readonly ? (
             <Tag icon={<LockOutlined />}>只读</Tag>
           ) : (
             <>
+              <Tooltip title="发布当前已保存版本为模板">
+                <Button
+                  icon={<FileAddOutlined />}
+                  aria-label="发布当前已保存版本为模板"
+                  onClick={() => {
+                    templateMutation.reset();
+                    if (!templateDraft) {
+                      setTemplateName(`${dashboard.name} 模板`);
+                    }
+                    setTemplateOpen(true);
+                  }}
+                />
+              </Tooltip>
+              {lifecycleStatus === "active" ? null : (
+                <Tooltip title="激活仪表盘">
+                  <Button
+                    icon={<RocketOutlined />}
+                    aria-label="激活仪表盘"
+                    loading={activateMutation.isPending}
+                    disabled={hasUnsavedChanges}
+                    onClick={() => activateMutation.mutate()}
+                  />
+                </Tooltip>
+              )}
               <Tooltip title="复制当前组件 (Ctrl/Cmd+C)">
                 <Button
                   icon={<CopyOutlined />}
@@ -465,18 +819,48 @@ function EditorWorkspace({ dashboard }: { dashboard: DashboardDetail }) {
       ) : null}
       {saveMutation.isError ? (
         <Alert
+          className="dashboard-lifecycle-alert"
           type="error"
           showIcon
           title="仪表盘保存失败"
           description={dashboardErrorDescription(saveMutation.error)}
+          action={
+            saveConflict ? (
+              <Button
+                icon={<ReloadOutlined />}
+                onClick={() => setReloadConfirmOpen(true)}
+              >
+                放弃本地更改并重新加载
+              </Button>
+            ) : undefined
+          }
+        />
+      ) : null}
+      {activateMutation.isError ? (
+        <Alert
+          className="dashboard-lifecycle-alert"
+          type="error"
+          showIcon
+          title="仪表盘激活失败"
+          description={dashboardErrorDescription(activateMutation.error)}
+        />
+      ) : null}
+      {reloadMutation.isError ? (
+        <Alert
+          className="dashboard-lifecycle-alert"
+          type="error"
+          showIcon
+          title="最新版本加载失败"
+          description={dashboardErrorDescription(reloadMutation.error)}
         />
       ) : null}
       <DashboardFilterBar
-        globalFilter={globalFilter}
-        pageFilter={currentPage.page_filter ?? null}
+        globalFilter={effectiveGlobalFilter}
+        pageFilter={effectivePageFilter}
         componentFilter={
-          selectedComponent && isChartComponentConfig(selectedComponent.config)
-            ? selectedComponent.config.component_filter
+          effectiveSelectedComponent &&
+          isChartComponentConfig(effectiveSelectedComponent.config)
+            ? effectiveSelectedComponent.config.component_filter
             : null
         }
         datasetId={
@@ -486,6 +870,13 @@ function EditorWorkspace({ dashboard }: { dashboard: DashboardDetail }) {
         }
         canPreview={dashboard.capabilities.includes("view")}
         onGlobalChange={(nextFilter) => {
+          if (readonly) {
+            setPreviewFilters((current) => ({
+              ...current,
+              globalFilter: nextFilter,
+            }));
+            return;
+          }
           setGlobalFilter(nextFilter);
           markChanged();
         }}
@@ -507,6 +898,67 @@ function EditorWorkspace({ dashboard }: { dashboard: DashboardDetail }) {
             {page.title}
           </button>
         ))}
+        {readonly ? null : (
+          <Space.Compact>
+            <Tooltip title="新增页面">
+              <Button
+                type="text"
+                size="small"
+                icon={<PlusOutlined />}
+                aria-label="新增页面"
+                onClick={() => openPageName("add")}
+              />
+            </Tooltip>
+            <Tooltip title="重命名页面">
+              <Button
+                type="text"
+                size="small"
+                icon={<EditOutlined />}
+                aria-label="重命名页面"
+                onClick={() => openPageName("rename")}
+              />
+            </Tooltip>
+            <Tooltip title="页面左移">
+              <Button
+                type="text"
+                size="small"
+                icon={<LeftOutlined />}
+                aria-label="页面左移"
+                disabled={currentPageIndex <= 0}
+                onClick={() => moveCurrentPage(-1)}
+              />
+            </Tooltip>
+            <Tooltip title="页面右移">
+              <Button
+                type="text"
+                size="small"
+                icon={<RightOutlined />}
+                aria-label="页面右移"
+                disabled={currentPageIndex >= pages.length - 1}
+                onClick={() => moveCurrentPage(1)}
+              />
+            </Tooltip>
+            <Popconfirm
+              title="删除当前页面？"
+              description="页面内组件及其桌面、移动布局将同时删除。"
+              okText="删除"
+              cancelText="取消"
+              disabled={pages.length <= 1}
+              onConfirm={deleteCurrentPage}
+            >
+              <Tooltip title="删除页面">
+                <Button
+                  type="text"
+                  danger
+                  size="small"
+                  icon={<DeleteOutlined />}
+                  aria-label="删除页面"
+                  disabled={pages.length <= 1}
+                />
+              </Tooltip>
+            </Popconfirm>
+          </Space.Compact>
+        )}
       </nav>
       <div className={`dashboard-editor-grid${readonly ? " is-readonly" : ""}`}>
         {readonly ? null : <ComponentPalette onAdd={addComponent} />}
@@ -514,9 +966,9 @@ function EditorWorkspace({ dashboard }: { dashboard: DashboardDetail }) {
           dashboardId={dashboard.id}
           dashboardVersionId={versionContext.id}
           pageId={currentPage.id}
-          components={currentPage.components}
-          globalFilter={globalFilter as ScopedFilter | null}
-          pageFilter={(currentPage.page_filter ?? null) as ScopedFilter | null}
+          components={effectiveComponents}
+          globalFilter={effectiveGlobalFilter}
+          pageFilter={effectivePageFilter}
           layout={activeLayout}
           selectedComponentId={selectedComponentId}
           readonly={readonly}
@@ -541,6 +993,72 @@ function EditorWorkspace({ dashboard }: { dashboard: DashboardDetail }) {
           />
         )}
       </div>
+      <Modal
+        open={pageNameMode !== null}
+        title={pageNameMode === "add" ? "新增页面" : "重命名页面"}
+        okText="确定"
+        cancelText="取消"
+        okButtonProps={{ disabled: !pageNameDraft.trim() }}
+        onOk={commitPageName}
+        onCancel={() => setPageNameMode(null)}
+      >
+        <Input
+          autoFocus
+          maxLength={128}
+          value={pageNameDraft}
+          aria-label="页面名称"
+          onChange={(event) => setPageNameDraft(event.target.value)}
+          onPressEnter={commitPageName}
+        />
+      </Modal>
+      <Modal
+        open={templateOpen}
+        title="发布当前版本为模板"
+        okText="发布"
+        cancelText="取消"
+        confirmLoading={templateMutation.isPending}
+        okButtonProps={{ disabled: !templateName.trim() }}
+        onOk={() => templateMutation.mutate()}
+        onCancel={() => {
+          if (!templateMutation.isPending) setTemplateOpen(false);
+        }}
+      >
+        <Input
+          autoFocus
+          maxLength={128}
+          value={templateName}
+          aria-label="模板名称"
+          onChange={(event) => setTemplateName(event.target.value)}
+          onPressEnter={() => {
+            if (templateName.trim()) templateMutation.mutate();
+          }}
+        />
+        {templateMutation.isError ? (
+          <Alert
+            className="dashboard-template-publish-error"
+            type="error"
+            showIcon
+            title="模板发布失败"
+            description={dashboardErrorDescription(templateMutation.error)}
+          />
+        ) : null}
+      </Modal>
+      <Modal
+        open={reloadConfirmOpen}
+        title="放弃本地更改"
+        okText="放弃并重新加载"
+        cancelText="取消"
+        confirmLoading={reloadMutation.isPending}
+        okButtonProps={{ danger: true }}
+        onOk={() => reloadMutation.mutate()}
+        onCancel={() => {
+          if (!reloadMutation.isPending) setReloadConfirmOpen(false);
+        }}
+      >
+        <Typography.Text>
+          本地未保存更改将被最新服务端版本替换。
+        </Typography.Text>
+      </Modal>
     </section>
   );
 }
@@ -568,7 +1086,7 @@ export function DashboardEditorPage() {
   }
   return (
     <EditorWorkspace
-      key={`${dashboardQuery.data.id}:${dashboardQuery.data.revision}`}
+      key={dashboardQuery.data.id}
       dashboard={dashboardQuery.data}
     />
   );
