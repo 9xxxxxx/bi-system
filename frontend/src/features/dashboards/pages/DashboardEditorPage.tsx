@@ -12,6 +12,7 @@ import { Link, useParams } from "react-router-dom";
 import { getDashboard, saveDashboardVersion } from "../api";
 import { ComponentPalette } from "../components/ComponentPalette";
 import { DashboardCanvas } from "../components/DashboardCanvas";
+import { DashboardFilterBar } from "../components/DashboardFilterBar";
 import {
   DashboardErrorState,
   DashboardLoadingState,
@@ -29,6 +30,8 @@ import type {
   DashboardLayoutProfile,
   DashboardPage,
 } from "../types";
+import { isChartComponentConfig } from "../charts/config";
+import type { ScopedFilter } from "../charts/types";
 import "../dashboards.css";
 
 const mobileQuery = "(max-width: 768px)";
@@ -122,11 +125,16 @@ function EditorWorkspace({ dashboard }: { dashboard: DashboardDetail }) {
   const readonly = mobile || !canEdit;
   const [pages, setPages] = useState(() => clonePages(dashboard.pages));
   const [layouts, setLayouts] = useState(() => cloneLayouts(dashboard.layouts));
+  const [globalFilter, setGlobalFilter] = useState<Record<
+    string,
+    unknown
+  > | null>(() => dashboard.global_filter ?? null);
   const [selectedPageId, setSelectedPageId] = useState(() => pages[0].id);
   const [selectedComponentId, setSelectedComponentId] = useState<string | null>(
     () => pages[0].components[0]?.id ?? null,
   );
   const [versionContext, setVersionContext] = useState(() => ({
+    id: dashboard.current_version_id,
     version: dashboard.current_version,
     revision: dashboard.revision,
   }));
@@ -146,6 +154,7 @@ function EditorWorkspace({ dashboard }: { dashboard: DashboardDetail }) {
       saveDashboardVersion(dashboard.id, {
         base_version: versionContext.version,
         expected_revision: versionContext.revision,
+        global_filter: globalFilter,
         pages,
         layouts,
       }),
@@ -153,6 +162,7 @@ function EditorWorkspace({ dashboard }: { dashboard: DashboardDetail }) {
       setPages(clonePages(saved.pages));
       setLayouts(cloneLayouts(saved.layouts));
       setVersionContext({
+        id: saved.current_version_id,
         version: saved.current_version,
         revision: saved.revision,
       });
@@ -161,7 +171,7 @@ function EditorWorkspace({ dashboard }: { dashboard: DashboardDetail }) {
   });
 
   function markChanged() {
-    setSaveState("有未保存更改");
+    if (canEdit) setSaveState("有未保存更改");
   }
 
   function addComponent(componentType: DashboardComponentType) {
@@ -199,6 +209,26 @@ function EditorWorkspace({ dashboard }: { dashboard: DashboardDetail }) {
       ),
     );
     markChanged();
+  }
+
+  function updatePageFilter(nextFilter: ScopedFilter | null) {
+    setPages((current) =>
+      current.map((page) =>
+        page.id === currentPage.id
+          ? { ...page, page_filter: nextFilter }
+          : page,
+      ),
+    );
+    markChanged();
+  }
+
+  function updateComponentFilter(nextFilter: ScopedFilter | null) {
+    if (!selectedComponent || !isChartComponentConfig(selectedComponent.config))
+      return;
+    updateComponent({
+      ...selectedComponent,
+      config: { ...selectedComponent.config, component_filter: nextFilter },
+    });
   }
 
   return (
@@ -263,6 +293,27 @@ function EditorWorkspace({ dashboard }: { dashboard: DashboardDetail }) {
           description={dashboardErrorDescription(saveMutation.error)}
         />
       ) : null}
+      <DashboardFilterBar
+        globalFilter={globalFilter}
+        pageFilter={currentPage.page_filter ?? null}
+        componentFilter={
+          selectedComponent && isChartComponentConfig(selectedComponent.config)
+            ? selectedComponent.config.component_filter
+            : null
+        }
+        datasetId={
+          selectedComponent && isChartComponentConfig(selectedComponent.config)
+            ? selectedComponent.config.query.dataset_id
+            : ""
+        }
+        canPreview={dashboard.capabilities.includes("view")}
+        onGlobalChange={(nextFilter) => {
+          setGlobalFilter(nextFilter);
+          markChanged();
+        }}
+        onPageChange={updatePageFilter}
+        onComponentChange={updateComponentFilter}
+      />
       <nav className="dashboard-page-tabs" aria-label="仪表盘页面">
         {pages.map((page) => (
           <button
@@ -282,10 +333,16 @@ function EditorWorkspace({ dashboard }: { dashboard: DashboardDetail }) {
       <div className={`dashboard-editor-grid${readonly ? " is-readonly" : ""}`}>
         {readonly ? null : <ComponentPalette onAdd={addComponent} />}
         <DashboardCanvas
+          dashboardId={dashboard.id}
+          dashboardVersionId={versionContext.id}
+          pageId={currentPage.id}
           components={currentPage.components}
+          globalFilter={globalFilter as ScopedFilter | null}
+          pageFilter={(currentPage.page_filter ?? null) as ScopedFilter | null}
           layout={activeLayout}
           selectedComponentId={selectedComponentId}
           readonly={readonly}
+          preview={canEdit}
           onSelect={setSelectedComponentId}
         />
         {readonly ? null : (

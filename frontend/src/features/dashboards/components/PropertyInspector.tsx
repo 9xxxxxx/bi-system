@@ -2,6 +2,7 @@ import { Form, Input, Tag, Typography } from "antd";
 
 import { componentTypeLabels } from "../presentation";
 import type { DashboardComponent } from "../types";
+import { ChartConfigEditor } from "./ChartConfigEditor";
 
 export function PropertyInspector({
   component,
@@ -45,10 +46,7 @@ export function PropertyInspector({
               }
             />
           </Form.Item>
-          <div className="dashboard-property-placeholder">
-            <strong>数据配置</strong>
-            <span>暂无配置</span>
-          </div>
+          <ChartConfigEditor component={component} onChange={onChange} />
         </Form>
       ) : (
         <div className="dashboard-inspector-empty">

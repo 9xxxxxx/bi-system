@@ -6,6 +6,8 @@ import {
 import { Button, Empty, Tag, Typography } from "antd";
 import type { CSSProperties } from "react";
 
+import { DashboardComponentRenderer } from "../charts/DashboardComponentRenderer";
+import type { ScopedFilter } from "../charts/types";
 import { componentTypeLabels } from "../presentation";
 import type {
   DashboardComponent,
@@ -32,16 +34,28 @@ function automaticItem(
 }
 
 export function DashboardCanvas({
+  dashboardId,
+  dashboardVersionId,
+  pageId,
   components,
+  globalFilter,
+  pageFilter,
   layout,
   selectedComponentId,
   readonly,
+  preview,
   onSelect,
 }: {
+  dashboardId: string;
+  dashboardVersionId: string;
+  pageId: string;
   components: DashboardComponent[];
+  globalFilter: ScopedFilter | null;
+  pageFilter: ScopedFilter | null;
   layout: DashboardLayoutProfile;
   selectedComponentId: string | null;
   readonly: boolean;
+  preview: boolean;
   onSelect: (componentId: string) => void;
 }) {
   const layoutByComponent = new Map(
@@ -95,6 +109,9 @@ export function DashboardCanvas({
                 className={`dashboard-component-placeholder${selectedComponentId === component.id ? " is-selected" : ""}`}
                 style={style}
                 data-component-id={component.id}
+                onClick={() => {
+                  if (!readonly) onSelect(component.id);
+                }}
               >
                 <header>
                   <div>
@@ -111,16 +128,17 @@ export function DashboardCanvas({
                     />
                   )}
                 </header>
-                <button
-                  className="dashboard-placeholder-body"
-                  type="button"
-                  disabled={readonly}
-                  onClick={() => onSelect(component.id)}
-                >
-                  <AppstoreOutlined aria-hidden />
-                  <span>组件合同已创建</span>
-                  <small>暂无数据配置</small>
-                </button>
+                <div className="dashboard-placeholder-body">
+                  <DashboardComponentRenderer
+                    dashboardId={dashboardId}
+                    dashboardVersionId={dashboardVersionId}
+                    pageId={pageId}
+                    component={component}
+                    preview={preview}
+                    globalFilter={globalFilter}
+                    pageFilter={pageFilter}
+                  />
+                </div>
               </article>
             );
           })}

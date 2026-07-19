@@ -1,9 +1,10 @@
-import { render, screen, waitFor } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, expect, it, vi } from "vitest";
 import { Route, Routes } from "react-router-dom";
 
 import { TestProviders } from "../../../test/TestProviders";
+import { defaultChartConfig } from "../charts/config";
 import type { DashboardDetail } from "../types";
 import { DashboardEditorPage } from "./DashboardEditorPage";
 
@@ -266,10 +267,138 @@ it("uses the independent mobile profile and removes editing controls at 390px", 
   ).not.toBeInTheDocument();
 });
 
+it("lets a read-only viewer apply global and page filters without saving", async () => {
+  const config = defaultChartConfig("kpi");
+  config.query.dataset_id = "00000000-0000-0000-0000-000000000001";
+  config.query.measures[0] = {
+    kind: "field",
+    field_id: "00000000-0000-0000-0000-000000000002",
+    aggregate: "sum",
+    slot_key: "value",
+  };
+  const readonlyDashboard: DashboardDetail = {
+    ...dashboard,
+    capabilities: ["view"],
+    pages: [
+      {
+        ...dashboard.pages[0],
+        components: [{ ...dashboard.pages[0].components[0], config }],
+      },
+    ],
+  };
+  const queryBodies: Array<Record<string, unknown>> = [];
+  vi.stubGlobal(
+    "fetch",
+    vi.fn(async (input: string | URL | Request, init?: RequestInit) => {
+      if (String(input).endsWith("/dashboard-chart-queries")) {
+        queryBodies.push(
+          JSON.parse(String(init?.body)) as Record<string, unknown>,
+        );
+        return chartResponse();
+      }
+      if (String(input).includes("/datasets/")) {
+        return jsonResponse({
+          id: config.query.dataset_id,
+          name: "销售数据集",
+          status: "active",
+          fields: [
+            {
+              id: "00000000-0000-0000-0000-000000000003",
+              label: "订单日期",
+              role: "dimension",
+              data_type: "date",
+              hidden: false,
+            },
+            {
+              id: "00000000-0000-0000-0000-000000000004",
+              label: "支付时间",
+              role: "dimension",
+              data_type: "datetime",
+              hidden: false,
+            },
+          ],
+        });
+      }
+      return jsonResponse(toWire(readonlyDashboard));
+    }),
+  );
+  const user = userEvent.setup();
+  renderPage();
+
+  expect(await screen.findByText("当前仪表盘为只读")).toBeInTheDocument();
+  await waitFor(() => expect(queryBodies).toHaveLength(1));
+  expect(queryBodies[0]).toMatchObject({
+    dashboard_version_id: "dashboard-version-2",
+    runtime_filters: {
+      global_filter: null,
+      page_filter: null,
+      component_filter: null,
+    },
+  });
+
+  await user.click(screen.getByRole("button", { name: /筛选/ }));
+  await user.click(screen.getAllByText("相对日期")[0]);
+  fireEvent.mouseDown(screen.getByLabelText("全局筛选字段"));
+  fireEvent.click(screen.getAllByText("订单日期").at(-1)!);
+  await user.click(screen.getAllByText("相对日期")[1]);
+  fireEvent.mouseDown(screen.getByLabelText("页面筛选字段"));
+  fireEvent.click(screen.getAllByText("支付时间").at(-1)!);
+
+  await waitFor(() =>
+    expect(queryBodies.at(-1)).toMatchObject({
+      dashboard_version_id: "dashboard-version-2",
+      runtime_filters: {
+        global_filter: {
+          kind: "relative_date",
+          field_id: "00000000-0000-0000-0000-000000000003",
+          period: "last_30_days",
+        },
+        page_filter: {
+          kind: "relative_date",
+          field_id: "00000000-0000-0000-0000-000000000004",
+          period: "last_30_days",
+        },
+        component_filter: null,
+      },
+    }),
+  );
+  expect(
+    screen.queryByRole("button", { name: /保存新版本/ }),
+  ).not.toBeInTheDocument();
+  expect(screen.getByText("当前为已保存版本")).toBeInTheDocument();
+});
+
 function jsonResponse(body: unknown, status = 200) {
   return new Response(JSON.stringify(body), {
     status,
     headers: { "Content-Type": "application/json" },
+  });
+}
+
+function chartResponse() {
+  return jsonResponse({
+    request_id: "request-1",
+    component_id: "component-revenue",
+    columns: [
+      {
+        slot_key: "value",
+        query_alias: "value_1",
+        resource_kind: "field",
+        resource_id: "00000000-0000-0000-0000-000000000002",
+        aggregate: "sum",
+        label: "总营收",
+        data_type: "decimal",
+        unit: null,
+      },
+    ],
+    rows: [{ value_1: "128.5" }],
+    truncated: false,
+    elapsed_ms: 8.5,
+    dataset_version: 3,
+    metric_version_ids: [],
+    source_batch_ids: ["batch-1"],
+    resolved_filters: [],
+    warnings: [],
   });
 }
 
