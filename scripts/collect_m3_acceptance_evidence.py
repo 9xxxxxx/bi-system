@@ -214,7 +214,14 @@ def command_specs(
         )
     if include_frontend_quality:
         node = "node.exe" if os.name == "nt" else "node"
-        npm = "npm.cmd" if os.name == "nt" else "npm"
+        npm_command: tuple[str, ...] = ("npm.cmd" if os.name == "nt" else "npm",)
+        if os.name == "nt":
+            bundled_root = REPOSITORY_ROOT / ".tmp/m3-node24-npm11/node_modules"
+            bundled_node = bundled_root / "node/bin/node.exe"
+            bundled_npm = bundled_root / "npm/bin/npm-cli.js"
+            if bundled_node.is_file() and bundled_npm.is_file():
+                node = str(bundled_node)
+                npm_command = (node, str(bundled_npm))
         specs.extend(
             (
                 CommandSpec(
@@ -227,20 +234,20 @@ def command_specs(
                 ),
                 CommandSpec(
                     "frontend_lint",
-                    (npm, "--prefix", "frontend", "run", "lint"),
+                    (*npm_command, "--prefix", "frontend", "run", "lint"),
                 ),
                 CommandSpec(
                     "frontend_format",
-                    (npm, "--prefix", "frontend", "run", "format:check"),
+                    (*npm_command, "--prefix", "frontend", "run", "format:check"),
                 ),
                 CommandSpec(
                     "frontend_typecheck",
-                    (npm, "--prefix", "frontend", "run", "typecheck"),
+                    (*npm_command, "--prefix", "frontend", "run", "typecheck"),
                 ),
                 CommandSpec(
                     "frontend_tests",
                     (
-                        npm,
+                        *npm_command,
                         "--prefix",
                         "frontend",
                         "run",
@@ -254,7 +261,7 @@ def command_specs(
                 ),
                 CommandSpec(
                     "frontend_build",
-                    (npm, "--prefix", "frontend", "run", "build"),
+                    (*npm_command, "--prefix", "frontend", "run", "build"),
                     timeout_seconds=1_800,
                 ),
             )

@@ -387,11 +387,19 @@ def test_frontend_quality_uses_local_node_24_and_npm_without_npx() -> None:
         include_frontend_quality=True,
     )
     frontend = [spec for spec in specs if spec.key.startswith("frontend_")]
+    bundled_root = collector.REPOSITORY_ROOT / ".tmp/m3-node24-npm11/node_modules"
+    bundled_node = bundled_root / "node/bin/node.exe"
+    bundled_npm = bundled_root / "npm/bin/npm-cli.js"
 
     assert frontend[0].key == "frontend_node24"
-    assert frontend[0].argv[0].lower().startswith("node")
     assert all("npx" not in argument.lower() for spec in frontend for argument in spec.argv)
-    assert all(spec.argv[0].lower().startswith(("node", "npm")) for spec in frontend)
+    if bundled_node.is_file() and bundled_npm.is_file():
+        assert frontend[0].argv[0] == str(bundled_node)
+        assert all(spec.argv[0] == str(bundled_node) for spec in frontend)
+        assert all(spec.argv[1] == str(bundled_npm) for spec in frontend[1:])
+    else:
+        assert frontend[0].argv[0].lower().startswith("node")
+        assert all(spec.argv[0].lower().startswith(("node", "npm")) for spec in frontend)
 
 
 def test_dependency_evidence_binds_versions_lock_build_and_commit(tmp_path: Path) -> None:
